@@ -31,7 +31,7 @@ resource "adx_table" "test" {
 resource "adx_table_mapping" "test" {
   name          = "TestMapping"
   database_name = "test-db"
-  table_name    = "Test1"
+  table_name    = adx_table.test.name
   kind          = "Json"
   mapping {
     column   = "f1"
