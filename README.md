@@ -25,7 +25,23 @@ provider "adx" {
 resource "adx_table" "test" {
   name          = "Test1"
   database_name = "test-db"
+
+  # either
   table_schema  = "f1:string,f2:string,f3:int"
+
+  # or
+  column {
+    name = "f1"
+    type = "string"
+  }
+  column {
+    name = "f2"
+    type = "string"
+  }
+  column {
+    name = "f3"
+    type = "int"
+  }
 }
 
 resource "adx_table_mapping" "test" {

@@ -23,7 +23,7 @@ resource "adx_table" "test" {
 
 Or use HCL to construct it:
 
-```
+```terraform
 resource "adx_table" "test" {
   name          = "Test1"
   database_name = "test-db"
