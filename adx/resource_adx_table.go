@@ -61,6 +61,7 @@ func resourceADXTable() *schema.Resource {
 				ConflictsWith: []string{"table_schema"},
 				ForceNew: true,
 				Optional: true,
+				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
