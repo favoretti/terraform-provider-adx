@@ -103,7 +103,7 @@ func resourceADXTableMappingCreate(ctx context.Context, d *schema.ResourceData, 
 	mapping := expandTableMapping(d.Get("mapping").([]interface{}))
 
 	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
-	createStatement := fmt.Sprintf(".create-or-alter table %s ingestion %s mapping '%s' '[%s]'", tableName, kind, name, mapping)
+	createStatement := fmt.Sprintf(".create-or-alter table %s ingestion %s mapping '%s' '[%s]'", tableName, strings.ToLower(kind), name, mapping)
 
 	_, err := client.Mgmt(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(createStatement))
 	if err != nil {
@@ -129,7 +129,7 @@ func resourceADXTableMappingRead(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
-	showStatement := fmt.Sprintf(".show table %s ingestion %s mapping '%s'", id.TableName, id.Kind, id.Name)
+	showStatement := fmt.Sprintf(".show table %s ingestion %s mapping '%s'", id.TableName, strings.ToLower(id.Kind), id.Name)
 
 	resp, err := client.Mgmt(ctx, id.DatabaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(showStatement))
 	if err != nil {
@@ -174,7 +174,7 @@ func resourceADXTableMappingDelete(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
-	deleteStatement := fmt.Sprintf(".drop table %s ingestion %s mapping '%s'", id.TableName, id.Kind, id.Name)
+	deleteStatement := fmt.Sprintf(".drop table %s ingestion %s mapping '%s'", id.TableName, strings.ToLower(id.Kind), id.Name)
 
 	_, err = client.Mgmt(ctx, id.DatabaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(deleteStatement))
 	if err != nil {
