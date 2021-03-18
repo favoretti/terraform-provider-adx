@@ -12,9 +12,9 @@ Manages a table in ADX.
 ## Example Usage
 
 ```terraform
-resource "adx_table" "vlad_test" {
-  name          = "vladTest1"
-  database_name = "vlad-test-db"
+resource "adx_table" "test" {
+  name          = "Test1"
+  database_name = "test-db"
   table_schema  = "f1:string,f2:string,f3:int"
 }
 ```
