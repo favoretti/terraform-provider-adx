@@ -1,6 +1,8 @@
 package adx
 
 import (
+	"regexp"
+
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -50,6 +52,24 @@ func stringIsNotEmpty(i interface{}, k cty.Path) diag.Diagnostics {
 	}
 
 	return nil
+}
+
+func stringMatch(r *regexp.Regexp, message string) schema.SchemaValidateDiagFunc {
+	return func(i interface{}, k cty.Path) diag.Diagnostics {
+		v, ok := i.(string)
+		if !ok {
+			return diag.Errorf("expected type of %s to be string", k)
+		}
+
+		if ok := r.MatchString(v); !ok {
+			if message != "" {
+				return diag.Errorf("invalid value for %s (%s)", k, message)
+
+			}
+			return diag.Errorf("expected value of %s to match regular expression %q, got %v", k, r, i)
+		}
+		return nil
+	}
 }
 
 func stringIsUUID(i interface{}, k cty.Path) diag.Diagnostics {
