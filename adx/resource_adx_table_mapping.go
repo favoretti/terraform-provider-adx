@@ -118,7 +118,7 @@ func resourceADXTableMappingCreateUpdate(ctx context.Context, d *schema.Resource
 		return diag.Errorf("error creating Mapping %q (Table %q, Database %q): %+v", name, tableName, databaseName, err)
 	}
 
-	id := fmt.Sprintf("%s|%s|%s|%s|%s", client.Endpoint(), databaseName, tableName, kind, name)
+	id := fmt.Sprintf("%s|%s|%s|%s|%s", client.Endpoint(), databaseName, tableName, strings.ToLower(kind), name)
 	d.SetId(id)
 
 	resourceADXTableMappingRead(ctx, d, meta)
