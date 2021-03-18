@@ -36,7 +36,7 @@ func resourceADXTable() *schema.Resource {
 				ValidateDiagFunc: stringIsNotEmpty,
 			},
 
-			"table_name": {
+			"name": {
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
@@ -60,7 +60,7 @@ func resourceADXTableCreate(ctx context.Context, d *schema.ResourceData, meta in
 	var diags diag.Diagnostics
 	client := meta.(*Meta).Kusto
 
-	tableName := d.Get("table_name").(string)
+	tableName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 	tableSchema := d.Get("table_schema").(string)
 
@@ -118,7 +118,7 @@ func resourceADXTableRead(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.Errorf("%+v", err)
 	}
 
-	d.Set("table_name", schemas[0].TableName)
+	d.Set("name", schemas[0].TableName)
 	d.Set("database_name", schemas[0].DatabaseName)
 	d.Set("table_schema", schemas[0].Schema)
 

@@ -48,7 +48,7 @@ func Provider() *schema.Provider {
 
 		ResourcesMap: map[string]*schema.Resource{
 			"adx_table": resourceADXTable(),
-			//"adx_mapping":       resourceADXMapping(),
+			"adx_table_mapping":       resourceADXTableMapping(),
 		},
 	}
 
