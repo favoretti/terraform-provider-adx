@@ -1,0 +1,27 @@
+*.dll
+*.exe
+.DS_Store
+example.tf
+terraform.tfplan
+terraform.tfstate
+bin/
+modules-dev/
+/pkg/
+*.backup
+./*.tfstate
+.terraform/
+*.tfvars
+*.auto.tfvars
+*.log
+*.bak
+*~
+.*.swp
+.idea
+*.iml
+*.test
+.terraform.tfstate.lock.info
+.vscode/
+
+# never upload the build to git
+terraform-provider-adx
+tf.zip
