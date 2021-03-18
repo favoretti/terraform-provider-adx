@@ -166,20 +166,20 @@ func resourceADXTableMappingRead(ctx context.Context, d *schema.ResourceData, me
 func resourceADXTableMappingDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	// client := meta.(*Meta).Kusto
-	//
-	// id, err := parseADXTableID(d.Id())
-	// if err != nil {
-	// 	return diag.FromErr(err)
-	// }
-	//
-	// kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
-	// deleteStatement := fmt.Sprintf(".drop table %s", id.Name)
-	//
-	// _, err = client.Mgmt(ctx, id.DatabaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(deleteStatement))
-	// if err != nil {
-	// 	return diag.Errorf("error deleting Table %q (Database %q): %+v", id.Name, id.DatabaseName, err)
-	// }
+	client := meta.(*Meta).Kusto
+
+	id, err := parseADXTableMappingID(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
+	deleteStatement := fmt.Sprintf(".drop table %s ingestion %s mapping '%s'", id.TableName, id.Kind, id.Name)
+
+	_, err = client.Mgmt(ctx, id.DatabaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(deleteStatement))
+	if err != nil {
+		return diag.Errorf("error deleting Table Mapping %q (Table %q, Database %q): %+v", id.Name, id.TableName, id.DatabaseName, err)
+	}
 
 	d.SetId("")
 
