@@ -43,7 +43,6 @@ func Provider() *schema.Provider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
-			//"azurepreview_resources": dataSourceMapping(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
