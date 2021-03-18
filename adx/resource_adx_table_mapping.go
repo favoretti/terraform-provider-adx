@@ -2,6 +2,7 @@ package adx
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -22,10 +23,17 @@ type TableMapping struct {
 	Database string
 }
 
+type Mapping struct {
+	Column string `json:"column"`
+	Path string `json:"path"`
+	DataType string `json:"datatype"`
+	Transform string `json:"transform"`
+}
 
 func resourceADXTableMapping() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceADXTableMappingCreate,
+		CreateContext: resourceADXTableMappingCreateUpdate,
+		UpdateContext: resourceADXTableMappingCreateUpdate,
 		ReadContext:   resourceADXTableMappingRead,
 		DeleteContext: resourceADXTableMappingDelete,
 
@@ -92,7 +100,7 @@ func resourceADXTableMapping() *schema.Resource {
 	}
 }
 
-func resourceADXTableMappingCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceADXTableMappingCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	client := meta.(*Meta).Kusto
 
@@ -156,7 +164,7 @@ func resourceADXTableMappingRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("table_name", schemas[0].Table)
 	d.Set("database_name", schemas[0].Database)
 	d.Set("kind", schemas[0].Kind)
-	d.Set("mapping", schemas[0].Mapping)
+	d.Set("mapping", flattenTableMapping(schemas[0].Mapping))
 	d.Set("last_updated_on", schemas[0].LastUpdatedOn)
 
 
@@ -204,4 +212,24 @@ func expandTableMapping(input []interface{}) string {
 		mappings = append(mappings, mapping)
 	}
 	return strings.Join(mappings, ",")
+}
+
+func flattenTableMapping(input string) []interface{} {
+	if len(input) == 0 {
+		return []interface{}{}
+	}
+
+	var oMappings []Mapping
+	json.Unmarshal([]byte(input), &oMappings)
+
+	mappings := make([]interface{}, 0)
+	for _, v := range oMappings {
+		block := make(map[string]interface{})
+		block["column"] = v.Column
+		block["path"] = v.Path
+		block["datatype"] = v.DataType
+		block["transform"] = v.Transform
+		mappings = append(mappings, block)
+	}
+	return mappings
 }
