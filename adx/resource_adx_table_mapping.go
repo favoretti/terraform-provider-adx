@@ -41,27 +41,23 @@ func resourceADXTableMapping() *schema.Resource {
 			"name": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ForceNew:         true,
 				ValidateDiagFunc: stringIsNotEmpty,
 			},
 			"database_name": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ForceNew:         true,
 				ValidateDiagFunc: stringIsNotEmpty,
 			},
 
 			"table_name": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ForceNew:         true,
 				ValidateDiagFunc: stringIsNotEmpty,
 			},
 
 			"kind": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ForceNew:         true,
 				ValidateDiagFunc: stringInSlice([]string{
 					"Json",
 				}),
@@ -69,7 +65,6 @@ func resourceADXTableMapping() *schema.Resource {
 			"mapping" : {
 				Type: schema.TypeList,
 				Required: true,
-				ForceNew: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"column": {

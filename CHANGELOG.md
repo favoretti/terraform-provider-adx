@@ -1,3 +1,7 @@
+## v0.0.7
+
+* Do not recreate resources as updating them seems to be supported and work well
+
 ## v0.0.6
 
 * Make `table_schema` and `column` definition formats in `adx_table` interchangeable

@@ -47,9 +47,9 @@ resource "adx_table" "test" {
 
 ### Argument Reference
 
-- **name** (String, Required) Name of the Table to create. Changing this forces a new resource to be created.
-- **database_name** (String, Required) Database name in which this Table should be created. Changing this forces a new resource to be created.
-- **table_schema** (String, Optional) Table schema. Must contain only letters, numbers, dashes, semicolons, commas and underscores and no spaces. Changing this forces a new resource to be created.
+- **name** (String, Required) Name of the Table to create.
+- **database_name** (String, Required) Database name in which this Table should be created.
+- **table_schema** (String, Optional) Table schema. Must contain only letters, numbers, dashes, semicolons, commas and underscores and no spaces.
 - **column** (String, Optional) One or more `column` blocks defined below.
 
 `column` Configures a column and supports the following:

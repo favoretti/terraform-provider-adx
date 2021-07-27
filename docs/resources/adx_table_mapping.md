@@ -38,10 +38,10 @@ resource "adx_table_mapping" "test" {
 
 ### Argument Reference
 
-- **name** (String, Required) Name of the Table mapping to create. Changing this forces a new resource to be created.
-- **database_name** (String, Required) Database name in which this Table mapping should be created. Changing this forces a new resource to be created.
-- **table_name** (String, Required) Table name in which this mapping should be created. Changing this forces a new resource to be created.
-- **kind** (String, Required) Mapping kind. The only currently supported value is `Json`. Changing this forces a new resource to be created.
+- **name** (String, Required) Name of the Table mapping to create.
+- **database_name** (String, Required) Database name in which this Table mapping should be created.
+- **table_name** (String, Required) Table name in which this mapping should be created.
+- **kind** (String, Required) Mapping kind. The only currently supported value is `Json`.
 - **mapping** A `mapping` block defined below.
 
 `mapping` Configures a mapping and supports the following:
