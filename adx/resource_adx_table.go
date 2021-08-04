@@ -31,12 +31,14 @@ func resourceADXTable() *schema.Resource {
 			"database_name": {
 				Type:             schema.TypeString,
 				Required:         true,
+				ForceNew:         true,
 				ValidateDiagFunc: stringIsNotEmpty,
 			},
 
 			"name": {
 				Type:             schema.TypeString,
 				Required:         true,
+				ForceNew: 		  true,
 				ValidateDiagFunc: stringIsNotEmpty,
 			},
 
