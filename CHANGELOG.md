@@ -1,3 +1,7 @@
+## v0.0.8
+
+* Fix validation bugs for `adx_table`
+
 ## v0.0.7
 
 * Do not recreate resources as updating them seems to be supported and work well
