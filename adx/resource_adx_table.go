@@ -145,6 +145,10 @@ func resourceADXTableRead(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.Errorf("%+v", err)
 	}
 
+	if len(schemas) == 0 {
+		return diag.Errorf("error reading schemas for Table %q (Database %q): %+v", id.Name, id.DatabaseName, err)
+	}
+
 	d.Set("name", schemas[0].TableName)
 	d.Set("database_name", schemas[0].DatabaseName)
 	d.Set("table_schema", schemas[0].Schema)

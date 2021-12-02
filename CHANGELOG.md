@@ -1,3 +1,7 @@
+## v0.0.9
+
+* Fix crash mentioned in #3
+
 ## v0.0.8
 
 * Fix validation bugs for `adx_table`
