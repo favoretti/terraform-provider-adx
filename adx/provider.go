@@ -46,8 +46,10 @@ func Provider() *schema.Provider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"adx_table": resourceADXTable(),
-			"adx_table_mapping":       resourceADXTableMapping(),
+			"adx_table": 							resourceADXTable(),
+			"adx_table_mapping":    				resourceADXTableMapping(),
+			"adx_table_ingestion_batching_policy": 	resourceADXTableIngestionBatchingPolicy(),
+			"adx_table_retention_policy": 			resourceADXTableRetentionPolicy(),
 		},
 	}
 
