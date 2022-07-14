@@ -3,6 +3,7 @@ package adx
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/Azure/azure-kusto-go/kusto"
 	"github.com/Azure/azure-kusto-go/kusto/unsafe"
@@ -18,8 +19,26 @@ type TablePolicyResult struct {
 	EntityType	string
 }
 
-func parseADXTablePolicyID(input string) (*adxResource, error) {
-	return parseADXID(input,4,0,1,2)
+type adxPolicyResource struct {
+	PolicyName string
+	adxResource
+}
+
+func parseADXPolicyID(input string) (*adxPolicyResource, error) {
+	parts := strings.Split(input, "|")
+	if len(parts) != 6 {
+		return nil, fmt.Errorf("error parsing ADX resource ID: unexpected format: %q", input)
+	}
+
+	id := new(adxPolicyResource)
+
+	id.EndpointURI = parts[0]
+	id.DatabaseName = parts[1]
+	id.EntityType = parts[2]
+	id.Name = parts[3]
+	id.PolicyName = parts[5]
+	
+	return id,nil
 }
 
 func createADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface{}, entityType string, policyName string, databaseName string, entityName string, createStatement string) diag.Diagnostics {
@@ -32,23 +51,23 @@ func createADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface
 		return diag.Errorf("error creating %s %s Policy %q (Database %q): %+v", entityType, policyName, entityName, databaseName, err)
 	}
 
-	id := fmt.Sprintf("%s|%s|%s|%s", client.Endpoint(), databaseName, entityName, policyName)
+	id := buildADXResourceId(client.Endpoint(),databaseName, entityType, entityName, "policy", policyName)
 	d.SetId(id)
 
 	return diags
 }
 
-func readADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface{}, entityType string, policyName string) (diag.Diagnostics, *adxResource, []TablePolicyResult) {
+func readADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface{}, entityType string, policyName string) (diag.Diagnostics, *adxPolicyResource, []TablePolicyResult) {
 	var diags diag.Diagnostics
 
-	id, err := parseADXTablePolicyID(d.Id())
+	id, err := parseADXPolicyID(d.Id())
 	if err != nil {
 		return diag.FromErr(err),nil,nil
 	}
 
 	showCommand := fmt.Sprintf(".show %s %s policy %s", entityType, id.Name, policyName)
 	
-	resultErr, resultSet := readADXEntity[TablePolicyResult](ctx, d, meta, id, showCommand, entityType)
+	resultErr, resultSet := readADXEntity[TablePolicyResult](ctx, d, meta, &id.adxResource, showCommand, entityType)
 	if resultErr != nil {
 		return diag.Errorf("%+v", resultErr), id, nil
 	}
@@ -57,7 +76,7 @@ func readADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface{}
 }
 
 func deleteADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface{}, entityType string, policyName string) diag.Diagnostics {
-	id, err := parseADXTablePolicyID(d.Id())
+	id, err := parseADXPolicyID(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
