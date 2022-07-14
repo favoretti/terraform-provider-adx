@@ -50,6 +50,7 @@ func Provider() *schema.Provider {
 			"adx_table_mapping":    				resourceADXTableMapping(),
 			"adx_table_ingestion_batching_policy": 	resourceADXTableIngestionBatchingPolicy(),
 			"adx_table_retention_policy": 			resourceADXTableRetentionPolicy(),
+			"adx_function": 						resourceADXFunction(),
 		},
 	}
 
