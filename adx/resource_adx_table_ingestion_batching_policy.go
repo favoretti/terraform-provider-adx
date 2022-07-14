@@ -42,8 +42,8 @@ func resourceADXTableIngestionBatchingPolicy() *schema.Resource {
 				Type:             schema.TypeString,
 				Required: true,
 				ValidateDiagFunc: stringMatch(
-					regexp.MustCompile("[0-9]{1,3}[dhms]"),
-					"batching timespan must be in the format of <amount><unit> such as 1m for (one minute) or 30s (thirty seconds)",
+					regexp.MustCompile("\\d\\d:\\d\\d:\\d\\d"),
+					"batching timespan must be in the format HH:MM:SS of ex. 00:10:00 for 10 minutes",
 					),
 			},
 
@@ -67,7 +67,7 @@ func resourceADXTableIngestionBatchingPolicyCreate(ctx context.Context, d *schem
 	maxNumberItems := d.Get("max_number_items").(int)
 	maxRawSizeMb := d.Get("max_raw_size_mb").(int)
 
-	createStatement := fmt.Sprintf(".alter tables (%s) policy ingestionbatching @'{\"MaximumBatchingTimeSpan\": \"%s\",\"MaximumNumberOfItems\": %s, \"MaximumRawDataSizeMB\": %d}'", tableName, maxBatchingTimespan, maxNumberItems, maxRawSizeMb)
+	createStatement := fmt.Sprintf(".alter tables (%s) policy ingestionbatching @'{\"MaximumBatchingTimeSpan\": \"%s\",\"MaximumNumberOfItems\": %d, \"MaximumRawDataSizeMB\": %d}'", tableName, maxBatchingTimespan, maxNumberItems, maxRawSizeMb)
 
 	if err := createADXPolicy(ctx, d, meta, "table","ingestionbatching", databaseName, tableName, createStatement); err != nil {
 		return err
