@@ -77,7 +77,7 @@ func resourceADXFunctionCreate(ctx context.Context, d *schema.ResourceData, meta
 		return diag.Errorf("error creating function %s (Database %q): %+v", name, databaseName, err)
 	}
 
-	d.SetId(genADXFunctionID(client.Endpoint(), databaseName, name))
+	d.SetId(buildADXResourceId(client.Endpoint(),databaseName, "function", name))
 
 	return resourceADXFunctionRead(ctx, d, meta)
 }
@@ -113,9 +113,5 @@ func resourceADXFunctionDelete(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func parseADXFunctionID(input string) (*adxResource, error) {
-	return parseADXID(input,4,0,1,3)
-}
-
-func genADXFunctionID(baseId string, databaseName string, name string) string {
-	return fmt.Sprintf("%s|%s|%s|%s", baseId, databaseName, "function", name)
+	return parseADXResourceID(input,4,0,1,2,3)
 }

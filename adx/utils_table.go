@@ -11,14 +11,24 @@ type adxTableResource struct {
 }
 
 type adxTableMappingResource struct {
-	TableName string
+	MappingName string
 	Kind string
 
 	adxResource
 }
 
 func parseADXTableID(input string) (*adxResource, error) {
-	return parseADXID(input,3,0,1,2)
+	parts := strings.Split(input, "|")
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("error parsing ADX Table Mapping resource ID: unexpected format: %q", input)
+	}
+
+	return &adxResource{
+		EndpointURI:  parts[0],
+		DatabaseName: parts[1],
+		EntityType:   "ingestion_mapping",
+		Name:         parts[2],
+	}, nil
 }
 
 func parseADXTableMappingID(input string) (*adxTableMappingResource, error) {
@@ -30,11 +40,12 @@ func parseADXTableMappingID(input string) (*adxTableMappingResource, error) {
 	res := adxResource{
 		EndpointURI:  parts[0],
 		DatabaseName: parts[1],
-		Name:         parts[4],
+		EntityType:   "ingestion_mapping",
+		Name:         parts[2],
 	}
 
 	return &adxTableMappingResource{
-		TableName:    parts[2],
+		MappingName:  parts[4],
 		Kind:         parts[3],
 		adxResource: res,
 	}, nil

@@ -15,25 +15,13 @@ import (
 
 type adxResource struct {
 	EndpointURI  string
-	Name string
 	DatabaseName string
+	EntityType string
+	Name string
 }
 
 type adxSimpleQueryResult struct {
 	Result string
-}
-
-func parseADXID(input string, expectedParts int, uriIndex int, dbNameIndex int, nameIndex int) (*adxResource, error) {
-	parts := strings.Split(input, "|")
-	if len(parts) != expectedParts {
-		return nil, fmt.Errorf("error parsing ADX resource ID: unexpected format: %q", input)
-	}
-
-	return &adxResource{
-		EndpointURI:  parts[uriIndex],
-		DatabaseName: parts[dbNameIndex],
-		Name:         parts[nameIndex],
-	}, nil
 }
 
 func readADXEntity[T any](ctx context.Context, d *schema.ResourceData, meta interface{}, id *adxResource, query string, entityType string) (diag.Diagnostics, []T) {
@@ -115,6 +103,26 @@ func deleteADXEntity(ctx context.Context, d *schema.ResourceData, meta interface
 	d.SetId("")
 
 	return diags
+}
+
+func buildADXResourceId(endpoint string, params ...string) string {
+	endpoint = strings.Replace(endpoint, "https://", "",1)
+	endpoint = strings.Replace(endpoint, "http://", "",1)
+	return endpoint + "|" + strings.Join(params[:], "|")
+}
+
+func parseADXResourceID(input string, expectedParts int, uriIndex int, dbNameIndex int, entityTypeIndex int, nameIndex int) (*adxResource, error) {
+	parts := strings.Split(input, "|")
+	if len(parts) != expectedParts {
+		return nil, fmt.Errorf("error parsing ADX resource ID: unexpected format: %q", input)
+	}
+
+	return &adxResource{
+		EndpointURI:  parts[uriIndex],
+		DatabaseName: parts[dbNameIndex],
+		EntityType:   parts[entityTypeIndex],
+		Name:         parts[nameIndex],
+	}, nil
 }
 
 func toADXTimespanLiteral(ctx context.Context, d *schema.ResourceData, meta interface{}, databaseName string, input string, expectedUnit string) (diag.Diagnostics, string) {
