@@ -1,154 +1,131 @@
 package adx
 
 import (
-	"strings"
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/Azure/azure-kusto-go/kusto"
 	"github.com/Azure/azure-kusto-go/kusto/data/table"
 	"github.com/Azure/azure-kusto-go/kusto/unsafe"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-
-type TablePolicyResult struct {
-	PolicyName	string
-	EntityName	string
-	Policy   	string
-	ChildEntities	string
-	EntityType	string
-}
-
-type adxTableResource struct {
+type adxResource struct {
 	EndpointURI  string
 	Name string
 	DatabaseName string
 }
 
-type adxTableMappingResource struct {
-	EndpointURI  string
-	Name         string
-	TableName string
-	Kind string
-	DatabaseName string
+type adxSimpleQueryResult struct {
+	Result string
 }
 
-func parseADXTableID(input string) (*adxTableResource, error) {
+func parseADXID(input string, expectedParts int, uriIndex int, dbNameIndex int, nameIndex int) (*adxResource, error) {
 	parts := strings.Split(input, "|")
-	if len(parts) != 3 {
-		return nil, fmt.Errorf("error parsing ADX Table resource ID: unexpected format: %q", input)
+	if len(parts) != expectedParts {
+		return nil, fmt.Errorf("error parsing ADX resource ID: unexpected format: %q", input)
 	}
 
-	return &adxTableResource{
-		EndpointURI:  parts[0],
-		DatabaseName: parts[1],
-		Name:    parts[2],
+	return &adxResource{
+		EndpointURI:  parts[uriIndex],
+		DatabaseName: parts[dbNameIndex],
+		Name:         parts[nameIndex],
 	}, nil
 }
 
-func parseADXTableMappingID(input string) (*adxTableMappingResource, error) {
-	parts := strings.Split(input, "|")
-	if len(parts) != 5 {
-		return nil, fmt.Errorf("error parsing ADX Table resource ID: unexpected format: %q", input)
-	}
-
-	return &adxTableMappingResource{
-		EndpointURI:  parts[0],
-		DatabaseName: parts[1],
-		TableName:    parts[2],
-		Kind: parts[3],
-		Name:         parts[4],
-	}, nil
-}
-
-func parseADXTablePolicyID(input string) (*adxTableResource, error) {
-	parts := strings.Split(input, "|")
-	if len(parts) != 4 {
-		return nil, fmt.Errorf("error parsing ADX Table policy resource ID: unexpected format: %q", input)
-	}
-
-	return &adxTableResource{
-		EndpointURI:  parts[0],
-		DatabaseName: parts[1],
-		Name:    parts[2],
-	}, nil
-}
-
-func createADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface{}, entityType string, policyName string, databaseName string, entityName string, createStatement string) diag.Diagnostics {
-	var diags diag.Diagnostics
-	client := meta.(*Meta).Kusto
-	
-	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
-	_, err := client.Mgmt(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(createStatement))
-	if err != nil {
-		return diag.Errorf("error creating %s %s Policy %q (Database %q): %+v", entityType, policyName, entityName, databaseName, err)
-	}
-
-	id := fmt.Sprintf("%s|%s|%s|%s", client.Endpoint(), databaseName, entityName, policyName)
-	d.SetId(id)
-
-	return diags
-}
-
-func readADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface{}, entityType string, policyName string) (diag.Diagnostics, *adxTableResource, []TablePolicyResult) {
+func readADXEntity[T any](ctx context.Context, d *schema.ResourceData, meta interface{}, id *adxResource, query string, entityType string) (diag.Diagnostics, []T) {
 	var diags diag.Diagnostics
 
 	client := meta.(*Meta).Kusto
 
-	id, err := parseADXTablePolicyID(d.Id())
-	if err != nil {
-		return diag.FromErr(err),nil,nil
-	}
-
 	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
-	showStatement := fmt.Sprintf(".show %s %s policy %s", entityType, id.Name, policyName)
 
-	resp, err := client.Mgmt(ctx, id.DatabaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(showStatement))
+	resp, err := client.Mgmt(ctx, id.DatabaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(query))
 	if err != nil {
-		return diag.Errorf("error reading %s %q policy %s (Database %q): %+v", entityType, id.Name, policyName, id.DatabaseName, err),id,nil
+		return diag.Errorf("error reading %s %q (Database %q): %+v", entityType, id.Name, id.DatabaseName, err),nil
 	}
 	defer resp.Stop()
 
-	var resultSet []TablePolicyResult
+	var resultSet []T
 	err = resp.Do(
 		func(row *table.Row) error {
-			rec := TablePolicyResult{}
-			if err := row.ToStruct(&rec); err != nil {
-				return fmt.Errorf("error parsing %s %s for %s %q (Database %q): %+v", entityType, policyName, entityType, id.Name, id.DatabaseName, err)
+			result := new(T)
+			if err := row.ToStruct(result); err != nil {
+				return fmt.Errorf("error parsing %s %s (Database %q): %+v", entityType, id.Name, id.DatabaseName, err)
 			}
-			resultSet = append(resultSet, rec)
+			resultSet = append(resultSet, *result)
 			return nil
-		},
-	)
+	})
 
 	if err != nil {
-		return diag.Errorf("%+v", err), id, resultSet
+		return diag.Errorf("%+v", err), resultSet
 	}
 
-	return diags, id, resultSet
+	if len(resultSet)<1 {
+		return diag.Errorf("unable to load state from adx. adx returned no results for (%s) (Database %q)", query, id.DatabaseName), nil
+	}
+
+	return diags, resultSet
 }
 
-func deleteADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface{}, entityType string, policyName string) diag.Diagnostics {
+func queryADX[T any](ctx context.Context, d *schema.ResourceData, meta interface{}, databaseName string, query string) (diag.Diagnostics, []T) {
 	var diags diag.Diagnostics
 
 	client := meta.(*Meta).Kusto
 
-	id, err := parseADXTablePolicyID(d.Id())
+	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
+	resp, err := client.Query(ctx, databaseName,  kusto.NewStmt("", kStmtOpts).UnsafeAdd(query))
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.Errorf("error executing adx query (Database %q): %+v", databaseName, err),nil
+	}
+	defer resp.Stop()
+
+	var resultSet []T
+	err = resp.Do(
+		func(row *table.Row) error {
+			result := new(T)
+			if err := row.ToStruct(result); err != nil {
+				return fmt.Errorf("error parsing query response (Database %q): %+v", databaseName, err)
+			}
+			resultSet = append(resultSet, *result)
+			return nil
+	})
+
+	if err != nil {
+		return diag.Errorf("%+v", err), nil
 	}
 
-	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
-	deleteStatement := fmt.Sprintf(".drop %s %s policy %s", entityType, id.Name, policyName)
+	return diags, resultSet
+}
 
-	_, err = client.Mgmt(ctx, id.DatabaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(deleteStatement))
+func deleteADXEntity(ctx context.Context, d *schema.ResourceData, meta interface{}, databaseName string, deleteStatement string) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	client := meta.(*Meta).Kusto
+	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
+
+	_, err := client.Mgmt(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(deleteStatement))
 	if err != nil {
-		return diag.Errorf("error deleting %s %q policy %s (Database %q): %+v", entityType, id.Name, policyName, id.DatabaseName, err)
+		return diag.Errorf("error deleting (%s) (Database %q): %+v", deleteStatement, databaseName, err)
 	}
 
 	d.SetId("")
 
 	return diags
+}
+
+func toADXTimespanLiteral(ctx context.Context, d *schema.ResourceData, meta interface{}, databaseName string, input string, expectedUnit string) (diag.Diagnostics, string) {
+	// Expected unit can be d,h,m,s
+	if input!= "" && expectedUnit!="" {
+		query := fmt.Sprintf("print Result=tostring(toint(totimespan('%s')/1%s))",input,expectedUnit)
+		resultErr, resultSet := queryADX[adxSimpleQueryResult](ctx, d, meta, databaseName, query)
+		if resultErr != nil {
+			return diag.Errorf("%+v", resultErr), ""
+		}
+		return nil,fmt.Sprintf("%s%s",resultSet[0].Result,expectedUnit)
+	}
+	return nil,input
 }

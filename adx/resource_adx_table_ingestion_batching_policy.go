@@ -21,6 +21,7 @@ func resourceADXTableIngestionBatchingPolicy() *schema.Resource {
 		CreateContext: resourceADXTableIngestionBatchingPolicyCreate,
 		ReadContext:   resourceADXTableIngestionBatchingPolicyRead,
 		DeleteContext: resourceADXTableIngestionBatchingPolicyDelete,
+		UpdateContext: resourceADXTableIngestionBatchingPolicyCreate,
 
 		Schema: map[string]*schema.Schema{
 			"database_name": {
@@ -39,7 +40,7 @@ func resourceADXTableIngestionBatchingPolicy() *schema.Resource {
 
 			"max_batching_timespan": {
 				Type:             schema.TypeString,
-				Optional: false,
+				Required: true,
 				ValidateDiagFunc: stringMatch(
 					regexp.MustCompile("[0-9]{1,3}[dhms]"),
 					"batching timespan must be in the format of <amount><unit> such as 1m for (one minute) or 30s (thirty seconds)",
@@ -48,12 +49,12 @@ func resourceADXTableIngestionBatchingPolicy() *schema.Resource {
 
 			"max_number_items": {
 				Type:             schema.TypeInt,
-				Optional: false,
+				Required: true,
 			},
 
 			"max_raw_size_mb": {
 				Type:             schema.TypeInt,
-				Optional: false,
+				Required: true,
 			},
 		},
 	}
