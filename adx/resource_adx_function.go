@@ -38,14 +38,18 @@ func resourceADXFunction() *schema.Resource {
 				Required: true,
 				ForceNew:         true,
 				ValidateDiagFunc: stringMatch(
-					regexp.MustCompile("[0-9]{1,3}[dhms]"),
-					"batching timespan must be in the format of <amount><unit> such as 1m for (one minute) or 30s (thirty seconds)",
+					regexp.MustCompile("[a-zA-Z_ .-0-9]+"),
+					"function name must be between 1 and 1024 characters long and may contain letters, digits, underscores (_), spaces, dots (.), and dashes (-)",
 					),
 			},
 
 			"body": {
 				Type:             schema.TypeString,
 				Required: true,
+				ValidateDiagFunc: stringMatch(
+					regexp.MustCompile("{.*}"),
+					"function body must include outer curly brackets {}",
+					),
 			},
 
 			"parameters": {

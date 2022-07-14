@@ -10,7 +10,7 @@ import (
 )
 
 type TableRowLevelSecurityPolicy struct {
-	IsEnabled string
+	IsEnabled bool
 	Query string
 }
 
@@ -38,7 +38,8 @@ func resourceADXTableRowLevelSecurityPolicy() *schema.Resource {
 
 			"query": {
 				Type:             schema.TypeString,
-				Optional: 		  false,
+				Required:         true,
+				ValidateDiagFunc: stringIsNotEmpty,
 			},
 
 			"enabled": {
@@ -61,7 +62,7 @@ func resourceADXTableRowLevelSecurityPolicyCreate(ctx context.Context, d *schema
 		enabledString = "disable"
 	}
 
-	createStatement := fmt.Sprintf(".alter table %s policy row_level_security %s %s", tableName, enabledString, query)
+	createStatement := fmt.Sprintf(".alter table %s policy row_level_security %s \"%s\"", tableName, enabledString, query)
 
 	if err := createADXPolicy(ctx, d, meta, "table","row_level_security", databaseName, tableName, createStatement); err != nil {
 		return err
@@ -86,12 +87,7 @@ func resourceADXTableRowLevelSecurityPolicyRead(ctx context.Context, d *schema.R
 	d.Set("table_name", id.Name)
 	d.Set("database_name", id.DatabaseName)
 	d.Set("query", policy.Query)
-
-	enabled := true
-	if policy.IsEnabled!="Enable" {
-		enabled = false
-	}
-	d.Set("enabled", enabled)
+	d.Set("enabled", policy.IsEnabled)
 
 	return diags
 }
