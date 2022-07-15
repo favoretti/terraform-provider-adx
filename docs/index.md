@@ -68,7 +68,7 @@ resource "adx_table_ingestion_batching_policy" "test" {
   database_name         = "test-db"
   table_name            = adx_table.test.name
   max_batching_timespan = "00:10:00"
-  max_number_items      = 501
+  max_items      = 501
   max_raw_size_mb       = 129
 }
 

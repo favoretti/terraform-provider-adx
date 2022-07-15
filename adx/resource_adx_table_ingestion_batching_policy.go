@@ -47,7 +47,7 @@ func resourceADXTableIngestionBatchingPolicy() *schema.Resource {
 				),
 			},
 
-			"max_number_items": {
+			"max_items": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
@@ -64,7 +64,7 @@ func resourceADXTableIngestionBatchingPolicyCreateUpdate(ctx context.Context, d 
 	tableName := d.Get("table_name").(string)
 	databaseName := d.Get("database_name").(string)
 	maxBatchingTimespan := d.Get("max_batching_timespan").(string)
-	maxNumberItems := d.Get("max_number_items").(int)
+	maxNumberItems := d.Get("max_items").(int)
 	maxRawSizeMb := d.Get("max_raw_size_mb").(int)
 
 	createStatement := fmt.Sprintf(".alter tables (%s) policy ingestionbatching @'{\"MaximumBatchingTimeSpan\": \"%s\",\"MaximumNumberOfItems\": %d, \"MaximumRawDataSizeMB\": %d}'", tableName, maxBatchingTimespan, maxNumberItems, maxRawSizeMb)
@@ -92,7 +92,7 @@ func resourceADXTableIngestionBatchingPolicyRead(ctx context.Context, d *schema.
 	d.Set("table_name", id.Name)
 	d.Set("database_name", id.DatabaseName)
 	d.Set("max_batching_timespan", policy.MaximumBatchingTimeSpan)
-	d.Set("max_number_items", policy.MaximumNumberOfItems)
+	d.Set("max_items", policy.MaximumNumberOfItems)
 	d.Set("max_raw_size_mb", policy.MaximumRawDataSizeMB)
 
 	return diags
