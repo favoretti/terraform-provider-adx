@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-type adxResource struct {
+type adxResourceId struct {
 	EndpointURI  string
 	DatabaseName string
 	EntityType   string
@@ -24,7 +24,7 @@ type adxSimpleQueryResult struct {
 	Result string
 }
 
-func readADXEntity[T any](ctx context.Context, d *schema.ResourceData, meta interface{}, id *adxResource, query string, entityType string) (diag.Diagnostics, []T) {
+func readADXEntity[T any](ctx context.Context, d *schema.ResourceData, meta interface{}, id *adxResourceId, query string, entityType string) (diag.Diagnostics, []T) {
 	var diags diag.Diagnostics
 
 	client := meta.(*Meta).Kusto
@@ -111,13 +111,13 @@ func buildADXResourceId(endpoint string, params ...string) string {
 	return endpoint + "|" + strings.Join(params[:], "|")
 }
 
-func parseADXResourceID(input string, expectedParts int, uriIndex int, dbNameIndex int, entityTypeIndex int, nameIndex int) (*adxResource, error) {
+func parseADXResourceID(input string, expectedParts int, uriIndex int, dbNameIndex int, entityTypeIndex int, nameIndex int) (*adxResourceId, error) {
 	parts := strings.Split(input, "|")
 	if len(parts) != expectedParts {
 		return nil, fmt.Errorf("error parsing ADX resource ID: unexpected format: %q", input)
 	}
 
-	return &adxResource{
+	return &adxResourceId{
 		EndpointURI:  parts[uriIndex],
 		DatabaseName: parts[dbNameIndex],
 		EntityType:   parts[entityTypeIndex],

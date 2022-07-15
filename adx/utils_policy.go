@@ -21,7 +21,7 @@ type TablePolicy struct {
 
 type adxPolicyResource struct {
 	PolicyName string
-	adxResource
+	adxResourceId
 }
 
 func parseADXPolicyID(input string) (*adxPolicyResource, error) {
@@ -67,7 +67,7 @@ func readADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	showCommand := fmt.Sprintf(".show %s %s policy %s", entityType, id.Name, policyName)
 
-	resultErr, resultSet := readADXEntity[TablePolicy](ctx, d, meta, &id.adxResource, showCommand, entityType)
+	resultErr, resultSet := readADXEntity[TablePolicy](ctx, d, meta, &id.adxResourceId, showCommand, entityType)
 	if resultErr != nil {
 		return diag.Errorf("%+v", resultErr), id, nil
 	}
