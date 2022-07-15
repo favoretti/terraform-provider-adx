@@ -44,8 +44,8 @@ func parseADXTableMappingID(input string) (*adxTableMappingResourceId, error) {
 	}
 
 	return &adxTableMappingResourceId{
-		MappingName: parts[4],
-		Kind:        parts[3],
+		MappingName:   parts[4],
+		Kind:          parts[3],
 		adxResourceId: res,
 	}, nil
 }

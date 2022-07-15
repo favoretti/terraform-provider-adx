@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 type ADXFunction struct {
@@ -37,10 +38,10 @@ func resourceADXFunction() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
-				ValidateDiagFunc: stringMatch(
+				ValidateDiagFunc: validation.ToDiagFunc(validation.All(validation.StringMatch(
 					regexp.MustCompile("[a-zA-Z_ .-0-9]+"),
 					"function name must be between 1 and 1024 characters long and may contain letters, digits, underscores (_), spaces, dots (.), and dashes (-)",
-				),
+				), validation.StringLenBetween(1, 1024))),
 			},
 
 			"body": {
