@@ -5,24 +5,24 @@ import (
 	"strings"
 )
 
-type adxTableResource struct {
-	adxResource
+type adxTableResourceId struct {
+	adxResourceId
 }
 
-type adxTableMappingResource struct {
+type adxTableMappingResourceId struct {
 	MappingName string
 	Kind        string
 
-	adxResource
+	adxResourceId
 }
 
-func parseADXTableID(input string) (*adxResource, error) {
+func parseADXTableID(input string) (*adxResourceId, error) {
 	parts := strings.Split(input, "|")
 	if len(parts) != 3 {
 		return nil, fmt.Errorf("error parsing ADX Table Mapping resource ID: unexpected format: %q", input)
 	}
 
-	return &adxResource{
+	return &adxResourceId{
 		EndpointURI:  parts[0],
 		DatabaseName: parts[1],
 		EntityType:   "ingestion_mapping",
@@ -30,22 +30,22 @@ func parseADXTableID(input string) (*adxResource, error) {
 	}, nil
 }
 
-func parseADXTableMappingID(input string) (*adxTableMappingResource, error) {
+func parseADXTableMappingID(input string) (*adxTableMappingResourceId, error) {
 	parts := strings.Split(input, "|")
 	if len(parts) != 5 {
 		return nil, fmt.Errorf("error parsing ADX Table Mapping resource ID: unexpected format: %q", input)
 	}
 
-	res := adxResource{
+	res := adxResourceId{
 		EndpointURI:  parts[0],
 		DatabaseName: parts[1],
 		EntityType:   "ingestion_mapping",
 		Name:         parts[2],
 	}
 
-	return &adxTableMappingResource{
+	return &adxTableMappingResourceId{
 		MappingName: parts[4],
 		Kind:        parts[3],
-		adxResource: res,
+		adxResourceId: res,
 	}, nil
 }

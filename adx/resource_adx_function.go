@@ -112,6 +112,6 @@ func resourceADXFunctionDelete(ctx context.Context, d *schema.ResourceData, meta
 	return deleteADXEntity(ctx, d, meta, id.DatabaseName, fmt.Sprintf(".drop function %s", id.Name))
 }
 
-func parseADXFunctionID(input string) (*adxResource, error) {
+func parseADXFunctionID(input string) (*adxResourceId, error) {
 	return parseADXResourceID(input, 4, 0, 1, 2, 3)
 }
