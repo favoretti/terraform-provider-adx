@@ -12,16 +12,16 @@ import (
 
 type TableIngestionBatchingPolicy struct {
 	MaximumBatchingTimeSpan string
-	MaximumNumberOfItems int
-	MaximumRawDataSizeMB int
+	MaximumNumberOfItems    int
+	MaximumRawDataSizeMB    int
 }
 
 func resourceADXTableIngestionBatchingPolicy() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceADXTableIngestionBatchingPolicyCreate,
+		CreateContext: resourceADXTableIngestionBatchingPolicyCreateUpdate,
 		ReadContext:   resourceADXTableIngestionBatchingPolicyRead,
 		DeleteContext: resourceADXTableIngestionBatchingPolicyDelete,
-		UpdateContext: resourceADXTableIngestionBatchingPolicyCreate,
+		UpdateContext: resourceADXTableIngestionBatchingPolicyCreateUpdate,
 
 		Schema: map[string]*schema.Schema{
 			"database_name": {
@@ -34,33 +34,33 @@ func resourceADXTableIngestionBatchingPolicy() *schema.Resource {
 			"table_name": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ForceNew: 		  true,
+				ForceNew:         true,
 				ValidateDiagFunc: stringIsNotEmpty,
 			},
 
 			"max_batching_timespan": {
-				Type:             schema.TypeString,
+				Type:     schema.TypeString,
 				Required: true,
 				ValidateDiagFunc: stringMatch(
 					regexp.MustCompile("\\d\\d:\\d\\d:\\d\\d"),
 					"batching timespan must be in the format HH:MM:SS of ex. 00:10:00 for 10 minutes",
-					),
+				),
 			},
 
 			"max_number_items": {
-				Type:             schema.TypeInt,
+				Type:     schema.TypeInt,
 				Required: true,
 			},
 
 			"max_raw_size_mb": {
-				Type:             schema.TypeInt,
+				Type:     schema.TypeInt,
 				Required: true,
 			},
 		},
 	}
 }
 
-func resourceADXTableIngestionBatchingPolicyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceADXTableIngestionBatchingPolicyCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tableName := d.Get("table_name").(string)
 	databaseName := d.Get("database_name").(string)
 	maxBatchingTimespan := d.Get("max_batching_timespan").(string)
@@ -69,8 +69,8 @@ func resourceADXTableIngestionBatchingPolicyCreate(ctx context.Context, d *schem
 
 	createStatement := fmt.Sprintf(".alter tables (%s) policy ingestionbatching @'{\"MaximumBatchingTimeSpan\": \"%s\",\"MaximumNumberOfItems\": %d, \"MaximumRawDataSizeMB\": %d}'", tableName, maxBatchingTimespan, maxNumberItems, maxRawSizeMb)
 
-	if err := createADXPolicy(ctx, d, meta, "table","ingestionbatching", databaseName, tableName, createStatement); err != nil {
-		return err
+	if err := createADXPolicy(ctx, d, meta, "table", "ingestionbatching", databaseName, tableName, createStatement); err != nil {
+		return diag.Errorf("%+v", err)
 	}
 
 	return resourceADXTableIngestionBatchingPolicyRead(ctx, d, meta)
@@ -79,7 +79,7 @@ func resourceADXTableIngestionBatchingPolicyCreate(ctx context.Context, d *schem
 func resourceADXTableIngestionBatchingPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	err, id, resultSet:= readADXPolicy(ctx,d,meta,"table","ingestionbatching"); 
+	err, id, resultSet := readADXPolicy(ctx, d, meta, "table", "ingestionbatching")
 	if err != nil {
 		return diag.Errorf("%+v", err)
 	}

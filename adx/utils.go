@@ -16,8 +16,8 @@ import (
 type adxResource struct {
 	EndpointURI  string
 	DatabaseName string
-	EntityType string
-	Name string
+	EntityType   string
+	Name         string
 }
 
 type adxSimpleQueryResult struct {
@@ -33,7 +33,7 @@ func readADXEntity[T any](ctx context.Context, d *schema.ResourceData, meta inte
 
 	resp, err := client.Mgmt(ctx, id.DatabaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(query))
 	if err != nil {
-		return diag.Errorf("error reading %s %q (Database %q): %+v", entityType, id.Name, id.DatabaseName, err),nil
+		return diag.Errorf("error reading %s %q (Database %q): %+v", entityType, id.Name, id.DatabaseName, err), nil
 	}
 	defer resp.Stop()
 
@@ -46,13 +46,13 @@ func readADXEntity[T any](ctx context.Context, d *schema.ResourceData, meta inte
 			}
 			resultSet = append(resultSet, *result)
 			return nil
-	})
+		})
 
 	if err != nil {
 		return diag.Errorf("%+v", err), resultSet
 	}
 
-	if len(resultSet)<1 {
+	if len(resultSet) < 1 {
 		return diag.Errorf("unable to load state from adx. adx returned no results for (%s) (Database %q)", query, id.DatabaseName), nil
 	}
 
@@ -65,9 +65,9 @@ func queryADX[T any](ctx context.Context, d *schema.ResourceData, meta interface
 	client := meta.(*Meta).Kusto
 
 	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
-	resp, err := client.Query(ctx, databaseName,  kusto.NewStmt("", kStmtOpts).UnsafeAdd(query))
+	resp, err := client.Query(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(query))
 	if err != nil {
-		return diag.Errorf("error executing adx query (Database %q): %+v", databaseName, err),nil
+		return diag.Errorf("error executing adx query (Database %q): %+v", databaseName, err), nil
 	}
 	defer resp.Stop()
 
@@ -80,7 +80,7 @@ func queryADX[T any](ctx context.Context, d *schema.ResourceData, meta interface
 			}
 			resultSet = append(resultSet, *result)
 			return nil
-	})
+		})
 
 	if err != nil {
 		return diag.Errorf("%+v", err), nil
@@ -106,8 +106,8 @@ func deleteADXEntity(ctx context.Context, d *schema.ResourceData, meta interface
 }
 
 func buildADXResourceId(endpoint string, params ...string) string {
-	endpoint = strings.Replace(endpoint, "https://", "",1)
-	endpoint = strings.Replace(endpoint, "http://", "",1)
+	endpoint = strings.Replace(endpoint, "https://", "", 1)
+	endpoint = strings.Replace(endpoint, "http://", "", 1)
 	return endpoint + "|" + strings.Join(params[:], "|")
 }
 
@@ -127,13 +127,13 @@ func parseADXResourceID(input string, expectedParts int, uriIndex int, dbNameInd
 
 func toADXTimespanLiteral(ctx context.Context, d *schema.ResourceData, meta interface{}, databaseName string, input string, expectedUnit string) (diag.Diagnostics, string) {
 	// Expected unit can be d,h,m,s
-	if input!= "" && expectedUnit!="" {
-		query := fmt.Sprintf("print Result=tostring(toint(totimespan('%s')/1%s))",input,expectedUnit)
+	if input != "" && expectedUnit != "" {
+		query := fmt.Sprintf("print Result=tostring(toint(totimespan('%s')/1%s))", input, expectedUnit)
 		resultErr, resultSet := queryADX[adxSimpleQueryResult](ctx, d, meta, databaseName, query)
 		if resultErr != nil {
 			return diag.Errorf("%+v", resultErr), ""
 		}
-		return nil,fmt.Sprintf("%s%s",resultSet[0].Result,expectedUnit)
+		return nil, fmt.Sprintf("%s%s", resultSet[0].Result, expectedUnit)
 	}
-	return nil,input
+	return nil, input
 }

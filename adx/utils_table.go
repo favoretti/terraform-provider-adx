@@ -1,18 +1,17 @@
 package adx
 
 import (
-	"strings"
 	"fmt"
+	"strings"
 )
 
 type adxTableResource struct {
-	
 	adxResource
 }
 
 type adxTableMappingResource struct {
 	MappingName string
-	Kind string
+	Kind        string
 
 	adxResource
 }
@@ -45,8 +44,8 @@ func parseADXTableMappingID(input string) (*adxTableMappingResource, error) {
 	}
 
 	return &adxTableMappingResource{
-		MappingName:  parts[4],
-		Kind:         parts[3],
+		MappingName: parts[4],
+		Kind:        parts[3],
 		adxResource: res,
 	}, nil
 }

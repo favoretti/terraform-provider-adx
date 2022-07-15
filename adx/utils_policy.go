@@ -11,12 +11,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-type TablePolicyResult struct {
-	PolicyName	string
-	EntityName	string
-	Policy   	string
-	ChildEntities	string
-	EntityType	string
+type TablePolicy struct {
+	PolicyName    string
+	EntityName    string
+	Policy        string
+	ChildEntities string
+	EntityType    string
 }
 
 type adxPolicyResource struct {
@@ -37,37 +37,37 @@ func parseADXPolicyID(input string) (*adxPolicyResource, error) {
 	id.EntityType = parts[2]
 	id.Name = parts[3]
 	id.PolicyName = parts[5]
-	
-	return id,nil
+
+	return id, nil
 }
 
 func createADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface{}, entityType string, policyName string, databaseName string, entityName string, createStatement string) diag.Diagnostics {
 	var diags diag.Diagnostics
 	client := meta.(*Meta).Kusto
-	
+
 	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
 	_, err := client.Mgmt(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(createStatement))
 	if err != nil {
 		return diag.Errorf("error creating %s %s Policy %q (Database %q): %+v", entityType, policyName, entityName, databaseName, err)
 	}
 
-	id := buildADXResourceId(client.Endpoint(),databaseName, entityType, entityName, "policy", policyName)
+	id := buildADXResourceId(client.Endpoint(), databaseName, entityType, entityName, "policy", policyName)
 	d.SetId(id)
 
 	return diags
 }
 
-func readADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface{}, entityType string, policyName string) (diag.Diagnostics, *adxPolicyResource, []TablePolicyResult) {
+func readADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface{}, entityType string, policyName string) (diag.Diagnostics, *adxPolicyResource, []TablePolicy) {
 	var diags diag.Diagnostics
 
 	id, err := parseADXPolicyID(d.Id())
 	if err != nil {
-		return diag.FromErr(err),nil,nil
+		return diag.FromErr(err), nil, nil
 	}
 
 	showCommand := fmt.Sprintf(".show %s %s policy %s", entityType, id.Name, policyName)
-	
-	resultErr, resultSet := readADXEntity[TablePolicyResult](ctx, d, meta, &id.adxResource, showCommand, entityType)
+
+	resultErr, resultSet := readADXEntity[TablePolicy](ctx, d, meta, &id.adxResource, showCommand, entityType)
 	if resultErr != nil {
 		return diag.Errorf("%+v", resultErr), id, nil
 	}
@@ -81,5 +81,5 @@ func deleteADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface
 		return diag.FromErr(err)
 	}
 
-	return deleteADXEntity(ctx,d,meta,id.DatabaseName, fmt.Sprintf(".delete %s %s policy %s", entityType, id.Name, policyName))
+	return deleteADXEntity(ctx, d, meta, id.DatabaseName, fmt.Sprintf(".delete %s %s policy %s", entityType, id.Name, policyName))
 }

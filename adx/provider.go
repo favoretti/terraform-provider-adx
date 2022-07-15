@@ -42,17 +42,16 @@ func Provider() *schema.Provider {
 			},
 		},
 
-		DataSourcesMap: map[string]*schema.Resource{
-		},
+		DataSourcesMap: map[string]*schema.Resource{},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"adx_table": 							resourceADXTable(),
-			"adx_table_mapping":    				resourceADXTableMapping(),
-			"adx_table_ingestion_batching_policy": 	resourceADXTableIngestionBatchingPolicy(),
-			"adx_table_retention_policy": 			resourceADXTableRetentionPolicy(),
-			"adx_table_row_level_security_policy":  resourceADXTableRowLevelSecurityPolicy(),
-			"adx_table_update_policy":              resourceADXTableUpdatePolicy(),
-			"adx_function": 						resourceADXFunction(),
+			"adx_table":                           resourceADXTable(),
+			"adx_table_mapping":                   resourceADXTableMapping(),
+			"adx_table_ingestion_batching_policy": resourceADXTableIngestionBatchingPolicy(),
+			"adx_table_retention_policy":          resourceADXTableRetentionPolicy(),
+			"adx_table_row_level_security_policy": resourceADXTableRowLevelSecurityPolicy(),
+			"adx_table_update_policy":             resourceADXTableUpdatePolicy(),
+			"adx_function":                        resourceADXFunction(),
 		},
 	}
 

@@ -12,15 +12,15 @@ import (
 
 type TableRetentionPolicy struct {
 	SoftDeletePeriod string
-	Recoverability string
+	Recoverability   string
 }
 
 func resourceADXTableRetentionPolicy() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceADXTableRetentionPolicyCreate,
+		CreateContext: resourceADXTableRetentionPolicyCreateUpdate,
 		ReadContext:   resourceADXTableRetentionPolicyRead,
 		DeleteContext: resourceADXTableRetentionPolicyDelete,
-		UpdateContext: resourceADXTableRetentionPolicyCreate,
+		UpdateContext: resourceADXTableRetentionPolicyCreateUpdate,
 
 		Schema: map[string]*schema.Schema{
 			"database_name": {
@@ -33,28 +33,28 @@ func resourceADXTableRetentionPolicy() *schema.Resource {
 			"table_name": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ForceNew: 		  true,
+				ForceNew:         true,
 				ValidateDiagFunc: stringIsNotEmpty,
 			},
 
 			"soft_delete_period": {
-				Type:             schema.TypeString,
+				Type:     schema.TypeString,
 				Required: true,
 				ValidateDiagFunc: stringMatch(
 					regexp.MustCompile("[0-9]{1,3}[dhms]"),
 					"soft delete timespan must be in the format of <amount><unit> such as 1m for (one minute) or 30d (thirty days)",
-					),
+				),
 			},
 
 			"recoverability": {
-				Type:             schema.TypeBool,
+				Type:     schema.TypeBool,
 				Required: true,
 			},
 		},
 	}
 }
 
-func resourceADXTableRetentionPolicyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceADXTableRetentionPolicyCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tableName := d.Get("table_name").(string)
 	databaseName := d.Get("database_name").(string)
 	softDeleteTimespan := d.Get("soft_delete_period").(string)
@@ -67,8 +67,8 @@ func resourceADXTableRetentionPolicyCreate(ctx context.Context, d *schema.Resour
 
 	createStatement := fmt.Sprintf(".alter-merge table %s policy retention softdelete = %s recoverability = %s", tableName, softDeleteTimespan, recoverabilityString)
 
-	if err := createADXPolicy(ctx, d, meta, "table","retention", databaseName, tableName, createStatement); err != nil {
-		return err
+	if err := createADXPolicy(ctx, d, meta, "table", "retention", databaseName, tableName, createStatement); err != nil {
+		return diag.Errorf("%+v", err)
 	}
 
 	return resourceADXTableRetentionPolicyRead(ctx, d, meta)
@@ -77,7 +77,7 @@ func resourceADXTableRetentionPolicyCreate(ctx context.Context, d *schema.Resour
 func resourceADXTableRetentionPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	err, id, resultSet:= readADXPolicy(ctx,d,meta,"table","retention"); 
+	err, id, resultSet := readADXPolicy(ctx, d, meta, "table", "retention")
 	if err != nil {
 		return diag.Errorf("%+v", err)
 	}
@@ -94,7 +94,7 @@ func resourceADXTableRetentionPolicyRead(ctx context.Context, d *schema.Resource
 
 		originalSoftDeletePeriodTimeUnit := originalSoftDeletePeriod.(string)[len(originalSoftDeletePeriod.(string))-1:]
 
-		err, softDeletePeriod := toADXTimespanLiteral(ctx,d,meta,id.DatabaseName,policy.SoftDeletePeriod,originalSoftDeletePeriodTimeUnit)
+		err, softDeletePeriod := toADXTimespanLiteral(ctx, d, meta, id.DatabaseName, policy.SoftDeletePeriod, originalSoftDeletePeriodTimeUnit)
 		if err != nil {
 			return diag.Errorf("%+v", err)
 		}
@@ -105,9 +105,9 @@ func resourceADXTableRetentionPolicyRead(ctx context.Context, d *schema.Resource
 
 	d.Set("table_name", id.Name)
 	d.Set("database_name", id.DatabaseName)
-	
+
 	recoverability := true
-	if policy.Recoverability!="Enabled" {
+	if policy.Recoverability != "Enabled" {
 		recoverability = false
 	}
 

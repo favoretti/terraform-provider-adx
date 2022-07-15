@@ -11,15 +11,15 @@ import (
 
 type TableRowLevelSecurityPolicy struct {
 	IsEnabled bool
-	Query string
+	Query     string
 }
 
 func resourceADXTableRowLevelSecurityPolicy() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceADXTableRowLevelSecurityPolicyCreate,
+		CreateContext: resourceADXTableRowLevelSecurityPolicyCreateUpdate,
 		ReadContext:   resourceADXTableRowLevelSecurityPolicyRead,
 		DeleteContext: resourceADXTableRowLevelSecurityPolicyDelete,
-		UpdateContext: resourceADXTableRowLevelSecurityPolicyCreate,
+		UpdateContext: resourceADXTableRowLevelSecurityPolicyCreateUpdate,
 
 		Schema: map[string]*schema.Schema{
 			"database_name": {
@@ -32,7 +32,7 @@ func resourceADXTableRowLevelSecurityPolicy() *schema.Resource {
 			"table_name": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ForceNew: 		  true,
+				ForceNew:         true,
 				ValidateDiagFunc: stringIsNotEmpty,
 			},
 
@@ -43,15 +43,15 @@ func resourceADXTableRowLevelSecurityPolicy() *schema.Resource {
 			},
 
 			"enabled": {
-				Type:             schema.TypeBool,
-				Optional: 		  true,
-				Default: 		  true,
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  true,
 			},
 		},
 	}
 }
 
-func resourceADXTableRowLevelSecurityPolicyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceADXTableRowLevelSecurityPolicyCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tableName := d.Get("table_name").(string)
 	databaseName := d.Get("database_name").(string)
 	query := d.Get("query").(string)
@@ -64,8 +64,8 @@ func resourceADXTableRowLevelSecurityPolicyCreate(ctx context.Context, d *schema
 
 	createStatement := fmt.Sprintf(".alter table %s policy row_level_security %s \"%s\"", tableName, enabledString, query)
 
-	if err := createADXPolicy(ctx, d, meta, "table","row_level_security", databaseName, tableName, createStatement); err != nil {
-		return err
+	if err := createADXPolicy(ctx, d, meta, "table", "row_level_security", databaseName, tableName, createStatement); err != nil {
+		return diag.Errorf("%+v", err)
 	}
 
 	return resourceADXTableRowLevelSecurityPolicyRead(ctx, d, meta)
@@ -74,7 +74,7 @@ func resourceADXTableRowLevelSecurityPolicyCreate(ctx context.Context, d *schema
 func resourceADXTableRowLevelSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	err, id, resultSet:= readADXPolicy(ctx,d,meta,"table","row_level_security"); 
+	err, id, resultSet := readADXPolicy(ctx, d, meta, "table", "row_level_security")
 	if err != nil {
 		return diag.Errorf("%+v", err)
 	}
