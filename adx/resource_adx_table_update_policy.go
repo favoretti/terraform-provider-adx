@@ -10,19 +10,19 @@ import (
 )
 
 type TableUpdatePolicy struct {
-	IsEnabled bool
-	Source string
-	Query string
-	IsTransactional bool
+	IsEnabled                    bool
+	Source                       string
+	Query                        string
+	IsTransactional              bool
 	PropagateIngestionProperties bool
 }
 
 func resourceADXTableUpdatePolicy() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceADXTableUpdatePolicyCreate,
+		CreateContext: resourceADXTableUpdatePolicyCreateUpdate,
 		ReadContext:   resourceADXTableUpdatePolicyRead,
 		DeleteContext: resourceADXTableUpdatePolicyDelete,
-		UpdateContext: resourceADXTableUpdatePolicyCreate,
+		UpdateContext: resourceADXTableUpdatePolicyCreateUpdate,
 
 		Schema: map[string]*schema.Schema{
 			"database_name": {
@@ -35,43 +35,43 @@ func resourceADXTableUpdatePolicy() *schema.Resource {
 			"table_name": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ForceNew: 		  true,
+				ForceNew:         true,
 				ValidateDiagFunc: stringIsNotEmpty,
 			},
 
 			"enabled": {
-				Type:             schema.TypeBool,
+				Type:     schema.TypeBool,
 				Optional: true,
-				Default: true,
+				Default:  true,
 			},
 
 			"source_table": {
 				Type:             schema.TypeString,
-				Required: true,
+				Required:         true,
 				ValidateDiagFunc: stringIsNotEmpty,
 			},
 
 			"query": {
 				Type:             schema.TypeString,
-				Required: true,
+				Required:         true,
 				ValidateDiagFunc: stringIsNotEmpty,
 			},
 
 			"transactional": {
-				Type:             schema.TypeBool,
+				Type:     schema.TypeBool,
 				Required: true,
 			},
 
 			"propagate_ingestion_properties": {
-				Type:             schema.TypeBool,
+				Type:     schema.TypeBool,
 				Optional: true,
-				Default: false,
+				Default:  false,
 			},
 		},
 	}
 }
 
-func resourceADXTableUpdatePolicyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceADXTableUpdatePolicyCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tableName := d.Get("table_name").(string)
 	databaseName := d.Get("database_name").(string)
 	enabled := d.Get("enabled").(bool)
@@ -82,8 +82,8 @@ func resourceADXTableUpdatePolicyCreate(ctx context.Context, d *schema.ResourceD
 
 	createStatement := fmt.Sprintf(".alter table %s policy update @'[{\"IsEnabled\": %t, \"Source\": \"%s\", \"Query\": \"%s\", \"IsTransactional\": %t, \"PropagateIngestionProperties\": %t}]'", tableName, enabled, sourceTable, query, transactional, propagateIngestionProperties)
 
-	if err := createADXPolicy(ctx, d, meta, "table","update", databaseName, tableName, createStatement); err != nil {
-		return err
+	if err := createADXPolicy(ctx, d, meta, "table", "update", databaseName, tableName, createStatement); err != nil {
+		return diag.Errorf("%+v", err)
 	}
 
 	return resourceADXTableUpdatePolicyRead(ctx, d, meta)
@@ -92,7 +92,7 @@ func resourceADXTableUpdatePolicyCreate(ctx context.Context, d *schema.ResourceD
 func resourceADXTableUpdatePolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	err, id, resultSet:= readADXPolicy(ctx,d,meta,"table","update"); 
+	err, id, resultSet := readADXPolicy(ctx, d, meta, "table", "update")
 	if err != nil {
 		return diag.Errorf("%+v", err)
 	}
