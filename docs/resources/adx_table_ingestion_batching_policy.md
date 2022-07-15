@@ -25,7 +25,7 @@ resource "adx_table_ingestion_batching_policy" "test" {
   database_name         = "test-db"
   table_name            = adx_table.test.name
   max_batching_timespan = "00:10:00"
-  max_number_items      = 500
+  max_items             = 500
   max_raw_size_mb       = 128
 }
 
@@ -36,7 +36,7 @@ resource "adx_table_ingestion_batching_policy" "test" {
 - **table_name** (String, Required) Name of the table containing the policy to modify
 - **database_name** (String, Required) Database name that the target table is in
 - **max_batching_timespan** (String, Required) Timespan after which an ingested blob will be sealed (Format: hh:mm:ss)
-- **max_number_items** (String, Required) Max items to ingest before sealing a blob
+- **max_items** (String, Required) Max items to ingest before sealing a blob
 - **max_raw_size_mb** (String, Required) Max size of ingested blob in MB
 
 ### Attribute Reference
