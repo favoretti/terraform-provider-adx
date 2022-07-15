@@ -51,6 +51,48 @@ resource "adx_table_mapping" "test" {
   }
 }
 
+resource "adx_table_retention_policy" "test" {
+  database_name      = "test-db"
+  table_name         = adx_table.test.name
+  soft_delete_period = "500m"
+  recoverability     = false
+}
+
+resource "adx_function" "test" {
+  database_name = "test-db"
+  name          = "test_function"
+  body          = format("{%s | limit 10}", adx_table.test.name)
+}
+
+resource "adx_table_ingestion_batching_policy" "test" {
+  database_name         = "test-db"
+  table_name            = adx_table.test.name
+  max_batching_timespan = "00:10:00"
+  max_number_items      = 501
+  max_raw_size_mb       = 129
+}
+
+resource "adx_table_row_level_security_policy" "test" {
+  database_name = "test-db"
+  table_name    = adx_table.test.name
+  query         = adx_function.test.name
+}
+
+resource "adx_table" "test_update" {
+  name          = "test_update"
+  database_name = "test-db"
+
+  table_schema = "f1:string,f2:string,f3:int"
+}
+
+resource "adx_table_update_policy" "test_update" {
+  database_name = "test-db"
+  table_name    = adx_table.test_update.name
+  query         = adx_table.test.name
+  source_table  = adx_table.test.name
+  transactional = true
+}
+
 ```
 
 ## Argument Reference
