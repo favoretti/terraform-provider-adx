@@ -15,9 +15,9 @@ import (
 
 type adxResourceId struct {
 	EndpointURI  string
+	Name         string
 	DatabaseName string
 	EntityType   string
-	Name         string
 }
 
 type adxSimpleQueryResult struct {
