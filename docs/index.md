@@ -78,6 +78,24 @@ resource "adx_table_row_level_security_policy" "test" {
   query         = adx_function.test.name
 }
 
+resource "adx_table_partitioning_policy" "test" {
+  database_name       = "test-db"
+  table_name          = adx_table.test.name
+  effective_date_time = "2022-07-19T13:56:45Z"
+
+  partition_key {
+    column_name = "f1"
+    kind        = "Hash"
+
+    hash_properties {
+      function                  = "XxHash64"
+      max_partition_count       = 64
+      seed                      = 2
+      partition_assignment_mode = "Uniform"
+    }
+  }
+}
+
 resource "adx_table" "test_update" {
   name          = "test_update"
   database_name = "test-db"
