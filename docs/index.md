@@ -78,6 +78,12 @@ resource "adx_table_row_level_security_policy" "test" {
   query         = adx_function.test.name
 }
 
+resource "adx_table_caching_policy" "test" {
+  database_name      = "test-db"
+  table_name         = adx_table.test.name
+  data_hot_span      = "30d"
+}
+
 resource "adx_table_partitioning_policy" "test" {
   database_name       = "test-db"
   table_name          = adx_table.test.name

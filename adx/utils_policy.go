@@ -19,6 +19,10 @@ type TablePolicy struct {
 	EntityType    string
 }
 
+type PolicyStringValue struct {
+	Value string
+}
+
 type adxPolicyResource struct {
 	PolicyName string
 	adxResourceId
