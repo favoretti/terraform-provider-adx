@@ -61,28 +61,27 @@ func createADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface
 	return diags
 }
 
-func readADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface{}, entityType string, policyName string) (diag.Diagnostics, *adxPolicyResource, []TablePolicy) {
+func readADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface{}, entityType string, policyName string) (*adxPolicyResource, []TablePolicy, diag.Diagnostics) {
 	var diags diag.Diagnostics
-
 	id, err := parseADXPolicyID(d.Id())
 	if err != nil {
-		return diag.FromErr(err), nil, nil
+		return nil, nil, diag.Errorf("could not read adx policy due to error parsing ID: %+v", err)
 	}
 
 	showCommand := fmt.Sprintf(".show %s %s policy %s", entityType, id.Name, policyName)
 
-	resultErr, resultSet := readADXEntity[TablePolicy](ctx, d, meta, &id.adxResourceId, showCommand, entityType)
-	if resultErr != nil {
-		return diag.Errorf("%+v", resultErr), id, nil
+	resultSet, diags := readADXEntity[TablePolicy](ctx, meta, &id.adxResourceId, showCommand, entityType)
+	if diags.HasError() {
+		return id, nil, diag.Errorf("error reading adx policy")
 	}
 
-	return diags, id, resultSet
+	return id, resultSet, diags
 }
 
 func deleteADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface{}, entityType string, policyName string) diag.Diagnostics {
 	id, err := parseADXPolicyID(d.Id())
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.Errorf("could not delete adx policy due to error parsing ID: %+v", err)
 	}
 
 	return deleteADXEntity(ctx, d, meta, id.DatabaseName, fmt.Sprintf(".delete %s %s policy %s", entityType, id.Name, policyName))

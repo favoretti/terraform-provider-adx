@@ -84,16 +84,14 @@ func resourceADXFunctionCreateUpdate(ctx context.Context, d *schema.ResourceData
 }
 
 func resourceADXFunctionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
 	id, err := parseADXFunctionID(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	resultErr, resultSet := readADXEntity[ADXFunction](ctx, d, meta, id, fmt.Sprintf(".show function %s", id.Name), "function")
-	if resultErr != nil {
-		return diag.Errorf("%+v", resultErr)
+	resultSet, diags := readADXEntity[ADXFunction](ctx, meta, id, fmt.Sprintf(".show function %s", id.Name), "function")
+	if diags.HasError() {
+		return diags
 	}
 
 	d.Set("name", id.Name)
