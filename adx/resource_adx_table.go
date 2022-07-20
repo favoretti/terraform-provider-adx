@@ -21,11 +21,21 @@ type TableSchema struct {
 	DocString    string
 }
 
+type tableFromQueryConfig struct {
+	Query            string
+	Append           bool
+	ExtendSchema     bool
+	RecreateSchema   bool
+	Distributed      bool
+	ForceUpdateValue string
+}
+
 func resourceADXTable() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceADXTableCreate,
 		ReadContext:   resourceADXTableRead,
 		DeleteContext: resourceADXTableDelete,
+		UpdateContext: resourceADXTableUpdate,
 
 		Schema: map[string]*schema.Schema{
 			"database_name": {
@@ -46,8 +56,8 @@ func resourceADXTable() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				Computed:      true,
-				AtLeastOneOf:  []string{"table_schema", "column"},
-				ConflictsWith: []string{"column"},
+				AtLeastOneOf:  []string{"table_schema", "column", "from_query"},
+				ConflictsWith: []string{"column", "from_query"},
 				ValidateDiagFunc: stringMatch(
 					regexp.MustCompile("[a-zA-Z0-9:-_,]+"),
 					"Table schema must contain only letters, number, dashes, semicolons, commas and underscores and no spaces",
@@ -56,8 +66,8 @@ func resourceADXTable() *schema.Resource {
 
 			"column": {
 				Type:          schema.TypeList,
-				AtLeastOneOf:  []string{"table_schema", "column"},
-				ConflictsWith: []string{"table_schema"},
+				AtLeastOneOf:  []string{"table_schema", "column", "from_query"},
+				ConflictsWith: []string{"table_schema", "from_query"},
 				Optional:      true,
 				Computed:      true,
 				Elem: &schema.Resource{
@@ -75,29 +85,73 @@ func resourceADXTable() *schema.Resource {
 					},
 				},
 			},
+
+			"from_query": {
+				Type:          schema.TypeList,
+				AtLeastOneOf:  []string{"table_schema", "column", "from_query"},
+				ConflictsWith: []string{"table_schema", "column"},
+				Optional:      true,
+				Computed:      true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"query": {
+							Type:             schema.TypeString,
+							Required:         true,
+							ValidateDiagFunc: stringIsNotEmpty,
+						},
+						"append": {
+							Type:     schema.TypeBool,
+							Required: true,
+						},
+						"extend_schema": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Default:  false,
+						},
+						"recreate_schema": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Default:  false,
+						},
+						"distributed": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Default:  false,
+						},
+						"force_an_update_when_value_changed": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Default:  "",
+						},
+					},
+				},
+			},
+
+			"merge_on_update": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
 		},
 	}
 }
 
 func resourceADXTableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
-	client := meta.(*Meta).Kusto
 
 	tableName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
+	createStatement := ""
 
-	tableDef := ""
-
-	if tableSchema := d.Get("table_schema").(string); len(tableSchema) != 0 {
-		tableDef = tableSchema
+	if fromQueryList, ok := d.GetOk("from_query"); ok {
+		createStatement = buildTableFromQueryStatement(tableName, true, getTableFromQueryConfig(fromQueryList.([]interface{})))
 	} else {
-		tableDef = expandTableColumn(d.Get("column").([]interface{}))
+		createStatement = fmt.Sprintf(".create table %s (%s)", tableName, getTableDefinition(d))
 	}
 
 	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
-	createStatement := fmt.Sprintf(".create table %s (%s)", tableName, tableDef)
-
-	_, err := client.Mgmt(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(createStatement))
+	client := meta.(*Meta).Kusto
+	_, err := client.Mgmt(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(createStatement), kusto.AllowWrite())
 	if err != nil {
 		return diag.Errorf("error creating Table %q (Database %q): %+v", tableName, databaseName, err)
 	}
@@ -108,6 +162,59 @@ func resourceADXTableCreate(ctx context.Context, d *schema.ResourceData, meta in
 	resourceADXTableRead(ctx, d, meta)
 
 	return diags
+}
+
+func resourceADXTableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	tableName := d.Get("name").(string)
+	databaseName := d.Get("database_name").(string)
+	mergeOnUpdate := d.Get("merge_on_update").(bool)
+	createStatement := ""
+
+	if fromQueryList, ok := d.GetOk("from_query"); ok {
+		createStatement = buildTableFromQueryStatement(tableName, false, getTableFromQueryConfig(fromQueryList.([]interface{})))
+	} else {
+		alterCmd := ".alter"
+		if mergeOnUpdate {
+			alterCmd = ".alter-merge"
+		}
+		createStatement = fmt.Sprintf("%s table %s (%s)", alterCmd, tableName, getTableDefinition(d))
+	}
+
+	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
+	client := meta.(*Meta).Kusto
+	_, err := client.Mgmt(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(createStatement), kusto.AllowWrite())
+	if err != nil {
+		return diag.Errorf("error updating Table %q (Database %q): %+v", tableName, databaseName, err)
+	}
+
+	resourceADXTableRead(ctx, d, meta)
+
+	return diags
+}
+
+func getTableDefinition(d *schema.ResourceData) string {
+	tableDef := ""
+	if tableSchema := d.Get("table_schema").(string); len(tableSchema) != 0 {
+		tableDef = tableSchema
+	} else {
+		tableDef = expandTableColumn(d.Get("column").([]interface{}))
+	}
+	return tableDef
+}
+
+func getTableFromQueryConfig(fromQueryList []interface{}) *tableFromQueryConfig {
+	fromQuery := fromQueryList[0].(map[string]interface{})
+	config := tableFromQueryConfig{
+		Query:            fromQuery["query"].(string),
+		Append:           fromQuery["append"].(bool),
+		ExtendSchema:     fromQuery["extend_schema"].(bool),
+		RecreateSchema:   fromQuery["recreate_schema"].(bool),
+		Distributed:      fromQuery["distributed"].(bool),
+		ForceUpdateValue: fromQuery["force_an_update_when_value_changed"].(string),
+	}
+	return &config
 }
 
 func resourceADXTableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -178,6 +285,36 @@ func resourceADXTableDelete(ctx context.Context, d *schema.ResourceData, meta in
 	d.SetId("")
 
 	return diags
+}
+
+func buildTableFromQueryStatement(tableName string, new bool, config *tableFromQueryConfig) string {
+	var withParams []string
+
+	if config.Distributed {
+		withParams = append(withParams, "distributed=true")
+	}
+	if config.ExtendSchema {
+		withParams = append(withParams, "extend_schema=true")
+	}
+	if config.RecreateSchema {
+		withParams = append(withParams, "recreate_schema=true")
+	}
+
+	withParamsString := ""
+	if len(withParams) > 0 {
+		withParamsString = fmt.Sprintf("with(%s)", strings.Join(withParams, ","))
+	}
+
+	cmd := ".set-or-append"
+	if !config.Append {
+		if new {
+			cmd = ".set"
+		} else {
+			cmd = ".set-or-replace"
+		}
+	}
+
+	return fmt.Sprintf("%s %s %s <| %s", cmd, tableName, withParamsString, config.Query)
 }
 
 func expandTableColumn(input []interface{}) string {
