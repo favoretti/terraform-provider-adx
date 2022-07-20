@@ -15,18 +15,18 @@ import (
 )
 
 type TableMapping struct {
-	Name string
-	Kind string
-	Mapping string
+	Name          string
+	Kind          string
+	Mapping       string
 	LastUpdatedOn value.DateTime
-	Table string
-	Database string
+	Table         string
+	Database      string
 }
 
 type Mapping struct {
-	Column string `json:"column"`
-	Path string `json:"path"`
-	DataType string `json:"datatype"`
+	Column    string `json:"column"`
+	Path      string `json:"path"`
+	DataType  string `json:"datatype"`
 	Transform string `json:"transform"`
 }
 
@@ -56,14 +56,14 @@ func resourceADXTableMapping() *schema.Resource {
 			},
 
 			"kind": {
-				Type:             schema.TypeString,
-				Required:         true,
+				Type:     schema.TypeString,
+				Required: true,
 				ValidateDiagFunc: stringInSlice([]string{
 					"Json",
 				}),
 			},
-			"mapping" : {
-				Type: schema.TypeList,
+			"mapping": {
+				Type:     schema.TypeList,
 				Required: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -76,18 +76,18 @@ func resourceADXTableMapping() *schema.Resource {
 							Required: true,
 						},
 						"datatype": {
-							Type: schema.TypeString,
+							Type:     schema.TypeString,
 							Required: true,
 						},
 						"transform": {
-							Type: schema.TypeString,
+							Type:     schema.TypeString,
 							Optional: true,
 						},
 					},
 				},
 			},
 			"last_updated_on": {
-				Type: schema.TypeString,
+				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
@@ -132,7 +132,7 @@ func resourceADXTableMappingRead(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
-	showStatement := fmt.Sprintf(".show table %s ingestion %s mapping '%s'", id.TableName, strings.ToLower(id.Kind), id.Name)
+	showStatement := fmt.Sprintf(".show table %s ingestion %s mapping '%s'", id.Name, strings.ToLower(id.Kind), id.MappingName)
 
 	resp, err := client.Mgmt(ctx, id.DatabaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(showStatement))
 	if err != nil {
@@ -156,12 +156,12 @@ func resourceADXTableMappingRead(ctx context.Context, d *schema.ResourceData, me
 		return diag.Errorf("%+v", err)
 	}
 
+	d.Set("name", schemas[0].Name)
 	d.Set("table_name", schemas[0].Table)
 	d.Set("database_name", schemas[0].Database)
 	d.Set("kind", schemas[0].Kind)
 	d.Set("mapping", flattenTableMapping(schemas[0].Mapping))
 	d.Set("last_updated_on", schemas[0].LastUpdatedOn)
-
 
 	return diags
 }
@@ -177,11 +177,11 @@ func resourceADXTableMappingDelete(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
-	deleteStatement := fmt.Sprintf(".drop table %s ingestion %s mapping '%s'", id.TableName, strings.ToLower(id.Kind), id.Name)
+	deleteStatement := fmt.Sprintf(".drop table %s ingestion %s mapping '%s'", id.Name, strings.ToLower(id.Kind), id.MappingName)
 
 	_, err = client.Mgmt(ctx, id.DatabaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(deleteStatement))
 	if err != nil {
-		return diag.Errorf("error deleting Table Mapping %q (Table %q, Database %q): %+v", id.Name, id.TableName, id.DatabaseName, err)
+		return diag.Errorf("error deleting Table Mapping %q (Table %q, Database %q): %+v", id.MappingName, id.Name, id.DatabaseName, err)
 	}
 
 	d.SetId("")
