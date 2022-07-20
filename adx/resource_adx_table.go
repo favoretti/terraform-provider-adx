@@ -14,11 +14,11 @@ import (
 )
 
 type TableSchema struct {
-	TableName string
-	Schema string
+	TableName    string
+	Schema       string
 	DatabaseName string
-	Folder string
-	DocString string
+	Folder       string
+	DocString    string
 }
 
 func resourceADXTable() *schema.Resource {
@@ -38,38 +38,38 @@ func resourceADXTable() *schema.Resource {
 			"name": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ForceNew: 		  true,
+				ForceNew:         true,
 				ValidateDiagFunc: stringIsNotEmpty,
 			},
 
 			"table_schema": {
-				Type:             schema.TypeString,
-				Optional: true,
-				Computed: true,
-				AtLeastOneOf: []string{"table_schema", "column"},
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				AtLeastOneOf:  []string{"table_schema", "column"},
 				ConflictsWith: []string{"column"},
 				ValidateDiagFunc: stringMatch(
 					regexp.MustCompile("[a-zA-Z0-9:-_,]+"),
 					"Table schema must contain only letters, number, dashes, semicolons, commas and underscores and no spaces",
-					),
+				),
 			},
 
 			"column": {
-				Type: schema.TypeList,
-				AtLeastOneOf: []string{"table_schema", "column"},
+				Type:          schema.TypeList,
+				AtLeastOneOf:  []string{"table_schema", "column"},
 				ConflictsWith: []string{"table_schema"},
-				Optional: true,
-				Computed: true,
+				Optional:      true,
+				Computed:      true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:             schema.TypeString,
+							Required:         true,
 							ValidateDiagFunc: stringIsNotEmpty,
 						},
 						"type": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:             schema.TypeString,
+							Required:         true,
 							ValidateDiagFunc: stringIsNotEmpty,
 						},
 					},
