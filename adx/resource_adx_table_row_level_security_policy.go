@@ -72,11 +72,9 @@ func resourceADXTableRowLevelSecurityPolicyCreateUpdate(ctx context.Context, d *
 }
 
 func resourceADXTableRowLevelSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	err, id, resultSet := readADXPolicy(ctx, d, meta, "table", "row_level_security")
-	if err != nil {
-		return diag.Errorf("%+v", err)
+	id, resultSet, diags := readADXPolicy(ctx, d, meta, "table", "row_level_security")
+	if diags.HasError() {
+		return diags
 	}
 
 	var policy TableRowLevelSecurityPolicy

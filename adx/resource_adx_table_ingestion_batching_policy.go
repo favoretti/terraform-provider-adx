@@ -77,11 +77,9 @@ func resourceADXTableIngestionBatchingPolicyCreateUpdate(ctx context.Context, d 
 }
 
 func resourceADXTableIngestionBatchingPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	err, id, resultSet := readADXPolicy(ctx, d, meta, "table", "ingestionbatching")
-	if err != nil {
-		return diag.Errorf("%+v", err)
+	id, resultSet, diags := readADXPolicy(ctx, d, meta, "table", "ingestionbatching")
+	if diags.HasError() {
+		return diags
 	}
 
 	var policy TableIngestionBatchingPolicy

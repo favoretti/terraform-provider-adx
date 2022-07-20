@@ -75,16 +75,14 @@ func resourceADXTableRetentionPolicyCreateUpdate(ctx context.Context, d *schema.
 }
 
 func resourceADXTableRetentionPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	err, id, resultSet := readADXPolicy(ctx, d, meta, "table", "retention")
-	if err != nil {
-		return diag.Errorf("%+v", err)
+	id, resultSet, diags := readADXPolicy(ctx, d, meta, "table", "retention")
+	if diags.HasError() {
+		return diags
 	}
 
 	var policy TableRetentionPolicy
 	if err := json.Unmarshal([]byte(resultSet[0].Policy), &policy); err != nil {
-		return diag.Errorf("error parsing policy retention for Table %q (Database %q): %+v", id.Name, id.DatabaseName, err)
+		return diag.Errorf("error parsing policy retention for Table %q (Database %q): %+v", id.Name, id.DatabaseName)
 	}
 
 	originalSoftDeletePeriod := d.Get("soft_delete_period")
@@ -94,7 +92,7 @@ func resourceADXTableRetentionPolicyRead(ctx context.Context, d *schema.Resource
 
 		originalSoftDeletePeriodTimeUnit := originalSoftDeletePeriod.(string)[len(originalSoftDeletePeriod.(string))-1:]
 
-		err, softDeletePeriod := toADXTimespanLiteral(ctx, d, meta, id.DatabaseName, policy.SoftDeletePeriod, originalSoftDeletePeriodTimeUnit)
+		softDeletePeriod, err := toADXTimespanLiteral(ctx, meta, id.DatabaseName, policy.SoftDeletePeriod, originalSoftDeletePeriodTimeUnit)
 		if err != nil {
 			return diag.Errorf("%+v", err)
 		}
