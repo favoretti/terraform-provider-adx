@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"runtime"
@@ -72,6 +73,13 @@ type Error struct {
 	permanent  bool
 
 	inner *Error
+}
+
+type KustoError = Error
+
+type HttpError struct {
+	KustoError
+	StatusCode int
 }
 
 // UnmarshalREST will unmarshal an error message from the server if the message is in
@@ -217,17 +225,23 @@ func ES(o Op, k Kind, s string, args ...interface{}) *Error {
 }
 
 // HTTP constructs an *Error from an *http.Response and a prefix to the error message.
-func HTTP(o Op, resp *http.Response, prefix string) *Error {
-	b, _ := ioutil.ReadAll(resp.Body) // Error doesn't matter, because there is nothing to do if it errors.
-
-	e := &Error{
-		Op:         o,
-		Kind:       KHTTPError,
-		restErrMsg: b,
-		Err:        fmt.Errorf("%s(%s):\n%s", prefix, resp.Status, string(b)),
+func HTTP(o Op, status string, statusCode int, body io.ReadCloser, prefix string) *HttpError {
+	bodyBytes, err := ioutil.ReadAll(body)
+	if err != nil {
+		bodyBytes = []byte(fmt.Sprintf("Failed to read body: %v", err))
 	}
+	e := HttpError{
+		KustoError: KustoError{
+			Op:         o,
+			Kind:       KHTTPError,
+			restErrMsg: bodyBytes,
+			Err:        fmt.Errorf("%s(%s):\n%s", prefix, status, string(bodyBytes)),
+		},
+		StatusCode: statusCode,
+	}
+
 	e.UnmarshalREST()
-	return e
+	return &e
 }
 
 // e constructs an Error. You may pass in an Op, Kind, string or error.  This will strip an *Error if you
@@ -361,4 +375,45 @@ func oneToErr(m map[string]interface{}, err *Error, op Op) *Error {
 	W(ES(op, kind, msg), err)
 
 	return err
+}
+
+func (e *HttpError) IsThrottled() bool {
+	return e != nil && (e.StatusCode == http.StatusTooManyRequests)
+}
+
+func (e *HttpError) Error() string {
+	return e.KustoError.Error()
+}
+
+func (e *HttpError) Unwrap() error {
+	if e == nil {
+		return nil
+	}
+	return e.KustoError.Unwrap()
+}
+
+func GetKustoError(err error) (*Error, bool) {
+	if err, ok := err.(*Error); ok {
+		return err, true
+	}
+	if err, ok := err.(*HttpError); ok {
+		return &err.KustoError, true
+	}
+	return nil, false
+}
+
+type CombinedError struct {
+	Errors []error
+}
+
+func (c CombinedError) Error() string {
+	result := ""
+	for _, err := range c.Errors {
+		result += fmt.Sprintf("'%s';", err.Error())
+	}
+	return result
+}
+
+func GetCombinedError(errs ...error) *CombinedError {
+	return &CombinedError{Errors: errs}
 }

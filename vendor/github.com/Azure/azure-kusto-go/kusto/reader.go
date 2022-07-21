@@ -19,12 +19,14 @@ import (
 
 // send allows us to send a table on a channel and know when everything has been written.
 type send struct {
-	inColumns    table.Columns
-	inRows       []value.Values
-	inProgress   v2.TableProgress
-	inNonPrimary v2.DataTable
-	inCompletion v2.DataSetCompletion
-	inErr        error
+	inColumns           table.Columns
+	inRows              []value.Values
+	inRowErrors         []errors.Error
+	inTableFragmentType string
+	inProgress          v2.TableProgress
+	inNonPrimary        v2.DataTable
+	inCompletion        v2.DataSetCompletion
+	inErr               error
 
 	wg *sync.WaitGroup
 }
@@ -33,6 +35,14 @@ func (s send) done() {
 	if s.wg != nil {
 		s.wg.Done()
 	}
+}
+
+// Row is a row of data from Kusto, or an error.
+// Replace indicates whether the existing result set should be cleared and replaced with this row.
+type Row struct {
+	Values  value.Values
+	Error   *errors.Error
+	Replace bool
 }
 
 // RowIterator is used to iterate over the returned Row objects returned by Kusto.
@@ -54,7 +64,7 @@ type RowIterator struct {
 	inCompletion chan send
 	inErr        chan send
 
-	rows chan value.Values
+	rows chan Row
 
 	mu sync.Mutex
 
@@ -93,7 +103,7 @@ func newRowIterator(ctx context.Context, cancel context.CancelFunc, execResp exe
 		inCompletion: make(chan send, 1),
 		inErr:        make(chan send),
 
-		rows:       make(chan value.Values, 1000),
+		rows:       make(chan Row, 1000),
 		nonPrimary: make(map[frames.TableKind]v2.DataTable),
 	}
 	columnsReady := ri.start()
@@ -122,10 +132,22 @@ func (r *RowIterator) start() chan struct{} {
 					close(r.rows)
 					return
 				}
-				for _, row := range sent.inRows {
-					select {
-					case <-r.ctx.Done():
-					case r.rows <- row:
+				if sent.inRows != nil {
+					for k, values := range sent.inRows {
+						select {
+						case <-r.ctx.Done():
+						case r.rows <- Row{Values: values, Replace: k == 0 && sent.inTableFragmentType == "DataReplace"}:
+						}
+					}
+				}
+
+				if sent.inRowErrors != nil {
+					for _, e := range sent.inRowErrors {
+						e := e // capture so we can send reference
+						select {
+						case <-r.ctx.Done():
+						case r.rows <- Row{Error: &e}:
+						}
 					}
 				}
 				sent.done()
@@ -170,8 +192,10 @@ func (r *RowIterator) Mock(m *MockRows) error {
 	return nil
 }
 
-// Do calls f for every row returned by the query. If f returns a non-nil error,
-// iteration stops.
+// Deprecated: Use DoOnRowOrError() instead for more robust error handling. In a future version, this will be removed, and NextRowOrError will replace it.
+// Do calls f for every row returned by the query. If f returns a non-nil error, iteration stops.
+// This method will fail on errors inline within the rows, even though they could potentially be recovered and more data might be available.
+// This behavior is to keep the interface compatible.
 func (r *RowIterator) Do(f func(r *table.Row) error) error {
 	for {
 		row, err := r.Next()
@@ -187,6 +211,24 @@ func (r *RowIterator) Do(f func(r *table.Row) error) error {
 	}
 }
 
+// DoOnRowOrError calls f for every row returned by the query. If errors occur inline within the rows, they are passed to f.
+// Other errors will stop the iteration and be returned.
+// If f returns a non-nil error, iteration stops.
+func (r *RowIterator) DoOnRowOrError(f func(r *table.Row, e *errors.Error) error) error {
+	for {
+		row, inlineErr, err := r.NextRowOrError()
+		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
+			return err
+		}
+		if err := f(row, inlineErr); err != nil {
+			return err
+		}
+	}
+}
+
 // Stop is called to stop any further iteration. Always defer a Stop() call after
 // receiving a RowIterator.
 func (r *RowIterator) Stop() {
@@ -194,31 +236,57 @@ func (r *RowIterator) Stop() {
 	return
 }
 
+// Deprecated: Use NextRowOrError() instead for more robust error handling. In a future version, this will be removed, and NextRowOrError will replace it.
 // Next gets the next Row from the query. io.EOF is returned if there are no more entries in the output.
+// This method will fail on errors inline within the rows, even though they could potentially be recovered and more data might be available.
 // Once Next() returns an error, all subsequent calls will return the same error.
-func (r *RowIterator) Next() (*table.Row, error) {
-	if err := r.getError(); err != nil {
+func (r *RowIterator) Next() (row *table.Row, finalError error) {
+	row, inlineErr, err := r.NextRowOrError()
+	if err != nil {
 		return nil, err
+	}
+	if inlineErr != nil {
+		r.setError(inlineErr)
+		return nil, inlineErr
+	}
+	return row, err
+}
+
+// NextRowOrError gets the next Row or service-side error from the query.
+// On partial success, inlineError will be set.
+// Once finalError returns non-nil, all subsequent calls will return the same error.
+// finalError will be set to io.EOF is when frame parsing completed with success or partial success (data + errors).
+// if finalError is not io.EOF, reading the frame has resulted in a failure state (no data is expected).
+func (r *RowIterator) NextRowOrError() (row *table.Row, inlineError *errors.Error, finalError error) {
+	if err := r.getError(); err != nil {
+		return nil, nil, err
 	}
 
 	if r.mock != nil {
 		if r.ctx.Err() != nil {
-			return nil, r.ctx.Err()
+			return nil, nil, r.ctx.Err()
 		}
-		return r.mock.nextRow()
+		nextRow, err := r.mock.nextRow()
+		if err != nil {
+			return nil, nil, err
+		}
+		return nextRow, nil, nil
 	}
 
 	select {
 	case <-r.ctx.Done():
-		return nil, r.ctx.Err()
+		return nil, nil, r.ctx.Err()
 	case kvs, ok := <-r.rows:
 		if !ok {
 			if err := r.getError(); err != nil {
-				return nil, err
+				return nil, nil, err
 			}
-			return nil, io.EOF
+			return nil, nil, io.EOF
 		}
-		return &table.Row{ColumnTypes: r.columns, Values: kvs, Op: r.op}, nil
+		if kvs.Error != nil {
+			return nil, kvs.Error, nil
+		}
+		return &table.Row{ColumnTypes: r.columns, Values: kvs.Values, Op: r.op, Replace: kvs.Replace}, nil, nil
 	}
 }
 
@@ -246,18 +314,29 @@ func (r *RowIterator) Progressive() bool {
 	return r.progressive
 }
 
-// getNonPrimary will return a non-primary dataTable if it exists from the last query. The non-primary table kinds
-// are defined as constants starting with TK<name>.
+// GetNonPrimary will return a non-primary dataTable if it exists from the last query. The non-primary table and common names are defined under the frames.TableKind enum.
 // Returns io.ErrUnexpectedEOF if not found. May not have all tables until RowIterator has reached io.EOF.
-func (r *RowIterator) getNonPrimary(ctx context.Context, tableKind, tableName frames.TableKind) (v2.DataTable, error) {
+func (r *RowIterator) GetNonPrimary(tableKind, tableName frames.TableKind) (v2.DataTable, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	for _, table := range r.nonPrimary {
-		if table.TableKind == tableKind && table.TableName == tableName {
-			return table, nil
+	for _, npTable := range r.nonPrimary {
+		if npTable.TableKind == tableKind && npTable.TableName == tableName {
+			return npTable, nil
 		}
 	}
 	return v2.DataTable{}, io.ErrUnexpectedEOF
+}
+
+// GetExtendedProperties will return the extended properties' table from the iterator, if it exists.
+// Returns io.ErrUnexpectedEOF if not found. May not have all tables until RowIterator has reached io.EOF.
+func (r *RowIterator) GetExtendedProperties() (v2.DataTable, error) {
+	return r.GetNonPrimary(frames.QueryProperties, frames.ExtendedProperties)
+}
+
+// GetQueryCompletionInformation will return the query completion information table from the iterator, if it exists.
+// Returns io.ErrUnexpectedEOF if not found. May not have all tables until RowIterator has reached io.EOF.
+func (r *RowIterator) GetQueryCompletionInformation() (v2.DataTable, error) {
+	return r.GetNonPrimary(frames.QueryCompletionInformation, frames.QueryCompletionInformation)
 }
 
 func isTest() bool {
