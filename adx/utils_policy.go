@@ -74,6 +74,9 @@ func readADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface{}
 	if diags.HasError() {
 		return id, nil, diag.Errorf("error reading adx policy")
 	}
+	if len(resultSet)==0 {
+		return id, nil, diag.Errorf("error: no results returned for policy %s for %s %q (Database %q)", policyName, entityType, id.Name, id.DatabaseName)
+	}
 
 	return id, resultSet, diags
 }
