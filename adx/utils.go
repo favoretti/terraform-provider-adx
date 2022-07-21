@@ -44,15 +44,11 @@ func readADXEntity[T any](ctx context.Context, meta interface{}, id *adxResource
 	return resultSet, diags
 }
 
-func queryADXMgmtAndParse[T any](ctx context.Context, meta interface{}, databaseName string, query string) ([]T, error) {
-	resp, err := queryADXMgmt(ctx, meta, databaseName, query)
-	if err != nil {
-		return nil, err
-	}
+func parseADXResp[T any](resp *kusto.RowIterator, databaseName string) ([]T, error) {
 	defer resp.Stop()
 
 	var resultSet []T
-	err = resp.Do(
+	err := resp.Do(
 		func(row *table.Row) error {
 			result := new(T)
 			if err := row.ToStruct(result); err != nil {
@@ -63,10 +59,26 @@ func queryADXMgmtAndParse[T any](ctx context.Context, meta interface{}, database
 		})
 
 	if err != nil {
-		return nil, fmt.Errorf("error parsing adx result set: %+v", err)
+		return nil, err
 	}
 
 	return resultSet, nil
+}
+
+func queryADXAndParse[T any](ctx context.Context, meta interface{}, databaseName string, query string) ([]T, error) {
+	resp, err := queryADX(ctx, meta, databaseName, query)
+	if err != nil {
+		return nil, err
+	}
+	return parseADXResp[T](resp, databaseName)
+}
+
+func queryADXMgmtAndParse[T any](ctx context.Context, meta interface{}, databaseName string, query string) ([]T, error) {
+	resp, err := queryADXMgmt(ctx, meta, databaseName, query)
+	if err != nil {
+		return nil, err
+	}
+	return parseADXResp[T](resp, databaseName)
 }
 
 func queryADXMgmt(ctx context.Context, meta interface{}, databaseName string, query string) (*kusto.RowIterator, error) {
@@ -127,7 +139,7 @@ func toADXTimespanLiteral(ctx context.Context, meta interface{}, databaseName st
 	// Expected unit can be d,h,m,s
 	if input != "" && expectedUnit != "" {
 		query := fmt.Sprintf("print Result=tostring(toint(totimespan('%s')/1%s))", input, expectedUnit)
-		resultSet, err := queryADXMgmtAndParse[adxSimpleQueryResult](ctx, meta, databaseName, query)
+		resultSet, err := queryADXAndParse[adxSimpleQueryResult](ctx, meta, databaseName, query)
 		if err != nil {
 			return input, fmt.Errorf("error converting timespan literal: %+v", err)
 		}

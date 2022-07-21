@@ -6,10 +6,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/Azure/azure-kusto-go/kusto"
-	"github.com/Azure/azure-kusto-go/kusto/data/table"
-	"github.com/Azure/azure-kusto-go/kusto/unsafe"
-	"github.com/Azure/azure-kusto-go/kusto/data/errors"
 	"github.com/Azure/azure-kusto-go/kusto/data/value"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -146,13 +142,12 @@ func resourceADXMaterializedViewCreateUpdate(ctx context.Context, d *schema.Reso
 	
 	createStatement := fmt.Sprintf("%s %s materialized-view %s %s on table %s \n{\n%s\n}", cmd, asyncString, withClause, name, sourceTableName, query)
 
-	client := meta.(*Meta).Kusto
-	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
-	_, err := client.Mgmt(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(createStatement))
+	_,err := queryADXMgmt(ctx,meta,databaseName,createStatement)
 	if err != nil {
 		return diag.Errorf("error creating materialized-view %s (Database %q): %+v", name, databaseName, err)
 	}
 
+	client := meta.(*Meta).Kusto
 	d.SetId(buildADXResourceId(client.Endpoint(), databaseName, "materializedview", name))
 
 	return resourceADXMaterializedViewRead(ctx, d, meta)
@@ -164,7 +159,8 @@ func resourceADXMaterializedViewRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	resultSet, diags := readADXEntity[ADXMaterializedView](ctx, meta, id, fmt.Sprintf(".show materialized-view %s | extend Lookback=tostring(Lookback), IsHealthy=tolower(tostring(IsHealthy)), IsEnabled=tolower(tostring(IsEnabled)), AutoUpdateSchema=tolower(tostring(AutoUpdateSchema)), EffectiveDateTime", id.Name), "materialized-view")
+	showCommand := fmt.Sprintf(".show materialized-view %s | extend Lookback=tostring(Lookback), IsHealthy=tolower(tostring(IsHealthy)), IsEnabled=tolower(tostring(IsEnabled)), AutoUpdateSchema=tolower(tostring(AutoUpdateSchema)), EffectiveDateTime", id.Name)
+	resultSet, diags := readADXEntity[ADXMaterializedView](ctx, meta, id, showCommand, "materialized-view")
 	if diags.HasError() {
 		return diags
 	}
