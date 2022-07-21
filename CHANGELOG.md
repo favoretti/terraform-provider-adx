@@ -1,17 +1,17 @@
 ## v0.0.10
 
-* Table resource improvements:
-Ability to update table definitions (.alter & .alter-merge),
-Table creation from query (.set, .set-or-replace etc..)
+### Table resource improvements:
+* Ability to update table definitions (.alter & .alter-merge),
+* Table creation from query (.set, .set-or-replace etc..)
 
-* New resources:
+### New resources:
 
-User defined functions
-Table row level security policy
-Table batch ingestion policy
-Table Retention policy
-Table update policy
-Added helper methods for improving ID generation & maintaining policy objects (to make adding more policy types easier)
+* User defined functions
+* Table row level security policy
+* Table batch ingestion policy
+* Table Retention policy
+* Table update policy
+* Added helper methods for improving ID generation & maintaining policy objects (to make adding more policy types easier)
 
 Table and table mapping resources were not updated to use the new id generation since it requires state migration
 
