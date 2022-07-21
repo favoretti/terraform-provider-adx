@@ -2,6 +2,8 @@ package kusto
 
 import (
 	"context"
+	"io"
+	"net/http"
 	"net/url"
 	"reflect"
 	"strings"
@@ -18,6 +20,7 @@ import (
 
 // queryer provides for getting a stream of Kusto frames. Exists to allow fake Kusto streams in tests.
 type queryer interface {
+	io.Closer
 	query(ctx context.Context, db string, query Stmt, options *queryOptions) (execResp, error)
 	mgmt(ctx context.Context, db string, query Stmt, options *mgmtOptions) (execResp, error)
 }
@@ -39,6 +42,10 @@ type Authorization struct {
 // For internal use only.
 func (a *Authorization) Validate(endpoint string) error {
 	const rescField = "Resource"
+
+	if strings.Contains(strings.ToLower(endpoint), ".azuresynapse") {
+		endpoint = "https://kusto.kusto.windows.net"
+	}
 
 	if a.Authorizer != nil && a.Config != nil {
 		return errors.ES(errors.OpServConn, errors.KClientArgs, "cannot set Authoriztion.Authorizer and Authorizer.Config")
@@ -105,6 +112,7 @@ type Client struct {
 	endpoint         string
 	auth             Authorization
 	mu               sync.Mutex
+	http             *http.Client
 }
 
 // Option is an optional argument type for New().
@@ -133,13 +141,24 @@ func New(endpoint string, auth Authorization, options ...Option) (*Client, error
 	if err := auth.Validate(endpoint); err != nil {
 		return nil, err
 	}
-	conn, err := newConn(endpoint, auth)
+
+	if client.http == nil {
+		client.http = &http.Client{}
+	}
+
+	conn, err := newConn(endpoint, auth, client.http)
 	if err != nil {
 		return nil, err
 	}
 	client.conn = conn
 
 	return client, nil
+}
+
+func WithHttpClient(client *http.Client) Option {
+	return func(c *Client) {
+		c.http = client
+	}
 }
 
 // QueryOption is an option type for a call to Query().
@@ -374,7 +393,7 @@ func (c *Client) getConn(callType callType, options connOptions) (queryer, error
 			if err := auth.Validate(u.String()); err != nil {
 				return nil, err
 			}
-			iconn, err := newConn(u.String(), auth)
+			iconn, err := newConn(u.String(), auth, c.http)
 			if err != nil {
 				return nil, err
 			}
@@ -409,4 +428,24 @@ func (*Client) contextSetup(ctx context.Context, mgmtCall bool) (context.Context
 	}
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Minute)
 	return ctx, cancel, nil
+}
+
+func (c *Client) HttpClient() *http.Client {
+	return c.http
+}
+
+func (c *Client) Close() error {
+	var err error
+	if c.conn != nil {
+		err = c.conn.Close()
+	}
+	if c.ingestConn != nil {
+		err2 := c.ingestConn.Close()
+		if err == nil {
+			err = err2
+		} else {
+			err = errors.GetCombinedError(err, err2)
+		}
+	}
+	return err
 }

@@ -65,7 +65,7 @@ func resourceADXTableCachingPolicyCreateUpdate(ctx context.Context, d *schema.Re
 func resourceADXTableCachingPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	err, id, resultSet := readADXPolicy(ctx, d, meta, "table", "caching")
+	id, resultSet, err := readADXPolicy(ctx, d, meta, "table", "caching")
 	if err != nil {
 		return diag.Errorf("%+v", err)
 	}
@@ -80,7 +80,7 @@ func resourceADXTableCachingPolicyRead(ctx context.Context, d *schema.ResourceDa
 	if originalDataHotSpan != "" {
 		originalDataHotSpanTimeUnit := originalDataHotSpan.(string)[len(originalDataHotSpan.(string))-1:]
 
-		err, dataHotSpan := toADXTimespanLiteral(ctx, d, meta, id.DatabaseName, policy.DataHotSpan.Value, originalDataHotSpanTimeUnit)
+		dataHotSpan, err := toADXTimespanLiteral(ctx, meta, id.DatabaseName, policy.DataHotSpan.Value, originalDataHotSpanTimeUnit)
 		if err != nil {
 			return diag.Errorf("%+v", err)
 		}
