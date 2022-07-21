@@ -1,3 +1,22 @@
+## v0.0.10
+
+* Table resource improvements:
+Ability to update table definitions (.alter & .alter-merge),
+Table creation from query (.set, .set-or-replace etc..)
+
+* New resources:
+
+User defined functions
+Table row level security policy
+Table batch ingestion policy
+Table Retention policy
+Table update policy
+Added helper methods for improving ID generation & maintaining policy objects (to make adding more policy types easier)
+
+Table and table mapping resources were not updated to use the new id generation since it requires state migration
+
+Upgraded to go 1.18 and terraform sdk v2.8.0
+
 ## v0.0.9
 
 * Fix crash mentioned in #3
