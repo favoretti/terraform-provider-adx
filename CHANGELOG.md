@@ -1,3 +1,9 @@
+## v0.0.11
+
+* New resource: `adx_table_caching_policy`
+* New resource: `adx_table_partitioning_policy`
+* New resource: `adx_materialized_view`
+
 ## v0.0.10
 
 ### Table resource improvements:
