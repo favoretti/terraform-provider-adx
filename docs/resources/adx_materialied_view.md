@@ -7,7 +7,7 @@ description: |-
 
 # Resource `adx_materialized_view`
 
-Manages a user defined function in ADX.
+Manages a materialized view in ADX.
 
 See: [ADX - Materialized Views](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/management/materialized-views/materialized-view-overview)
 
