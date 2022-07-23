@@ -43,6 +43,7 @@ func resourceADXTable() *schema.Resource {
 		SchemaVersion: 1,
 
 		Schema: map[string]*schema.Schema{
+			"cluster": getClusterConfigInputSchema(),
 			"database_name": {
 				Type:             schema.TypeString,
 				Required:         true,
@@ -138,12 +139,14 @@ func resourceADXTable() *schema.Resource {
 				Default:  false,
 			},
 		},
+		CustomizeDiff: clusterConfigCustomDiff,
 	}
 }
 
 func resourceADXTableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
+	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
 	tableName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 	createStatement := ""
@@ -155,8 +158,12 @@ func resourceADXTableCreate(ctx context.Context, d *schema.ResourceData, meta in
 	}
 
 	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
-	client := meta.(*Meta).Kusto
-	_, err := client.Mgmt(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(createStatement), kusto.AllowWrite())
+	client, err := getADXClient(meta, clusterConfig)
+	if err != nil {
+		return diag.Errorf("error creating adx client connection: %+v", err)
+	}
+
+	_, err = client.Mgmt(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(createStatement), kusto.AllowWrite())
 	if err != nil {
 		return diag.Errorf("error creating Table %q (Database %q): %+v", tableName, databaseName, err)
 	}
@@ -171,6 +178,7 @@ func resourceADXTableCreate(ctx context.Context, d *schema.ResourceData, meta in
 func resourceADXTableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
+	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
 	tableName := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 	mergeOnUpdate := d.Get("merge_on_update").(bool)
@@ -187,8 +195,11 @@ func resourceADXTableUpdate(ctx context.Context, d *schema.ResourceData, meta in
 	}
 
 	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
-	client := meta.(*Meta).Kusto
-	_, err := client.Mgmt(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(createStatement), kusto.AllowWrite())
+	client, err := getADXClient(meta, clusterConfig)
+	if err != nil {
+		return diag.Errorf("error creating adx client connection: %+v", err)
+	}
+	_, err = client.Mgmt(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(createStatement), kusto.AllowWrite())
 	if err != nil {
 		return diag.Errorf("error updating Table %q (Database %q): %+v", tableName, databaseName, err)
 	}
@@ -223,12 +234,24 @@ func getTableFromQueryConfig(fromQueryList []interface{}) *tableFromQueryConfig 
 
 func resourceADXTableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
+	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
 
-	client := meta.(*Meta).Kusto
+	client, err := getADXClient(meta, clusterConfig)
+	if err != nil {
+		return diag.Errorf("error creating adx client connection: %+v", err)
+	}
 
 	id, err := parseADXTableID(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	if tableExists, err := isTableExists(ctx,meta,clusterConfig,id.DatabaseName,id.Name); err != nil || !tableExists{
+		if err!=nil {
+			return diag.Errorf("%+v",err)
+		}
+		d.SetId("")
+		return diags
 	}
 
 	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
@@ -264,31 +287,20 @@ func resourceADXTableRead(ctx context.Context, d *schema.ResourceData, meta inte
 	d.Set("database_name", schemas[0].DatabaseName)
 	d.Set("table_schema", schemas[0].Schema)
 	d.Set("column", flattenTableColumn(schemas[0].Schema))
+	//flattenAndSetClusterConfig(ctx, d, clusterConfig)
 
 	return diags
 }
 
 func resourceADXTableDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	client := meta.(*Meta).Kusto
+	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
 
 	id, err := parseADXTableID(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
-	deleteStatement := fmt.Sprintf(".drop table %s", id.Name)
-
-	_, err = client.Mgmt(ctx, id.DatabaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(deleteStatement))
-	if err != nil {
-		return diag.Errorf("error deleting Table %q (Database %q): %+v", id.Name, id.DatabaseName, err)
-	}
-
-	d.SetId("")
-
-	return diags
+	return deleteADXEntity(ctx, d, meta, clusterConfig, id.DatabaseName, fmt.Sprintf(".drop table %s", id.Name))
 }
 
 func buildTableFromQueryStatement(tableName string, new bool, config *tableFromQueryConfig) string {

@@ -47,10 +47,14 @@ func parseADXPolicyID(input string) (*adxPolicyResource, error) {
 
 func createADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface{}, entityType string, policyName string, databaseName string, entityName string, createStatement string) diag.Diagnostics {
 	var diags diag.Diagnostics
-	client := meta.(*Meta).Kusto
+	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
+	client, err := getADXClient(meta, clusterConfig)
+	if err != nil {
+		return diag.Errorf("error creating adx client connection: %+v", err)
+	}
 
 	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
-	_, err := client.Mgmt(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(createStatement))
+	_, err = client.Mgmt(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(createStatement))
 	if err != nil {
 		return diag.Errorf("error creating %s %s Policy %q (Database %q): %+v", entityType, policyName, entityName, databaseName, err)
 	}
@@ -63,29 +67,41 @@ func createADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface
 
 func readADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface{}, entityType string, policyName string) (*adxPolicyResource, []TablePolicy, diag.Diagnostics) {
 	var diags diag.Diagnostics
+	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
+
 	id, err := parseADXPolicyID(d.Id())
 	if err != nil {
 		return nil, nil, diag.Errorf("could not read adx policy due to error parsing ID: %+v", err)
 	}
 
+	if tableExists, err := isTableExists(ctx,meta,clusterConfig,id.DatabaseName,id.Name); err != nil || !tableExists{
+		if err!=nil {
+			return id, nil, diag.Errorf("%+v",err)
+		}
+		d.SetId("")
+		return id, nil, diags
+	}
+
 	showCommand := fmt.Sprintf(".show %s %s policy %s", entityType, id.Name, policyName)
 
-	resultSet, diags := readADXEntity[TablePolicy](ctx, meta, &id.adxResourceId, showCommand, entityType)
+	resultSet, diags := readADXEntity[TablePolicy](ctx, meta, clusterConfig, &id.adxResourceId, showCommand, entityType)
 	if diags.HasError() {
 		return id, nil, diag.Errorf("error reading adx policy")
 	}
-	if len(resultSet)==0 {
+	if len(resultSet) == 0 {
 		return id, nil, diag.Errorf("error: no results returned for policy %s for %s %q (Database %q)", policyName, entityType, id.Name, id.DatabaseName)
 	}
+	//flattenAndSetClusterConfig(ctx, d, clusterConfig)
 
 	return id, resultSet, diags
 }
 
 func deleteADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface{}, entityType string, policyName string) diag.Diagnostics {
+	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
 	id, err := parseADXPolicyID(d.Id())
 	if err != nil {
 		return diag.Errorf("could not delete adx policy due to error parsing ID: %+v", err)
 	}
 
-	return deleteADXEntity(ctx, d, meta, id.DatabaseName, fmt.Sprintf(".delete %s %s policy %s", entityType, id.Name, policyName))
+	return deleteADXEntity(ctx, d, meta, clusterConfig, id.DatabaseName, fmt.Sprintf(".delete %s %s policy %s", entityType, id.Name, policyName))
 }

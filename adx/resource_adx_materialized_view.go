@@ -31,6 +31,7 @@ func resourceADXMaterializedView() *schema.Resource {
 		DeleteContext: resourceADXMaterializedViewDelete,
 
 		Schema: map[string]*schema.Schema{
+			"cluster": getClusterConfigInputSchema(),
 			"database_name": {
 				Type:             schema.TypeString,
 				Required:         true,
@@ -93,6 +94,7 @@ func resourceADXMaterializedView() *schema.Resource {
 				Default:  false,
 			},
 		},
+		CustomizeDiff: clusterConfigCustomDiff,
 	}
 }
 
@@ -105,6 +107,7 @@ func resourceADXMaterializedViewUpdate(ctx context.Context, d *schema.ResourceDa
 }
 
 func resourceADXMaterializedViewCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, new bool) diag.Diagnostics {
+	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
 	name := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 	query := d.Get("query").(string)
@@ -143,46 +146,58 @@ func resourceADXMaterializedViewCreateUpdate(ctx context.Context, d *schema.Reso
 
 	createStatement := fmt.Sprintf("%s %s materialized-view %s %s on table %s \n{\n%s\n}", cmd, asyncString, withClause, name, sourceTableName, query)
 
-	_, err := queryADXMgmt(ctx, meta, databaseName, createStatement)
+	_, err := queryADXMgmt(ctx, meta, clusterConfig, databaseName, createStatement)
 	if err != nil {
 		return diag.Errorf("error creating materialized-view %s (Database %q): %+v", name, databaseName, err)
 	}
 
-	client := meta.(*Meta).Kusto
+	client, err := getADXClient(meta, clusterConfig)
+	if err != nil {
+		return diag.Errorf("error creating adx client connection: %+v", err)
+	}
 	d.SetId(buildADXResourceId(client.Endpoint(), databaseName, "materializedview", name))
 
 	return resourceADXMaterializedViewRead(ctx, d, meta)
 }
 
 func resourceADXMaterializedViewRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
+
 	id, err := parseADXMaterializedViewID(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	showCommand := fmt.Sprintf(".show materialized-view %s | extend Lookback=tostring(Lookback), IsHealthy=tolower(tostring(IsHealthy)), IsEnabled=tolower(tostring(IsEnabled)), AutoUpdateSchema=tolower(tostring(AutoUpdateSchema)), EffectiveDateTime", id.Name)
-	resultSet, diags := readADXEntity[ADXMaterializedView](ctx, meta, id, showCommand, "materialized-view")
+	showCommand := fmt.Sprintf(".show materialized-views | where Name == '%s' | extend Lookback=tostring(Lookback), IsHealthy=tolower(tostring(IsHealthy)), IsEnabled=tolower(tostring(IsEnabled)), AutoUpdateSchema=tolower(tostring(AutoUpdateSchema)), EffectiveDateTime", id.Name)
+	resultSet, diags := readADXEntity[ADXMaterializedView](ctx, meta, clusterConfig, id, showCommand, "materialized-view")
 	if diags.HasError() {
 		return diags
 	}
 
-	d.Set("name", id.Name)
-	d.Set("database_name", id.DatabaseName)
-	d.Set("source_table_name", resultSet[0].SourceTable)
-	d.Set("query", resultSet[0].Query)
-	d.Set("auto_update_schema", resultSet[0].AutoUpdateSchema)
-	d.Set("effective_date_time", resultSet[0].EffectiveDateTime)
+	if len(resultSet) < 1 {
+		d.SetId("")
+	} else {
+		d.Set("name", id.Name)
+		d.Set("database_name", id.DatabaseName)
+		d.Set("source_table_name", resultSet[0].SourceTable)
+		d.Set("query", resultSet[0].Query)
+		d.Set("auto_update_schema", resultSet[0].AutoUpdateSchema)
+		d.Set("effective_date_time", resultSet[0].EffectiveDateTime)
+		//flattenAndSetClusterConfig(ctx, d, clusterConfig)
+	}
 
 	return diags
 }
 
 func resourceADXMaterializedViewDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
+
 	id, err := parseADXMaterializedViewID(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	return deleteADXEntity(ctx, d, meta, id.DatabaseName, fmt.Sprintf(".drop materialized-view %s", id.Name))
+	return deleteADXEntity(ctx, d, meta, clusterConfig, id.DatabaseName, fmt.Sprintf(".drop materialized-view %s", id.Name))
 }
 
 func parseADXMaterializedViewID(input string) (*adxResourceId, error) {

@@ -25,6 +25,7 @@ func resourceADXTableRetentionPolicy() *schema.Resource {
 		UpdateContext: resourceADXTableRetentionPolicyCreateUpdate,
 
 		Schema: map[string]*schema.Schema{
+			"cluster": getClusterConfigInputSchema(),
 			"database_name": {
 				Type:             schema.TypeString,
 				Required:         true,
@@ -53,6 +54,7 @@ func resourceADXTableRetentionPolicy() *schema.Resource {
 				Required: true,
 			},
 		},
+		CustomizeDiff: clusterConfigCustomDiff,
 	}
 }
 
@@ -77,8 +79,10 @@ func resourceADXTableRetentionPolicyCreateUpdate(ctx context.Context, d *schema.
 }
 
 func resourceADXTableRetentionPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
+
 	id, resultSet, diags := readADXPolicy(ctx, d, meta, "table", "retention")
-	if diags.HasError() {
+	if diags.HasError() || resultSet==nil || len(resultSet)==0 {
 		return diags
 	}
 
@@ -94,7 +98,7 @@ func resourceADXTableRetentionPolicyRead(ctx context.Context, d *schema.Resource
 
 		originalSoftDeletePeriodTimeUnit := originalSoftDeletePeriod.(string)[len(originalSoftDeletePeriod.(string))-1:]
 
-		softDeletePeriod, err := toADXTimespanLiteral(ctx, meta, id.DatabaseName, policy.SoftDeletePeriod, originalSoftDeletePeriodTimeUnit)
+		softDeletePeriod, err := toADXTimespanLiteral(ctx, meta, clusterConfig, id.DatabaseName, policy.SoftDeletePeriod, originalSoftDeletePeriodTimeUnit)
 		if err != nil {
 			return diag.Errorf("%+v", err)
 		}
