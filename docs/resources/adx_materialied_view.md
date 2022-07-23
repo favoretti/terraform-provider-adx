@@ -33,6 +33,16 @@ resource "adx_materialized_view" "test" {
 - **effective_date_time** (String, Optional) ISO8601 Date time string. If set, creation only backfills with records ingested after the datetime. `backfill` must also be set to true. 
 - **auto_update_schema** (Boolean, Optional) Whether to auto-update the view on source table changes. Default is false. This option is valid only for views of type `arg_max(Timestamp,*)`, `arg_min(Timestamp, *)`, `take_any(*)` (only when columns argument is *). If this option is set to true, changes to source table will be automatically reflected in the materialized view.
 - **update_extents_creation_time** (Boolean, Optional) Relevant only when using `backfill`. If true, extent creation time is assigned based on datetime group-by key during the backfill process
+- **cluster** (Optional) `cluster` Configuration block (defined below) for the target cluster (overrides any config specified in the provider)
+
+`cluster` Configuration block for connection details about the target ADX cluster 
+
+*Note*: Any attributes specified here override the cluster config specified in the provider. Once a resource overrides an attribute specified in the provider, it will be stored explicitly as state for that resource and will not be possible to go back to the provider config.
+
+- **cluster_uri** - (String, Optional) Target ADX cluster endpoint URI, starting with `https://`
+- **client_id** - (String, Optional) The client ID for a service principal having admin access to this cluster/database. 
+- **client_secret** - (String, Optional) The client secret for a service principal having admin access to this cluster/database
+- **tenant_id** - (String, Optional) Id for the tenant to which the service principal belongs
 
 ### Attribute Reference
 
