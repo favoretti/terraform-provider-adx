@@ -32,6 +32,7 @@ func Provider() *schema.Provider {
 				Type:             schema.TypeString,
 				Optional:         true,
 				DefaultFunc:      schema.MultiEnvDefaultFunc([]string{"ADX_ENDPOINT"}, nil),
+				ForceNew:         true,
 				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 
@@ -40,6 +41,12 @@ func Provider() *schema.Provider {
 				Optional:         true,
 				DefaultFunc:      schema.MultiEnvDefaultFunc([]string{"ADX_TENANT_ID"}, nil),
 				ValidateDiagFunc: validate.StringIsNotEmpty,
+			},
+
+			"lazy_init": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
 			},
 		},
 
@@ -71,6 +78,7 @@ func providerConfigure(p *schema.Provider) schema.ConfigureContextFunc {
 			ClientSecret: d.Get("client_secret").(string),
 			TenantID:     d.Get("tenant_id").(string),
 			Endpoint:     d.Get("adx_endpoint").(string),
+			LazyInit:     d.Get("lazy_init").(bool),
 		}
 
 		ua := p.UserAgent(TerraformProviderUserAgent, p.TerraformVersion)

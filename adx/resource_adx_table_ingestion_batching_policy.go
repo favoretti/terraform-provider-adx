@@ -26,6 +26,7 @@ func resourceADXTableIngestionBatchingPolicy() *schema.Resource {
 		UpdateContext: resourceADXTableIngestionBatchingPolicyCreateUpdate,
 
 		Schema: map[string]*schema.Schema{
+			"cluster": getClusterConfigInputSchema(),
 			"database_name": {
 				Type:             schema.TypeString,
 				Required:         true,
@@ -59,6 +60,7 @@ func resourceADXTableIngestionBatchingPolicy() *schema.Resource {
 				Required: true,
 			},
 		},
+		CustomizeDiff: clusterConfigCustomDiff,
 	}
 }
 
@@ -80,7 +82,7 @@ func resourceADXTableIngestionBatchingPolicyCreateUpdate(ctx context.Context, d 
 
 func resourceADXTableIngestionBatchingPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	id, resultSet, diags := readADXPolicy(ctx, d, meta, "table", "ingestionbatching")
-	if diags.HasError() {
+	if diags.HasError() || resultSet==nil || len(resultSet)==0 {
 		return diags
 	}
 

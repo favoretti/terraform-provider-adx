@@ -24,6 +24,7 @@ func resourceADXTableRowLevelSecurityPolicy() *schema.Resource {
 		UpdateContext: resourceADXTableRowLevelSecurityPolicyCreateUpdate,
 
 		Schema: map[string]*schema.Schema{
+			"cluster": getClusterConfigInputSchema(),
 			"database_name": {
 				Type:             schema.TypeString,
 				Required:         true,
@@ -50,6 +51,7 @@ func resourceADXTableRowLevelSecurityPolicy() *schema.Resource {
 				Default:  true,
 			},
 		},
+		CustomizeDiff: clusterConfigCustomDiff,
 	}
 }
 
@@ -75,7 +77,7 @@ func resourceADXTableRowLevelSecurityPolicyCreateUpdate(ctx context.Context, d *
 
 func resourceADXTableRowLevelSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	id, resultSet, diags := readADXPolicy(ctx, d, meta, "table", "row_level_security")
-	if diags.HasError() {
+	if diags.HasError() || resultSet==nil || len(resultSet)==0 {
 		return diags
 	}
 
