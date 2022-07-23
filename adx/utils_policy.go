@@ -74,9 +74,9 @@ func readADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface{}
 		return nil, nil, diag.Errorf("could not read adx policy due to error parsing ID: %+v", err)
 	}
 
-	if tableExists, err := isTableExists(ctx,meta,clusterConfig,id.DatabaseName,id.Name); err != nil || !tableExists{
-		if err!=nil {
-			return id, nil, diag.Errorf("%+v",err)
+	if tableExists, err := isTableExists(ctx, meta, clusterConfig, id.DatabaseName, id.Name); err != nil || !tableExists {
+		if err != nil {
+			return id, nil, diag.Errorf("%+v", err)
 		}
 		d.SetId("")
 		return id, nil, diags

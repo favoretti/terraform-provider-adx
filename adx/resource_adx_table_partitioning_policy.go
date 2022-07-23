@@ -166,7 +166,7 @@ func resourceADXTablePartitioningPolicyCreateUpdate(ctx context.Context, d *sche
 
 func resourceADXTablePartitioningPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	id, resultSet, diags := readADXPolicy(ctx, d, meta, "table", "partitioning")
-	if diags.HasError() || resultSet==nil || len(resultSet)==0 {
+	if diags.HasError() || resultSet == nil || len(resultSet) == 0 {
 		return diags
 	}
 

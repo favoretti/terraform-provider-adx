@@ -246,9 +246,9 @@ func resourceADXTableRead(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.FromErr(err)
 	}
 
-	if tableExists, err := isTableExists(ctx,meta,clusterConfig,id.DatabaseName,id.Name); err != nil || !tableExists{
-		if err!=nil {
-			return diag.Errorf("%+v",err)
+	if tableExists, err := isTableExists(ctx, meta, clusterConfig, id.DatabaseName, id.Name); err != nil || !tableExists {
+		if err != nil {
+			return diag.Errorf("%+v", err)
 		}
 		d.SetId("")
 		return diags

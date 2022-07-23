@@ -74,11 +74,11 @@ func clusterConfigCustomDiff(ctx context.Context, diff *schema.ResourceDiff, met
 
 	newClusterConfig := expandClusterConfig(newClusterMap)
 	oldClusterConfig := expandClusterConfig(oldClusterMap)
-	
+
 	if oldClusterConfig.ClusterURI != newClusterConfig.ClusterURI && oldClusterConfig.ClusterURI == "" && newClusterConfig.ClusterURI == defaultConfig.ClusterURI {
 		diff.Clear("cluster")
 	}
-	
+
 	//applyClusterConfigDefaults(newClusterConfig,defaultConfig)
 
 	//diff.SetNew("cluster",newClusterConfig)
@@ -129,15 +129,15 @@ func expandClusterConfig(input interface{}) *ClusterConfig {
 	clusterInputMap := input.(map[string]interface{})
 
 	return &ClusterConfig{
-		ClientID:     getAttributeOrDefault(clusterInputMap,"client_id",""),
-		ClientSecret: getAttributeOrDefault(clusterInputMap,"client_secret",""),
-		TenantID:     getAttributeOrDefault(clusterInputMap,"tenant_id",""),
-		ClusterURI:   getAttributeOrDefault(clusterInputMap,"cluster_uri",""),
+		ClientID:     getAttributeOrDefault(clusterInputMap, "client_id", ""),
+		ClientSecret: getAttributeOrDefault(clusterInputMap, "client_secret", ""),
+		TenantID:     getAttributeOrDefault(clusterInputMap, "tenant_id", ""),
+		ClusterURI:   getAttributeOrDefault(clusterInputMap, "cluster_uri", ""),
 	}
 }
 
 func getAttributeOrDefault(d map[string]interface{}, name string, defaultString string) string {
-	if val := d[name]; val !=nil {
+	if val := d[name]; val != nil {
 		return val.(string)
 	}
 	return defaultString

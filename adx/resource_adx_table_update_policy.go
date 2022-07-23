@@ -95,7 +95,7 @@ func resourceADXTableUpdatePolicyCreateUpdate(ctx context.Context, d *schema.Res
 
 func resourceADXTableUpdatePolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	id, resultSet, diags := readADXPolicy(ctx, d, meta, "table", "update")
-	if diags.HasError() || resultSet==nil || len(resultSet)==0 {
+	if diags.HasError() || resultSet == nil || len(resultSet) == 0 {
 		return diags
 	}
 
