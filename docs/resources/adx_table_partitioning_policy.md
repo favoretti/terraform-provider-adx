@@ -47,6 +47,7 @@ resource "adx_table_partitioning_policy" "test" {
 - **database_name** (String, Required) Database name that the target table is in
 - **effective_date_time** (String, Required) ISO8601 Timestamp after which this policy will apply
 - **partition_key** (Optional) One to two `partition_key` blocks defined below
+- **cluster** (Optional) `cluster` Configuration block (defined below) for the target cluster (overrides any config specified in the provider)
 
 `partition_key` Configures a single partition key (ADX allows up to two) and supports the following:
 
@@ -69,6 +70,15 @@ resource "adx_table_partitioning_policy" "test" {
 - **override_creation_time** (Boolean, Optional) Indicates whether or not the result extent's minimum and maximum creation times should be overridden by the range of the values in the partition key. (Default is false)
 
 There can be up to one column on which 'Hash' partitioning is defined
+
+`cluster` Configuration block for connection details about the target ADX cluster 
+
+*Note*: Any attributes specified here override the cluster config specified in the provider. Once a resource overrides an attribute specified in the provider, it will be stored explicitly as state for that resource and will not be possible to go back to the provider config.
+
+- **cluster_uri** - (String, Optional) Target ADX cluster endpoint URI, starting with `https://`
+- **client_id** - (String, Optional) The client ID for a service principal having admin access to this cluster/database. 
+- **client_secret** - (String, Optional) The client secret for a service principal having admin access to this cluster/database
+- **tenant_id** - (String, Optional) Id for the tenant to which the service principal belongs
 
 ### Attribute Reference
 

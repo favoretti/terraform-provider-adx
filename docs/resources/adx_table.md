@@ -68,6 +68,7 @@ resource "adx_table" "test" {
 - **column** (String, Optional) One or more `column` blocks defined below.
 - **from_query** (String, Optional) One `from_query` blocks defined below.
 - **merge_on_update** (Boolean, Optional) If true, prevent removal of columns or configuration during schema changes. Changes become additive only. See Azure docs on difference between `.alter` and `.alter-merge`. Default is false
+- **cluster** (Optional) `cluster` Configuration block (defined below) for the target cluster (overrides any config specified in the provider)
 
 `column` Configures a column and supports the following:
 
@@ -84,6 +85,15 @@ See [ADX - Ingest from Query](https://docs.microsoft.com/en-us/azure/data-explor
 - **recreate_schema** (Boolean, Optional) True if the command may recreate the schema of the table. Default is "false". Only applied for updates. Takes precedence over recreate_schema
 - **distributed** (Boolean, Optional) Indicates that the command ingests from all nodes executing the query in parallel. Default is "false"
 - **force_an_update_when_value_changed** (String, Optional) A unique string. If changed the script will be applied again. Default is ""
+
+`cluster` Configuration block for connection details about the target ADX cluster 
+
+*Note*: Any attributes specified here override the cluster config specified in the provider. Once a resource overrides an attribute specified in the provider, it will be stored explicitly as state for that resource and will not be possible to go back to the provider config.
+
+- **cluster_uri** - (String, Optional) Target ADX cluster endpoint URI, starting with `https://`
+- **client_id** - (String, Optional) The client ID for a service principal having admin access to this cluster/database. 
+- **client_secret** - (String, Optional) The client secret for a service principal having admin access to this cluster/database
+- **tenant_id** - (String, Optional) Id for the tenant to which the service principal belongs
 
 ### Attribute Reference
 

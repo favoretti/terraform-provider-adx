@@ -43,6 +43,7 @@ resource "adx_table_mapping" "test" {
 - **table_name** (String, Required) Table name in which this mapping should be created.
 - **kind** (String, Required) Mapping kind. The only currently supported value is `Json`.
 - **mapping** A `mapping` block defined below.
+- **cluster** (Optional) `cluster` Configuration block (defined below) for the target cluster (overrides any config specified in the provider)
 
 `mapping` Configures a mapping and supports the following:
 
@@ -50,6 +51,15 @@ resource "adx_table_mapping" "test" {
 - **path** (String, Required)
 - **datatype** (String, Required)
 - **transform** (String, Optional)
+
+`cluster` Configuration block for connection details about the target ADX cluster 
+
+*Note*: Any attributes specified here override the cluster config specified in the provider. Once a resource overrides an attribute specified in the provider, it will be stored explicitly as state for that resource and will not be possible to go back to the provider config.
+
+- **cluster_uri** - (String, Optional) Target ADX cluster endpoint URI, starting with `https://`
+- **client_id** - (String, Optional) The client ID for a service principal having admin access to this cluster/database. 
+- **client_secret** - (String, Optional) The client secret for a service principal having admin access to this cluster/database
+- **tenant_id** - (String, Optional) Id for the tenant to which the service principal belongs
 
 ### Attribute Reference
 
