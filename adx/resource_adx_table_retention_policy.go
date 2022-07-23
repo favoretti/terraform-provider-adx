@@ -82,7 +82,7 @@ func resourceADXTableRetentionPolicyRead(ctx context.Context, d *schema.Resource
 	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
 
 	id, resultSet, diags := readADXPolicy(ctx, d, meta, "table", "retention")
-	if diags.HasError() || resultSet==nil || len(resultSet)==0 {
+	if diags.HasError() || resultSet == nil || len(resultSet) == 0 {
 		return diags
 	}
 

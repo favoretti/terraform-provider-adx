@@ -70,7 +70,7 @@ func resourceADXTableCachingPolicyRead(ctx context.Context, d *schema.ResourceDa
 	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
 
 	id, resultSet, diags := readADXPolicy(ctx, d, meta, "table", "caching")
-	if diags.HasError() || resultSet==nil || len(resultSet)==0 {
+	if diags.HasError() || resultSet == nil || len(resultSet) == 0 {
 		return diags
 	}
 
