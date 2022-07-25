@@ -22,7 +22,7 @@ resource "adx_materialized_view" "test" {
 }
 ```
 
-### Argument Reference
+## Argument Reference
 
 - **name** (String, Required) Name of the function to create.
 - **database_name** (String, Required) Database name in which this function should be created.
@@ -44,7 +44,7 @@ resource "adx_materialized_view" "test" {
 - **client_secret** - (String, Optional) The client secret for a service principal having admin access to this cluster/database
 - **tenant_id** - (String, Optional) Id for the tenant to which the service principal belongs
 
-### Attribute Reference
+## Attribute Reference
 
 In addition to all arguments above, the following attributes are exported:
 

@@ -60,7 +60,7 @@ resource "adx_table" "test" {
 }
 ```
 
-### Argument Reference
+## Argument Reference
 
 - **name** (String, Required) Name of the Table to create.
 - **database_name** (String, Required) Database name in which this Table should be created.
@@ -95,7 +95,7 @@ See [ADX - Ingest from Query](https://docs.microsoft.com/en-us/azure/data-explor
 - **client_secret** - (String, Optional) The client secret for a service principal having admin access to this cluster/database
 - **tenant_id** - (String, Optional) Id for the tenant to which the service principal belongs
 
-### Attribute Reference
+## Attribute Reference
 
 In addition to all arguments above, the following attributes are exported:
 
