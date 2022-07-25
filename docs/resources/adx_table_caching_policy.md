@@ -38,7 +38,7 @@ resource "adx_table_caching_policy" "test" {
 
 `cluster` Configuration block for connection details about the target ADX cluster 
 
-*Note*: Any attributes specified here override the cluster config specified in the provider. Once a resource overrides an attribute specified in the provider, it will be stored explicitly as state for that resource and will not be possible to go back to the provider config.
+*Note*: Any attributes specified here override the cluster config specified in the provider. Once a resource overrides an attribute specified in the provider, it will be stored explicitly as state for that resource and will not be possible to go back to the provider config unless explicitly unset.
 
 - **cluster_uri** - (String, Optional) Target ADX cluster endpoint URI, starting with `https://`
 - **client_id** - (String, Optional) The client ID for a service principal having admin access to this cluster/database. 
