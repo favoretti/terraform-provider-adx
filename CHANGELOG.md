@@ -1,3 +1,12 @@
+## v0.0.12
+
+* Resource IDs of `adx_table` and `adx_table_mapping` were changed to match the structure of the newly added resources. Should have no impact on normal operation.
+* Lazy Init of provider to resolve Issue Unable to create adx and then use the provider at the same time #2
+* Cluster config per resource (to manage resources across multiple clusters)
+* Refactoring of client & query helpers
+* Checks for deleted resources in ADX (previously this caused errors and this provider would not recognize to re-create them)
+* Client caching for optimizing control of many resources across many clusters (client per cluster)
+
 ## v0.0.11
 
 * New resource: `adx_table_caching_policy`
