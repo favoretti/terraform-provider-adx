@@ -6,6 +6,8 @@ import (
 	"regexp"
 
 	"encoding/json"
+
+	"github.com/favoretti/terraform-provider-adx/adx/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -27,20 +29,20 @@ func resourceADXTableRetentionPolicy() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: stringIsNotEmpty,
+				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 
 			"table_name": {
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: stringIsNotEmpty,
+				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 
 			"soft_delete_period": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateDiagFunc: stringMatch(
+				ValidateDiagFunc: validate.StringMatch(
 					regexp.MustCompile("[0-9]{1,3}[dhms]"),
 					"soft delete timespan must be in the format of <amount><unit> such as 1m for (one minute) or 30d (thirty days)",
 				),
@@ -88,7 +90,7 @@ func resourceADXTableRetentionPolicyRead(ctx context.Context, d *schema.Resource
 	originalSoftDeletePeriod := d.Get("soft_delete_period")
 
 	if originalSoftDeletePeriod != "" {
-		//return diag.Errorf(originalSoftDeletePeriod.(string))
+		// return diag.Errorf(originalSoftDeletePeriod.(string))
 
 		originalSoftDeletePeriodTimeUnit := originalSoftDeletePeriod.(string)[len(originalSoftDeletePeriod.(string))-1:]
 
