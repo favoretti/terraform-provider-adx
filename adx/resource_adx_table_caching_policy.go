@@ -6,6 +6,8 @@ import (
 	"regexp"
 
 	"encoding/json"
+
+	"github.com/favoretti/terraform-provider-adx/adx/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -26,20 +28,20 @@ func resourceADXTableCachingPolicy() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: stringIsNotEmpty,
+				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 
 			"table_name": {
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: stringIsNotEmpty,
+				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 
 			"data_hot_span": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateDiagFunc: stringMatch(
+				ValidateDiagFunc: validate.StringMatch(
 					regexp.MustCompile("[0-9]{1,3}[dhms]"),
 					"data_hot_span must be in the format of <amount><unit> such as 1m for (one minute) or 30d (thirty days)",
 				),

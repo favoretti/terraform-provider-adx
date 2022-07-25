@@ -6,6 +6,8 @@ import (
 	"regexp"
 
 	"encoding/json"
+
+	"github.com/favoretti/terraform-provider-adx/adx/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -28,20 +30,20 @@ func resourceADXTableIngestionBatchingPolicy() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: stringIsNotEmpty,
+				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 
 			"table_name": {
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: stringIsNotEmpty,
+				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 
 			"max_batching_timespan": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateDiagFunc: stringMatch(
+				ValidateDiagFunc: validate.StringMatch(
 					regexp.MustCompile("\\d\\d:\\d\\d:\\d\\d"),
 					"batching timespan must be in the format HH:MM:SS of ex. 00:10:00 for 10 minutes",
 				),

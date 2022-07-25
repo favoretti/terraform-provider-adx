@@ -7,6 +7,7 @@ import (
 
 	"github.com/Azure/azure-kusto-go/kusto"
 	"github.com/Azure/azure-kusto-go/kusto/unsafe"
+	"github.com/favoretti/terraform-provider-adx/adx/validate"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -31,7 +32,7 @@ func resourceADXFunction() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: stringIsNotEmpty,
+				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 
 			"name": {
@@ -47,7 +48,7 @@ func resourceADXFunction() *schema.Resource {
 			"body": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateDiagFunc: stringMatch(
+				ValidateDiagFunc: validate.StringMatch(
 					regexp.MustCompile("{.*}"),
 					"function body must include outer curly brackets {}",
 				),

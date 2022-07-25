@@ -9,6 +9,7 @@ import (
 	"github.com/Azure/azure-kusto-go/kusto"
 	"github.com/Azure/azure-kusto-go/kusto/data/table"
 	"github.com/Azure/azure-kusto-go/kusto/unsafe"
+	"github.com/favoretti/terraform-provider-adx/adx/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -36,20 +37,24 @@ func resourceADXTable() *schema.Resource {
 		ReadContext:   resourceADXTableRead,
 		DeleteContext: resourceADXTableDelete,
 		UpdateContext: resourceADXTableUpdate,
+		StateUpgraders: []schema.StateUpgrader{
+			TableV0ToV1Upgrader(),
+		},
+		SchemaVersion: 1,
 
 		Schema: map[string]*schema.Schema{
 			"database_name": {
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: stringIsNotEmpty,
+				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 
 			"name": {
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: stringIsNotEmpty,
+				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 
 			"table_schema": {
@@ -58,7 +63,7 @@ func resourceADXTable() *schema.Resource {
 				Computed:      true,
 				AtLeastOneOf:  []string{"table_schema", "column", "from_query"},
 				ConflictsWith: []string{"column", "from_query"},
-				ValidateDiagFunc: stringMatch(
+				ValidateDiagFunc: validate.StringMatch(
 					regexp.MustCompile("[a-zA-Z0-9:-_,]+"),
 					"Table schema must contain only letters, number, dashes, semicolons, commas and underscores and no spaces",
 				),
@@ -75,12 +80,12 @@ func resourceADXTable() *schema.Resource {
 						"name": {
 							Type:             schema.TypeString,
 							Required:         true,
-							ValidateDiagFunc: stringIsNotEmpty,
+							ValidateDiagFunc: validate.StringIsNotEmpty,
 						},
 						"type": {
 							Type:             schema.TypeString,
 							Required:         true,
-							ValidateDiagFunc: stringIsNotEmpty,
+							ValidateDiagFunc: validate.StringIsNotEmpty,
 						},
 					},
 				},
@@ -97,7 +102,7 @@ func resourceADXTable() *schema.Resource {
 						"query": {
 							Type:             schema.TypeString,
 							Required:         true,
-							ValidateDiagFunc: stringIsNotEmpty,
+							ValidateDiagFunc: validate.StringIsNotEmpty,
 						},
 						"append": {
 							Type:     schema.TypeBool,

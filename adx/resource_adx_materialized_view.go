@@ -7,19 +7,20 @@ import (
 	"strings"
 
 	"github.com/Azure/azure-kusto-go/kusto/data/value"
+	"github.com/favoretti/terraform-provider-adx/adx/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 type ADXMaterializedView struct {
-	Name string
-	SourceTable string
-	Query       string
-	MaterializedTo value.DateTime
-	AutoUpdateSchema string
-    EffectiveDateTime value.DateTime
-	Lookback string
+	Name              string
+	SourceTable       string
+	Query             string
+	MaterializedTo    value.DateTime
+	AutoUpdateSchema  string
+	EffectiveDateTime value.DateTime
+	Lookback          string
 }
 
 func resourceADXMaterializedView() *schema.Resource {
@@ -34,7 +35,7 @@ func resourceADXMaterializedView() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: stringIsNotEmpty,
+				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 
 			"source_table_name": {
@@ -58,9 +59,9 @@ func resourceADXMaterializedView() *schema.Resource {
 			},
 
 			"query": {
-				Type:     schema.TypeString,
-				Required: true,
-				ValidateDiagFunc: stringIsNotEmpty,
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 
 			"async": {
@@ -96,11 +97,11 @@ func resourceADXMaterializedView() *schema.Resource {
 }
 
 func resourceADXMaterializedViewCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return resourceADXMaterializedViewCreateUpdate(ctx,d,meta,true)
+	return resourceADXMaterializedViewCreateUpdate(ctx, d, meta, true)
 }
 
 func resourceADXMaterializedViewUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return resourceADXMaterializedViewCreateUpdate(ctx,d,meta,false)
+	return resourceADXMaterializedViewCreateUpdate(ctx, d, meta, false)
 }
 
 func resourceADXMaterializedViewCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, new bool) diag.Diagnostics {
@@ -117,17 +118,17 @@ func resourceADXMaterializedViewCreateUpdate(ctx context.Context, d *schema.Reso
 
 	var withParams []string
 
-	if backfill, ok := d.GetOk("backfill"); ok  {
-		withParams = append(withParams, fmt.Sprintf("backfill=%t",backfill.(bool)))
+	if backfill, ok := d.GetOk("backfill"); ok {
+		withParams = append(withParams, fmt.Sprintf("backfill=%t", backfill.(bool)))
 	}
 	if updateExtentsCreationTime, ok := d.GetOk("update_extents_creation_time"); ok {
-		withParams = append(withParams, fmt.Sprintf("UpdateExtentsCreationTime=%t",updateExtentsCreationTime.(bool)))
+		withParams = append(withParams, fmt.Sprintf("UpdateExtentsCreationTime=%t", updateExtentsCreationTime.(bool)))
 	}
 	if autoUpdateSchema, ok := d.GetOk("auto_update_schema"); ok {
-		withParams = append(withParams, fmt.Sprintf("autoUpdateSchema=%t",autoUpdateSchema.(bool)))
+		withParams = append(withParams, fmt.Sprintf("autoUpdateSchema=%t", autoUpdateSchema.(bool)))
 	}
-	if effectiveDateTime, ok := d.GetOk("effective_date_time"); ok  {
-		withParams = append(withParams,fmt.Sprintf( "effectiveDateTime=%s",effectiveDateTime.(string)))
+	if effectiveDateTime, ok := d.GetOk("effective_date_time"); ok {
+		withParams = append(withParams, fmt.Sprintf("effectiveDateTime=%s", effectiveDateTime.(string)))
 	}
 
 	withClause := ""
@@ -139,10 +140,10 @@ func resourceADXMaterializedViewCreateUpdate(ctx context.Context, d *schema.Reso
 	if new {
 		cmd = ".create"
 	}
-	
+
 	createStatement := fmt.Sprintf("%s %s materialized-view %s %s on table %s \n{\n%s\n}", cmd, asyncString, withClause, name, sourceTableName, query)
 
-	_,err := queryADXMgmt(ctx,meta,databaseName,createStatement)
+	_, err := queryADXMgmt(ctx, meta, databaseName, createStatement)
 	if err != nil {
 		return diag.Errorf("error creating materialized-view %s (Database %q): %+v", name, databaseName, err)
 	}
@@ -164,7 +165,7 @@ func resourceADXMaterializedViewRead(ctx context.Context, d *schema.ResourceData
 	if diags.HasError() {
 		return diags
 	}
-	
+
 	d.Set("name", id.Name)
 	d.Set("database_name", id.DatabaseName)
 	d.Set("source_table_name", resultSet[0].SourceTable)
