@@ -12,7 +12,7 @@ type ClusterConfig struct {
 	ClientID     string
 	ClientSecret string
 	TenantID     string
-	ClusterURI   string
+	URI          string
 }
 
 func getClusterConfigInputSchema() *schema.Schema {
@@ -23,7 +23,7 @@ func getClusterConfigInputSchema() *schema.Schema {
 		Computed: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"cluster_uri": {
+				"uri": {
 					Type:     schema.TypeString,
 					Optional: true,
 					ForceNew: true,
@@ -50,6 +50,9 @@ func getClusterConfigInputSchema() *schema.Schema {
 }
 
 func clusterConfigCustomDiff(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
+	id := diff.Id()
+	log.Printf("[DEBUG] Prcoessing resource with id(%s): %s", id)
+
 	oldCluster, newCluster := diff.GetChange("cluster")
 	var newClusterMap map[string]interface{}
 	var oldClusterMap map[string]interface{}
@@ -68,20 +71,34 @@ func clusterConfigCustomDiff(ctx context.Context, diff *schema.ResourceDiff, met
 
 	defaultConfig := meta.(*Meta).DefaultClusterConfig
 
-	log.Printf("[DEBUG] diff: default cluster_uri (%s)", defaultConfig.ClusterURI)
-	log.Printf("[DEBUG] diff: new cluster_uri (%s)", newClusterMap["cluster_uri"])
-	log.Printf("[DEBUG] diff: old cluster_uri (%s)", oldClusterMap["cluster_uri"])
+	log.Printf("[TRACE] diff: default cluster uri (%s)", defaultConfig.URI)
+	log.Printf("[TRACE] diff: new cluster uri (%s)", newClusterMap["uri"])
+	log.Printf("[TRACE] diff: old cluster uri (%s)", oldClusterMap["uri"])
 
 	newClusterConfig := expandClusterConfig(newClusterMap)
 	oldClusterConfig := expandClusterConfig(oldClusterMap)
 
-	if oldClusterConfig.ClusterURI != newClusterConfig.ClusterURI && oldClusterConfig.ClusterURI == "" && newClusterConfig.ClusterURI == defaultConfig.ClusterURI {
+	if oldClusterConfig.URI != newClusterConfig.URI && oldClusterConfig.URI == "" && newClusterConfig.URI == defaultConfig.URI {
 		diff.Clear("cluster")
+	} else {
+		if oldClusterConfig.URI != "" && newClusterConfig.URI == "" {
+			newClusterMap["uri"] = defaultConfig.URI
+			log.Printf("[DEBUG] Defaulting cluster[0].uri diff to provider config: %s", defaultConfig.URI)
+		}
+		if oldClusterConfig.ClientID != "" && newClusterConfig.ClientID == "" {
+			newClusterMap["client_id"] = defaultConfig.ClientID
+			log.Printf("[DEBUG] Defaulting cluster[0].client_id diff to provider config: %s", defaultConfig.ClientID)
+		}
+		if oldClusterConfig.ClientSecret != "" && newClusterConfig.ClientSecret == "" {
+			newClusterMap["client_secret"] = defaultConfig.ClientSecret
+			log.Printf("[DEBUG] Defaulting cluster[0].client_secret diff to provider config: %s", defaultConfig.ClientSecret)
+		}
+		if oldClusterConfig.TenantID != "" && newClusterConfig.TenantID == "" {
+			newClusterMap["tenant_id"] = defaultConfig.TenantID
+			log.Printf("[DEBUG] Defaulting cluster[0].tenant_id diff to provider config: %s", defaultConfig.TenantID)
+		}
+		diff.SetNew("cluster", newCluster)
 	}
-
-	//applyClusterConfigDefaults(newClusterConfig,defaultConfig)
-
-	//diff.SetNew("cluster",newClusterConfig)
 
 	return nil
 }
@@ -99,9 +116,9 @@ func applyClusterConfigDefaults(clusterConfig *ClusterConfig, defaultConfig *Clu
 		log.Printf("[DEBUG] Using default TenantID from provider for cluster config")
 		clusterConfig.TenantID = defaultConfig.TenantID
 	}
-	if len(clusterConfig.ClusterURI) == 0 {
-		log.Printf("[DEBUG] Using default ClusterURI from provider for cluster config")
-		clusterConfig.ClusterURI = defaultConfig.ClusterURI
+	if len(clusterConfig.URI) == 0 {
+		log.Printf("[DEBUG] Using default URI from provider for cluster config")
+		clusterConfig.URI = defaultConfig.URI
 	}
 }
 
@@ -132,7 +149,7 @@ func expandClusterConfig(input interface{}) *ClusterConfig {
 		ClientID:     getAttributeOrDefault(clusterInputMap, "client_id", ""),
 		ClientSecret: getAttributeOrDefault(clusterInputMap, "client_secret", ""),
 		TenantID:     getAttributeOrDefault(clusterInputMap, "tenant_id", ""),
-		ClusterURI:   getAttributeOrDefault(clusterInputMap, "cluster_uri", ""),
+		URI:          getAttributeOrDefault(clusterInputMap, "uri", ""),
 	}
 }
 
@@ -153,11 +170,11 @@ func flattenClusterConfig(clusterConfig *ClusterConfig) []map[string]interface{}
 	cluster[0]["client_id"] = clusterConfig.ClientID
 	cluster[0]["client_secret"] = clusterConfig.ClientSecret
 	cluster[0]["tenant_id"] = clusterConfig.TenantID
-	cluster[0]["cluster_uri"] = clusterConfig.ClusterURI
+	cluster[0]["uri"] = clusterConfig.URI
 	return cluster
 }
 
 func hashClusterConfig(clusterConfig *ClusterConfig) string {
-	hash := hashObjects([]interface{}{clusterConfig.ClientID, clusterConfig.ClientSecret, clusterConfig.TenantID, clusterConfig.ClusterURI})
+	hash := hashObjects([]interface{}{clusterConfig.ClientID, clusterConfig.ClientSecret, clusterConfig.TenantID, clusterConfig.URI})
 	return hex.EncodeToString(hash)
 }

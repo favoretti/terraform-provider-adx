@@ -85,7 +85,7 @@ func resourceADXFunctionCreateUpdate(ctx context.Context, d *schema.ResourceData
 		return diag.Errorf("error creating function %s (Database %q): %+v", name, databaseName, err)
 	}
 
-	d.SetId(buildADXResourceId(clusterConfig.ClusterURI, databaseName, "function", name))
+	d.SetId(buildADXResourceId(clusterConfig.URI, databaseName, "function", name))
 
 	return resourceADXFunctionRead(ctx, d, meta)
 }
