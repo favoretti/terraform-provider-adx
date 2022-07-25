@@ -121,10 +121,12 @@ resource "adx_table_update_policy" "test_update" {
 
 ## Argument Reference
 
-* `adx_endpoint` - (Optional) ADX Endpoint URI, starting with `https://`. It can also be sourced from the `ADX_ENDPOINT` environment variable.
+* `adx_endpoint` - (String, Optional) ADX Endpoint URI, starting with `https://`. It can also be sourced from the `ADX_ENDPOINT` environment variable.
 
-* `client_id` - (Optional) The client ID. It can also be sourced from the `ADX_CLIENT_ID` environment variable.
+* `client_id` - (String, Optional) The client ID. It can also be sourced from the `ADX_CLIENT_ID` environment variable.
 
-* `client_secret` - (Optional) The client secret. It can also be sourced from the `ADX_CLIENT_SECRET` environment variable.
+* `client_secret` - (String, Optional) The client secret. It can also be sourced from the `ADX_CLIENT_SECRET` environment variable.
 
-* `tenant_id` - (Optional) The tenant ID. It can also be sourced from the `ADX_TENANT_ID` environment variable.
+* `tenant_id` - (String, Optional) The tenant ID. It can also be sourced from the `ADX_TENANT_ID` environment variable.
+
+* `lazy_init` - (Boolean, Optional) Defer connection to ADX until the first resource is managed. Default is false

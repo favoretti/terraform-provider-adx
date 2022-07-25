@@ -24,6 +24,7 @@ func resourceADXTableCachingPolicy() *schema.Resource {
 		UpdateContext: resourceADXTableCachingPolicyCreateUpdate,
 
 		Schema: map[string]*schema.Schema{
+			"cluster": getClusterConfigInputSchema(),
 			"database_name": {
 				Type:             schema.TypeString,
 				Required:         true,
@@ -47,6 +48,7 @@ func resourceADXTableCachingPolicy() *schema.Resource {
 				),
 			},
 		},
+		CustomizeDiff: clusterConfigCustomDiff,
 	}
 }
 
@@ -65,11 +67,11 @@ func resourceADXTableCachingPolicyCreateUpdate(ctx context.Context, d *schema.Re
 }
 
 func resourceADXTableCachingPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
+	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
 
-	id, resultSet, err := readADXPolicy(ctx, d, meta, "table", "caching")
-	if err != nil {
-		return diag.Errorf("%+v", err)
+	id, resultSet, diags := readADXPolicy(ctx, d, meta, "table", "caching")
+	if diags.HasError() || resultSet == nil || len(resultSet) == 0 {
+		return diags
 	}
 
 	var policy TableCachingPolicy
@@ -82,7 +84,7 @@ func resourceADXTableCachingPolicyRead(ctx context.Context, d *schema.ResourceDa
 	if originalDataHotSpan != "" {
 		originalDataHotSpanTimeUnit := originalDataHotSpan.(string)[len(originalDataHotSpan.(string))-1:]
 
-		dataHotSpan, err := toADXTimespanLiteral(ctx, meta, id.DatabaseName, policy.DataHotSpan.Value, originalDataHotSpanTimeUnit)
+		dataHotSpan, err := toADXTimespanLiteral(ctx, meta, clusterConfig, id.DatabaseName, policy.DataHotSpan.Value, originalDataHotSpanTimeUnit)
 		if err != nil {
 			return diag.Errorf("%+v", err)
 		}

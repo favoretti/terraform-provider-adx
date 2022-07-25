@@ -43,6 +43,7 @@ func resourceADXTableMapping() *schema.Resource {
 		SchemaVersion: 1,
 
 		Schema: map[string]*schema.Schema{
+			"cluster": getClusterConfigInputSchema(),
 			"name": {
 				Type:             schema.TypeString,
 				Required:         true,
@@ -97,12 +98,18 @@ func resourceADXTableMapping() *schema.Resource {
 				Computed: true,
 			},
 		},
+		CustomizeDiff: clusterConfigCustomDiff,
 	}
 }
 
 func resourceADXTableMappingCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
-	client := meta.(*Meta).Kusto
+
+	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
+	client, err := getADXClient(meta, clusterConfig)
+	if err != nil {
+		return diag.Errorf("error creating adx client connection: %+v", err)
+	}
 
 	name := d.Get("name").(string)
 	tableName := d.Get("table_name").(string)
@@ -114,7 +121,7 @@ func resourceADXTableMappingCreateUpdate(ctx context.Context, d *schema.Resource
 	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
 	createStatement := fmt.Sprintf(".create-or-alter table %s ingestion %s mapping '%s' '[%s]'", tableName, strings.ToLower(kind), name, mapping)
 
-	_, err := client.Mgmt(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(createStatement))
+	_, err = client.Mgmt(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(createStatement))
 	if err != nil {
 		return diag.Errorf("error creating Mapping %q (Table %q, Database %q): %+v", name, tableName, databaseName, err)
 	}
@@ -129,12 +136,24 @@ func resourceADXTableMappingCreateUpdate(ctx context.Context, d *schema.Resource
 
 func resourceADXTableMappingRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
+	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
 
-	client := meta.(*Meta).Kusto
+	client, err := getADXClient(meta, clusterConfig)
+	if err != nil {
+		return diag.Errorf("error creating adx client connection: %+v", err)
+	}
 
 	id, err := parseADXTableMappingID(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	if tableExists, err := isTableExists(ctx, meta, clusterConfig, id.DatabaseName, id.Name); err != nil || !tableExists {
+		if err != nil {
+			return diag.Errorf("%+v", err)
+		}
+		d.SetId("")
+		return diags
 	}
 
 	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
@@ -173,26 +192,15 @@ func resourceADXTableMappingRead(ctx context.Context, d *schema.ResourceData, me
 }
 
 func resourceADXTableMappingDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	client := meta.(*Meta).Kusto
+	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
 
 	id, err := parseADXTableMappingID(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
 	deleteStatement := fmt.Sprintf(".drop table %s ingestion %s mapping '%s'", id.Name, strings.ToLower(id.Kind), id.MappingName)
-
-	_, err = client.Mgmt(ctx, id.DatabaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(deleteStatement))
-	if err != nil {
-		return diag.Errorf("error deleting Table Mapping %q (Table %q, Database %q): %+v", id.MappingName, id.Name, id.DatabaseName, err)
-	}
-
-	d.SetId("")
-
-	return diags
+	return deleteADXEntity(ctx, d, meta, clusterConfig, id.DatabaseName, deleteStatement)
 }
 
 func expandTableMapping(input []interface{}) string {

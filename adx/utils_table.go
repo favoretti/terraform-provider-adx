@@ -1,8 +1,11 @@
 package adx
 
 import (
+	"context"
 	"fmt"
 	"strings"
+
+	"github.com/Azure/azure-kusto-go/kusto/data/table"
 )
 
 type adxTableResourceId struct {
@@ -66,4 +69,24 @@ func parseADXTableMappingV0ID(input string) (*adxTableMappingResourceId, error) 
 		MappingName:   parts[4],
 		adxResourceId: res,
 	}, nil
+}
+
+func isTableExists(ctx context.Context, meta interface{}, clusterConfig *ClusterConfig, databaseName, tableName string) (bool, error) {
+	showStatement := fmt.Sprintf(".show tables (%s) details", tableName)
+
+	resp, err := queryADXMgmt(ctx, meta, clusterConfig, databaseName, showStatement)
+	defer resp.Stop()
+	if err != nil {
+		return false, fmt.Errorf("error checking if table exists (%s) in database (%s): %+v", tableName, databaseName, err)
+	}
+	var exists bool
+	err = resp.Do(
+		func(row *table.Row) error {
+			exists = true
+			return nil
+		})
+	if err != nil {
+		return false, fmt.Errorf("error checking if table exists (%s) in database (%s): %+v", tableName, databaseName, err)
+	}
+	return exists, nil
 }

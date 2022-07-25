@@ -28,6 +28,7 @@ func resourceADXFunction() *schema.Resource {
 		DeleteContext: resourceADXFunctionDelete,
 
 		Schema: map[string]*schema.Schema{
+			"cluster": getClusterConfigInputSchema(),
 			"database_name": {
 				Type:             schema.TypeString,
 				Required:         true,
@@ -60,10 +61,12 @@ func resourceADXFunction() *schema.Resource {
 				Default:  "()",
 			},
 		},
+		CustomizeDiff: clusterConfigCustomDiff,
 	}
 }
 
 func resourceADXFunctionCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
 	name := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 	body := d.Get("body").(string)
@@ -71,45 +74,55 @@ func resourceADXFunctionCreateUpdate(ctx context.Context, d *schema.ResourceData
 
 	createStatement := fmt.Sprintf(".create-or-alter function \n%s%s\n%s", name, parameters, body)
 
-	client := meta.(*Meta).Kusto
+	client, err := getADXClient(meta, clusterConfig)
+	if err != nil {
+		return diag.Errorf("error creating adx client connection: %+v", err)
+	}
 
 	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
-	_, err := client.Mgmt(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(createStatement))
+	_, err = client.Mgmt(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(createStatement))
 	if err != nil {
 		return diag.Errorf("error creating function %s (Database %q): %+v", name, databaseName, err)
 	}
 
-	d.SetId(buildADXResourceId(client.Endpoint(), databaseName, "function", name))
+	d.SetId(buildADXResourceId(clusterConfig.URI, databaseName, "function", name))
 
 	return resourceADXFunctionRead(ctx, d, meta)
 }
 
 func resourceADXFunctionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
 	id, err := parseADXFunctionID(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	resultSet, diags := readADXEntity[ADXFunction](ctx, meta, id, fmt.Sprintf(".show function %s", id.Name), "function")
+	resultSet, diags := readADXEntity[ADXFunction](ctx, meta, clusterConfig, id, fmt.Sprintf(".show functions | where Name == '%s'", id.Name), "function")
 	if diags.HasError() {
 		return diags
 	}
 
-	d.Set("name", id.Name)
-	d.Set("database_name", id.DatabaseName)
-	d.Set("body", resultSet[0].Body)
-	d.Set("parameters", resultSet[0].Parameters)
+	if len(resultSet) < 1 {
+		d.SetId("")
+	} else {
+		d.Set("name", id.Name)
+		d.Set("database_name", id.DatabaseName)
+		d.Set("body", resultSet[0].Body)
+		d.Set("parameters", resultSet[0].Parameters)
+	}
 
 	return diags
 }
 
 func resourceADXFunctionDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
+
 	id, err := parseADXFunctionID(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	return deleteADXEntity(ctx, d, meta, id.DatabaseName, fmt.Sprintf(".drop function %s", id.Name))
+	return deleteADXEntity(ctx, d, meta, clusterConfig, id.DatabaseName, fmt.Sprintf(".drop function %s", id.Name))
 }
 
 func parseADXFunctionID(input string) (*adxResourceId, error) {
