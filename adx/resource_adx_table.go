@@ -161,8 +161,7 @@ func resourceADXTableCreate(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf("error creating Table %q (Database %q): %+v", tableName, databaseName, err)
 	}
 
-	id := fmt.Sprintf("%s|%s|%s", client.Endpoint(), databaseName, tableName)
-	d.SetId(id)
+	d.SetId(buildADXResourceId(client.Endpoint(), databaseName, "table", tableName))
 
 	resourceADXTableRead(ctx, d, meta)
 
@@ -350,4 +349,8 @@ func flattenTableColumn(input string) []interface{} {
 		columns = append(columns, block)
 	}
 	return columns
+}
+
+func parseADXTableID(input string) (*adxResourceId, error) {
+	return parseADXResourceID(input, 4, 0, 1, 2, 3)
 }

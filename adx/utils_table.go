@@ -16,7 +16,7 @@ type adxTableMappingResourceId struct {
 	adxResourceId
 }
 
-func parseADXTableID(input string) (*adxResourceId, error) {
+func parseADXTableV0ID(input string) (*adxResourceId, error) {
 	parts := strings.Split(input, "|")
 	if len(parts) != 3 {
 		return nil, fmt.Errorf("error parsing ADX Table resource ID: unexpected format: %q", input)
