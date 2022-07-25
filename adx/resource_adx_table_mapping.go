@@ -187,7 +187,6 @@ func resourceADXTableMappingRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("kind", schemas[0].Kind)
 	d.Set("mapping", flattenTableMapping(schemas[0].Mapping))
 	d.Set("last_updated_on", schemas[0].LastUpdatedOn)
-	//flattenAndSetClusterConfig(ctx, d, clusterConfig)
 
 	return diags
 }

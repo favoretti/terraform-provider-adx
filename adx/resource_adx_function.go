@@ -109,7 +109,6 @@ func resourceADXFunctionRead(ctx context.Context, d *schema.ResourceData, meta i
 		d.Set("database_name", id.DatabaseName)
 		d.Set("body", resultSet[0].Body)
 		d.Set("parameters", resultSet[0].Parameters)
-		//flattenAndSetClusterConfig(ctx, d, clusterConfig)
 	}
 
 	return diags

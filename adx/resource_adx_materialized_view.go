@@ -183,7 +183,6 @@ func resourceADXMaterializedViewRead(ctx context.Context, d *schema.ResourceData
 		d.Set("query", resultSet[0].Query)
 		d.Set("auto_update_schema", resultSet[0].AutoUpdateSchema)
 		d.Set("effective_date_time", resultSet[0].EffectiveDateTime)
-		//flattenAndSetClusterConfig(ctx, d, clusterConfig)
 	}
 
 	return diags
