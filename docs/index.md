@@ -1,6 +1,6 @@
 # Azure Data Explorer Provider
 
-Use this provider to manage Azure Data Explorer tables and mappings.
+Use this provider to manage Azure Data Explorer resources.
 
 ## Example Usage
 
@@ -130,3 +130,44 @@ resource "adx_table_update_policy" "test_update" {
 * `tenant_id` - (String, Optional) The tenant ID. It can also be sourced from the `ADX_TENANT_ID` environment variable.
 
 * `lazy_init` - (Boolean, Optional) Defer connection to ADX until the first resource is managed. Default is false
+
+## Alternative authentication
+Above configuration parameters can also be overridden with following environment variables:
+```
+ADX_ENDPOINT
+ADX_CLIENT_ID
+ADX_CLIENT_SECRET
+ADX_TENANT_ID
+```
+
+## Lazy provider initialization
+```hcl
+provider "adx" {
+adx_endpoint  = "https://adxcluster123.eastus.kusto.windows.net"
+client_id     = "clientId"
+client_secret = "secret"
+tenant_id     = "tenantId"
+lazy_init     = true
+}
+```
+
+If `lazy_init` is set to true, no connection will be attempted to the ADX cluster until the first resource state load.
+
+## Cluster config per resource
+
+Resources allow overriding any of the cluster attributes specified in the provider config.
+
+The provider config is the "default" config for each resource unless overridden.
+
+*NOTE:* Once a resource overrides an attribute specified in the provider, it will be stored explicitly as state for that resource (instead of computed) and will not be possible to go back to the provider config.
+
+```hcl
+resource "adx_table" "test" {
+  name          = "Test1"
+  database_name = "test-db"
+  table_schema  = "f1:string,f2:string,f4:string,f3:int"
+  cluster {
+    cluster_uri = "https://adxcluster456.eastus.kusto.windows.net"
+  }
+}
+```
