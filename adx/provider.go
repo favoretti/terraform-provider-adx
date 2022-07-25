@@ -3,6 +3,7 @@ package adx
 import (
 	"context"
 
+	"github.com/favoretti/terraform-provider-adx/adx/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -16,7 +17,7 @@ func Provider() *schema.Provider {
 				Type:             schema.TypeString,
 				Optional:         true,
 				DefaultFunc:      schema.MultiEnvDefaultFunc([]string{"ADX_CLIENT_ID"}, nil),
-				ValidateDiagFunc: stringIsNotEmpty,
+				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 
 			"client_secret": {
@@ -24,21 +25,21 @@ func Provider() *schema.Provider {
 				Optional:         true,
 				Sensitive:        true,
 				DefaultFunc:      schema.MultiEnvDefaultFunc([]string{"ADX_CLIENT_SECRET"}, nil),
-				ValidateDiagFunc: stringIsNotEmpty,
+				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 
 			"adx_endpoint": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				DefaultFunc:      schema.MultiEnvDefaultFunc([]string{"ADX_ENDPOINT"}, nil),
-				ValidateDiagFunc: stringIsNotEmpty,
+				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 
 			"tenant_id": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				DefaultFunc:      schema.MultiEnvDefaultFunc([]string{"ADX_TENANT_ID"}, nil),
-				ValidateDiagFunc: stringIsNotEmpty,
+				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 		},
 

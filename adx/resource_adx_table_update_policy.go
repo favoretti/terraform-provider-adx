@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"encoding/json"
+
+	"github.com/favoretti/terraform-provider-adx/adx/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -29,14 +31,14 @@ func resourceADXTableUpdatePolicy() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: stringIsNotEmpty,
+				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 
 			"table_name": {
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: stringIsNotEmpty,
+				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 
 			"enabled": {
@@ -48,13 +50,13 @@ func resourceADXTableUpdatePolicy() *schema.Resource {
 			"source_table": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: stringIsNotEmpty,
+				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 
 			"query": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: stringIsNotEmpty,
+				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 
 			"transactional": {

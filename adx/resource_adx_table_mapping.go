@@ -10,6 +10,7 @@ import (
 	"github.com/Azure/azure-kusto-go/kusto/data/table"
 	"github.com/Azure/azure-kusto-go/kusto/data/value"
 	"github.com/Azure/azure-kusto-go/kusto/unsafe"
+	"github.com/favoretti/terraform-provider-adx/adx/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -36,29 +37,33 @@ func resourceADXTableMapping() *schema.Resource {
 		UpdateContext: resourceADXTableMappingCreateUpdate,
 		ReadContext:   resourceADXTableMappingRead,
 		DeleteContext: resourceADXTableMappingDelete,
+		StateUpgraders: []schema.StateUpgrader{
+			TableMappingV0ToV1Upgrader(),
+		},
+		SchemaVersion: 1,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: stringIsNotEmpty,
+				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 			"database_name": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: stringIsNotEmpty,
+				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 
 			"table_name": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: stringIsNotEmpty,
+				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 
 			"kind": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateDiagFunc: stringInSlice([]string{
+				ValidateDiagFunc: validate.StringInSlice([]string{
 					"Json",
 				}),
 			},
@@ -104,6 +109,7 @@ func resourceADXTableMappingCreateUpdate(ctx context.Context, d *schema.Resource
 	databaseName := d.Get("database_name").(string)
 	kind := d.Get("kind").(string)
 	mapping := expandTableMapping(d.Get("mapping").([]interface{}))
+	entityType := "table"
 
 	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
 	createStatement := fmt.Sprintf(".create-or-alter table %s ingestion %s mapping '%s' '[%s]'", tableName, strings.ToLower(kind), name, mapping)
@@ -113,7 +119,7 @@ func resourceADXTableMappingCreateUpdate(ctx context.Context, d *schema.Resource
 		return diag.Errorf("error creating Mapping %q (Table %q, Database %q): %+v", name, tableName, databaseName, err)
 	}
 
-	id := fmt.Sprintf("%s|%s|%s|%s|%s", client.Endpoint(), databaseName, tableName, strings.ToLower(kind), name)
+	id := buildADXResourceId(client.Endpoint(), databaseName, entityType, tableName, "tablemapping", kind, name)
 	d.SetId(id)
 
 	resourceADXTableMappingRead(ctx, d, meta)
