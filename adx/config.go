@@ -34,7 +34,7 @@ func (c *Config) Client(userAgent string) (*Meta, diag.Diagnostics) {
 	if !c.LazyInit {
 		//tflog.Info(ctx, "Lazy init is disabled, attempting to eagerly create ADX client")
 		// Client is automatically cached in this function
-		_, err := getADXClient(meta, clusterConfig)
+		_, err := getADXClient(&meta, clusterConfig)
 		if err != nil {
 			return nil, diag.Errorf("%+v", err)
 		}
@@ -50,6 +50,6 @@ func providerConfigToClusterConfig(config *Config) *ClusterConfig {
 		ClientID:     config.ClientID,
 		ClientSecret: config.ClientSecret,
 		TenantID:     config.TenantID,
-		ClusterURI:   config.Endpoint,
+		URI:          config.Endpoint,
 	}
 }

@@ -126,12 +126,12 @@ func buildADXClient(clusterConfig *ClusterConfig) (*kusto.Client, error) {
 	if len(clusterConfig.TenantID) == 0 {
 		return nil, fmt.Errorf("tenant_id is required either in the resource or provider config")
 	}
-	if len(clusterConfig.ClusterURI) == 0 {
+	if len(clusterConfig.URI) == 0 {
 		return nil, fmt.Errorf("cluster_uri is required either in the resource or provider config")
 	}
 
 	auth := kusto.Authorization{Config: auth.NewClientCredentialsConfig(clusterConfig.ClientID, clusterConfig.ClientSecret, clusterConfig.TenantID)}
-	client, err := kusto.New(clusterConfig.ClusterURI, auth)
+	client, err := kusto.New(clusterConfig.URI, auth)
 	if err != nil {
 		return nil, fmt.Errorf("error creating adx client from config: %+v", err)
 	}
