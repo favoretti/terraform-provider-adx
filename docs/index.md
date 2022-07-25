@@ -143,11 +143,11 @@ ADX_TENANT_ID
 ## Lazy provider initialization
 ```hcl
 provider "adx" {
-adx_endpoint  = "https://adxcluster123.eastus.kusto.windows.net"
-client_id     = "clientId"
-client_secret = "secret"
-tenant_id     = "tenantId"
-lazy_init     = true
+  adx_endpoint  = "https://adxcluster123.eastus.kusto.windows.net"
+  client_id     = "clientId"
+  client_secret = "secret"
+  tenant_id     = "tenantId"
+  lazy_init     = true
 }
 ```
 
