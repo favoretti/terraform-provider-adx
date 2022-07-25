@@ -29,7 +29,7 @@ resource "adx_table_caching_policy" "test" {
 
 ```
 
-### Argument Reference
+## Argument Reference
 
 - **table_name** (String, Required) Name of the table containing the policy to modify
 - **database_name** (String, Required) Database name that the target table is in
@@ -45,7 +45,7 @@ resource "adx_table_caching_policy" "test" {
 - **client_secret** - (String, Optional) The client secret for a service principal having admin access to this cluster/database
 - **tenant_id** - (String, Optional) Id for the tenant to which the service principal belongs
 
-### Attribute Reference
+## Attribute Reference
 
 In addition to all arguments above, the following attributes are exported:
 

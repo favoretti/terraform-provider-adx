@@ -31,7 +31,7 @@ resource "adx_table_ingestion_batching_policy" "test" {
 
 ```
 
-### Argument Reference
+## Argument Reference
 
 - **table_name** (String, Required) Name of the table containing the policy to modify
 - **database_name** (String, Required) Database name that the target table is in
@@ -42,18 +42,14 @@ resource "adx_table_ingestion_batching_policy" "test" {
 
 `cluster` Configuration block for connection details about the target ADX cluster 
 
-<<<<<<< HEAD
 *Note*: Any attributes specified here override the cluster config specified in the provider. Once a resource overrides an attribute specified in the provider, it will be stored explicitly as state for that resource and will not be possible to go back to the provider config unless explicitly unset.
-=======
-*Note*: Any attributes specified here override the cluster config specified in the provider. Once a resource overrides an attribute specified in the provider, it will be stored explicitly as state for that resource and will not be possible to go back to the provider config.
->>>>>>> 7529cf8 (doc updates for cluster config)
 
 - **cluster_uri** - (String, Optional) Target ADX cluster endpoint URI, starting with `https://`
 - **client_id** - (String, Optional) The client ID for a service principal having admin access to this cluster/database. 
 - **client_secret** - (String, Optional) The client secret for a service principal having admin access to this cluster/database
 - **tenant_id** - (String, Optional) Id for the tenant to which the service principal belongs
 
-### Attribute Reference
+## Attribute Reference
 
 In addition to all arguments above, the following attributes are exported:
 
