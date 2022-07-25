@@ -1,6 +1,7 @@
 # Terraform Provider for Azure Data Explorer
 
 * [Terraform Website](https://www.terraform.io)
+* [ADX Provider Documentation](https://registry.terraform.io/providers/favoretti/adx/latest/docs)
 
 ## Usage Example
 
@@ -73,7 +74,7 @@ ADX_TENANT_ID
 ```
 
 ## Lazy provider initialization
-``hcl
+```hcl
 provider "adx" {
   adx_endpoint  = "https://adxcluster123.eastus.kusto.windows.net"
   client_id     = "clientId"
