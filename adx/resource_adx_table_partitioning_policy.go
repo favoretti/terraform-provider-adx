@@ -40,6 +40,7 @@ func resourceADXTablePartitioningPolicy() *schema.Resource {
 		UpdateContext: resourceADXTablePartitioningPolicyCreateUpdate,
 
 		Schema: map[string]*schema.Schema{
+			"cluster": getClusterConfigInputSchema(),
 			"database_name": {
 				Type:             schema.TypeString,
 				Required:         true,
@@ -129,6 +130,7 @@ func resourceADXTablePartitioningPolicy() *schema.Resource {
 				},
 			},
 		},
+		CustomizeDiff: clusterConfigCustomDiff,
 	}
 }
 
@@ -163,11 +165,9 @@ func resourceADXTablePartitioningPolicyCreateUpdate(ctx context.Context, d *sche
 }
 
 func resourceADXTablePartitioningPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	id, resultSet, err := readADXPolicy(ctx, d, meta, "table", "partitioning")
-	if err != nil {
-		return diag.Errorf("%+v", err)
+	id, resultSet, diags := readADXPolicy(ctx, d, meta, "table", "partitioning")
+	if diags.HasError() || resultSet == nil || len(resultSet) == 0 {
+		return diags
 	}
 
 	var policy TablePartitioningPolicy

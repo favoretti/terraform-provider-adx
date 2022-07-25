@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/Azure/azure-kusto-go/kusto"
-	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
 
@@ -13,25 +12,44 @@ type Config struct {
 	ClientSecret string
 	TenantID     string
 	Endpoint     string
+	LazyInit     bool
 }
 
 type Meta struct {
-	Kusto       kusto.Client
-	StopContext context.Context
+	KustoClientsMap      map[string]*kusto.Client
+	DefaultClusterConfig *ClusterConfig
+	StopContext          context.Context
 }
 
 func (c *Config) Client(userAgent string) (*Meta, diag.Diagnostics) {
+	clusterConfig := providerConfigToClusterConfig(c)
+
 	meta := Meta{
-		StopContext: context.Background(),
+		StopContext:          context.Background(),
+		DefaultClusterConfig: clusterConfig,
+		KustoClientsMap:      make(map[string]*kusto.Client),
 	}
 
-	auth := kusto.Authorization{Config: auth.NewClientCredentialsConfig(c.ClientID, c.ClientSecret, c.TenantID)}
-	client, err := kusto.New(c.Endpoint, auth)
-	if err != nil {
-		return nil, diag.FromErr(err)
+	// Not returning an error here on missing values because the user can specify "missing" config for each resource
+	if !c.LazyInit {
+		//tflog.Info(ctx, "Lazy init is disabled, attempting to eagerly create ADX client")
+		// Client is automatically cached in this function
+		_, err := getADXClient(&meta, clusterConfig)
+		if err != nil {
+			return nil, diag.Errorf("%+v", err)
+		}
+	} else {
+		//tflog.Info(ctx, "Lazy init is enabled, postponing ADX client creation")
 	}
-
-	meta.Kusto = *client
 
 	return &meta, nil
+}
+
+func providerConfigToClusterConfig(config *Config) *ClusterConfig {
+	return &ClusterConfig{
+		ClientID:     config.ClientID,
+		ClientSecret: config.ClientSecret,
+		TenantID:     config.TenantID,
+		URI:          config.Endpoint,
+	}
 }

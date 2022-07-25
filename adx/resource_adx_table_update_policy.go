@@ -27,6 +27,7 @@ func resourceADXTableUpdatePolicy() *schema.Resource {
 		UpdateContext: resourceADXTableUpdatePolicyCreateUpdate,
 
 		Schema: map[string]*schema.Schema{
+			"cluster": getClusterConfigInputSchema(),
 			"database_name": {
 				Type:             schema.TypeString,
 				Required:         true,
@@ -70,6 +71,7 @@ func resourceADXTableUpdatePolicy() *schema.Resource {
 				Default:  false,
 			},
 		},
+		CustomizeDiff: clusterConfigCustomDiff,
 	}
 }
 
@@ -93,7 +95,7 @@ func resourceADXTableUpdatePolicyCreateUpdate(ctx context.Context, d *schema.Res
 
 func resourceADXTableUpdatePolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	id, resultSet, diags := readADXPolicy(ctx, d, meta, "table", "update")
-	if diags.HasError() {
+	if diags.HasError() || resultSet == nil || len(resultSet) == 0 {
 		return diags
 	}
 
