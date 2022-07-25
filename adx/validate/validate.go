@@ -1,4 +1,4 @@
-package adx
+package validate
 
 import (
 	"regexp"
@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func stringLengthBetween(min, max int) schema.SchemaValidateDiagFunc {
+func StringLengthBetween(min, max int) schema.SchemaValidateDiagFunc {
 	return func(i interface{}, k cty.Path) diag.Diagnostics {
 		v, ok := i.(string)
 		if !ok {
@@ -24,7 +24,7 @@ func stringLengthBetween(min, max int) schema.SchemaValidateDiagFunc {
 	}
 }
 
-func stringInSlice(valid []string) schema.SchemaValidateDiagFunc {
+func StringInSlice(valid []string) schema.SchemaValidateDiagFunc {
 	return func(i interface{}, k cty.Path) diag.Diagnostics {
 		v, ok := i.(string)
 		if !ok {
@@ -41,7 +41,7 @@ func stringInSlice(valid []string) schema.SchemaValidateDiagFunc {
 	}
 }
 
-func stringIsNotEmpty(i interface{}, k cty.Path) diag.Diagnostics {
+func StringIsNotEmpty(i interface{}, k cty.Path) diag.Diagnostics {
 	v, ok := i.(string)
 	if !ok {
 		return diag.Errorf("expected type of %q to be string", k)
@@ -54,7 +54,7 @@ func stringIsNotEmpty(i interface{}, k cty.Path) diag.Diagnostics {
 	return nil
 }
 
-func stringMatch(r *regexp.Regexp, message string) schema.SchemaValidateDiagFunc {
+func StringMatch(r *regexp.Regexp, message string) schema.SchemaValidateDiagFunc {
 	return func(i interface{}, k cty.Path) diag.Diagnostics {
 		v, ok := i.(string)
 		if !ok {
@@ -72,7 +72,7 @@ func stringMatch(r *regexp.Regexp, message string) schema.SchemaValidateDiagFunc
 	}
 }
 
-func stringIsUUID(i interface{}, k cty.Path) diag.Diagnostics {
+func StringIsUUID(i interface{}, k cty.Path) diag.Diagnostics {
 	v, ok := i.(string)
 	if !ok {
 		return diag.Errorf("expected type of %q to be string", k)

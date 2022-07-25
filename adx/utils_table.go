@@ -19,13 +19,13 @@ type adxTableMappingResourceId struct {
 func parseADXTableID(input string) (*adxResourceId, error) {
 	parts := strings.Split(input, "|")
 	if len(parts) != 3 {
-		return nil, fmt.Errorf("error parsing ADX Table Mapping resource ID: unexpected format: %q", input)
+		return nil, fmt.Errorf("error parsing ADX Table resource ID: unexpected format: %q", input)
 	}
 
 	return &adxResourceId{
 		EndpointURI:  parts[0],
 		DatabaseName: parts[1],
-		EntityType:   "ingestion_mapping",
+		EntityType:   "table",
 		Name:         parts[2],
 	}, nil
 }
