@@ -25,7 +25,7 @@ func resourceADXMaterializedViewRowLevelSecurityPolicy() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"cluster": getClusterConfigInputSchema(),
-			
+
 			"database_name": {
 				Type:             schema.TypeString,
 				Required:         true,
