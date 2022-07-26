@@ -34,7 +34,7 @@ resource "adx_function" "test" {
   body          = format("{%s | limit 10}", adx_materialized_view.test.name)
 }
 
-resource "adx_table_row_level_security_policy" "test" {
+resource "adx_materialized_view_row_level_security_policy" "test" {
   database_name = "test-db"
   view_name     = adx_materialized_view.test.name
   query         = adx_function.test.name
