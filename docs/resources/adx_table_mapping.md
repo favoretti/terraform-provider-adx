@@ -56,7 +56,7 @@ resource "adx_table_mapping" "test" {
 
 *Note*: Any attributes specified here override the cluster config specified in the provider. Once a resource overrides an attribute specified in the provider, it will be stored explicitly as state for that resource and will not be possible to go back to the provider config unless explicitly unset.
 
-- **cluster_uri** - (String, Optional) Target ADX cluster endpoint URI, starting with `https://`
+- **uri** - (String, Optional) Target ADX cluster endpoint URI, starting with `https://`
 - **client_id** - (String, Optional) The client ID for a service principal having admin access to this cluster/database. 
 - **client_secret** - (String, Optional) The client secret for a service principal having admin access to this cluster/database
 - **tenant_id** - (String, Optional) Id for the tenant to which the service principal belongs
