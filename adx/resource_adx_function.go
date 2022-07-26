@@ -22,8 +22,8 @@ type ADXFunction struct {
 
 func resourceADXFunction() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceADXFunctionCreateUpdate,
-		UpdateContext: resourceADXFunctionCreateUpdate,
+		CreateContext: resourceADXFunctionCreate,
+		UpdateContext: resourceADXFunctionUpdate,
 		ReadContext:   resourceADXFunctionRead,
 		DeleteContext: resourceADXFunctionDelete,
 
@@ -64,15 +64,27 @@ func resourceADXFunction() *schema.Resource {
 		CustomizeDiff: clusterConfigCustomDiff,
 	}
 }
+func resourceADXFunctionCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceADXFunctionCreateUpdate(ctx, d, meta, true)
+} 
 
-func resourceADXFunctionCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceADXFunctionUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceADXFunctionCreateUpdate(ctx, d, meta, false)
+} 
+
+func resourceADXFunctionCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, new bool) diag.Diagnostics {
 	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
 	name := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
 	body := d.Get("body").(string)
 	parameters := d.Get("parameters").(string)
 
-	createStatement := fmt.Sprintf(".create-or-alter function \n%s%s\n%s", name, parameters, body)
+	cmd := ".alter"
+	if new {
+		cmd = ".create"
+	}
+
+	createStatement := fmt.Sprintf("%s function \n%s%s\n%s", cmd, name, parameters, body)
 
 	client, err := getADXClient(meta, clusterConfig)
 	if err != nil {
