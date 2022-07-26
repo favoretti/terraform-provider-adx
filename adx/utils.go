@@ -127,7 +127,7 @@ func buildADXClient(clusterConfig *ClusterConfig) (*kusto.Client, error) {
 		return nil, fmt.Errorf("tenant_id is required either in the resource or provider config")
 	}
 	if len(clusterConfig.URI) == 0 {
-		return nil, fmt.Errorf("cluster_uri is required either in the resource or provider config")
+		return nil, fmt.Errorf("uri is required either in the resource or provider config")
 	}
 
 	auth := kusto.Authorization{Config: auth.NewClientCredentialsConfig(clusterConfig.ClientID, clusterConfig.ClientSecret, clusterConfig.TenantID)}
@@ -143,7 +143,6 @@ func getADXClient(meta interface{}, clusterConfig *ClusterConfig) (*kusto.Client
 
 	if client == nil {
 		var err error
-		// TODO accept these from resource config and replace the ""
 		client, err = buildADXClient(clusterConfig)
 		if err != nil {
 			return nil, err
@@ -203,4 +202,48 @@ func hashObjects(objs ...interface{}) []byte {
 		fmt.Fprint(digester, ob)
 	}
 	return digester.Sum(nil)
+}
+
+func isTableExists(ctx context.Context, meta interface{}, clusterConfig *ClusterConfig, databaseName, tableName string) (bool, error) {
+	showStatement := fmt.Sprintf(".show tables (%s) details", tableName)
+	return hasStatementResults(ctx, meta, clusterConfig, databaseName, showStatement, "checking if table exists")
+}
+
+func isMaterializedViewExists(ctx context.Context, meta interface{}, clusterConfig *ClusterConfig, databaseName, viewName string) (bool, error) {
+	showStatement := fmt.Sprintf(".show materialized-views (%s) details", viewName)
+	return hasStatementResults(ctx, meta, clusterConfig, databaseName, showStatement, "checking if materialized view exists")
+}
+
+func isFunctionExists(ctx context.Context, meta interface{}, clusterConfig *ClusterConfig, databaseName, functionName string) (bool, error) {
+	showStatement := fmt.Sprintf(".show functions | where Name == '%s'", functionName)
+	return hasStatementResults(ctx, meta, clusterConfig, databaseName, showStatement, "checking if function exists")
+}
+
+func isEntityExists(ctx context.Context, meta interface{}, clusterConfig *ClusterConfig, databaseName, entityType string, entityName string) (bool, error) {
+	if entityType == "table" {
+		return isTableExists(ctx, meta, clusterConfig, databaseName, entityName)
+	} else if entityType == "materialized-view" {
+		return isMaterializedViewExists(ctx, meta, clusterConfig, databaseName, entityName)
+	} else if entityType == "function" {
+		return isFunctionExists(ctx, meta, clusterConfig, databaseName, entityName)
+	}
+	return false, fmt.Errorf("checking for existance of entity type (%s) is not yet supported", entityType)
+}
+
+func hasStatementResults(ctx context.Context, meta interface{}, clusterConfig *ClusterConfig, databaseName, statement string, desc string) (bool, error) {
+	resp, err := queryADXMgmt(ctx, meta, clusterConfig, databaseName, statement)
+	defer resp.Stop()
+	if err != nil {
+		return false, fmt.Errorf("error %s in database (%s): %+v", desc, databaseName, err)
+	}
+	var hasResults bool
+	err = resp.Do(
+		func(row *table.Row) error {
+			hasResults = true
+			return nil
+		})
+	if err != nil {
+		return false, fmt.Errorf("error %s in database (%s): %+v", desc, databaseName, err)
+	}
+	return hasResults, nil
 }
