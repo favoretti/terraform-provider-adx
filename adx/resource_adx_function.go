@@ -66,11 +66,11 @@ func resourceADXFunction() *schema.Resource {
 }
 func resourceADXFunctionCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return resourceADXFunctionCreateUpdate(ctx, d, meta, true)
-} 
+}
 
 func resourceADXFunctionUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return resourceADXFunctionCreateUpdate(ctx, d, meta, false)
-} 
+}
 
 func resourceADXFunctionCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, new bool) diag.Diagnostics {
 	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
