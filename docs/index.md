@@ -167,7 +167,7 @@ resource "adx_table" "test" {
   database_name = "test-db"
   table_schema  = "f1:string,f2:string,f4:string,f3:int"
   cluster {
-    cluster_uri = "https://adxcluster456.eastus.kusto.windows.net"
+    uri = "https://adxcluster456.eastus.kusto.windows.net"
   }
 }
 ```
