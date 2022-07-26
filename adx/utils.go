@@ -227,7 +227,7 @@ func isEntityExists(ctx context.Context, meta interface{}, clusterConfig *Cluste
 	} else if entityType == "function" {
 		return isFunctionExists(ctx, meta, clusterConfig, databaseName, entityName)
 	}
-	return false, fmt.Errorf("checking for existance of entity type (%s) is not yet supported",entityType)
+	return false, fmt.Errorf("checking for existance of entity type (%s) is not yet supported", entityType)
 }
 
 func hasStatementResults(ctx context.Context, meta interface{}, clusterConfig *ClusterConfig, databaseName, statement string, desc string) (bool, error) {
