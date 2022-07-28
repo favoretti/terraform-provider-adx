@@ -88,7 +88,7 @@ func resourceADXMaterializedViewRetentionPolicyRead(ctx context.Context, d *sche
 
 	var policy MaterializedViewRetentionPolicy
 	if err := json.Unmarshal([]byte(resultSet[0].Policy), &policy); err != nil {
-		return diag.Errorf("error parsing policy retention for MaterializedView %q (Database %q): %+v", id.Name, id.DatabaseName)
+		return diag.Errorf("error parsing policy retention for MaterializedView %q (Database %q): %+v", id.Name, id.DatabaseName, err)
 	}
 
 	originalSoftDeletePeriod := d.Get("soft_delete_period")
