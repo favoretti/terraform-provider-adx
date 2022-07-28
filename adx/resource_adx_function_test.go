@@ -13,10 +13,10 @@ func TestAccADXFunction_basic(t *testing.T) {
 	var entity ADXFunction
 	r := ADXFunctionTestResource{}
 	rtcBuilder := BuildResourceTestContext[ADXFunction]()
-	rtc,_ := rtcBuilder.Test(t).Type("adx_function").
+	rtc, _ := rtcBuilder.Test(t).Type("adx_function").
 		DatabaseName("test-db").
 		EntityType("function").
-		ReadStatement(".show functions | where Name == '%s'",true).Build()
+		ReadStatement(".show functions | where Name == '%s'", true).Build()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

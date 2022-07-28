@@ -7,10 +7,10 @@ import (
 	"testing"
 
 	"github.com/Azure/azure-kusto-go/kusto"
-	
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
@@ -38,36 +38,36 @@ type ResourceTestContext[T any] struct {
 }
 
 type ResourceTestContextBuilder[T any] struct {
-	context 			  *ResourceTestContext[T]
+	context               *ResourceTestContext[T]
 	interpolateEntityName bool
 }
 
 func (this *ResourceTestContextBuilder[T]) Build() (*ResourceTestContext[T], error) {
-	if this.context.Cluster==nil {
+	if this.context.Cluster == nil {
 		this.context.Cluster = GetTestClusterConfig()
 	}
-	if this.context.Label=="" {
+	if this.context.Label == "" {
 		this.context.Label = "test"
 	}
-	if this.context.Test==nil {
+	if this.context.Test == nil {
 		return nil, fmt.Errorf("Test cannot be nil")
 	}
-	if this.context.DatabaseName=="" {
+	if this.context.DatabaseName == "" {
 		return nil, fmt.Errorf("DatabaseName cannot be empty")
 	}
-	if this.context.EntityType=="" {
+	if this.context.EntityType == "" {
 		return nil, fmt.Errorf("EntityType cannot be empty")
 	}
-	if this.context.EntityName=="" {
+	if this.context.EntityName == "" {
 		this.context.EntityName = acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 	}
-	if this.context.Type=="" {
+	if this.context.Type == "" {
 		return nil, fmt.Errorf("Type cannot be empty")
 	}
-	if this.context.ReadStatement=="" {
+	if this.context.ReadStatement == "" {
 		return nil, fmt.Errorf("ReadStatement cannot be empty")
 	} else if this.interpolateEntityName {
-		this.context.ReadStatement = fmt.Sprintf(this.context.ReadStatement,this.context.EntityName)
+		this.context.ReadStatement = fmt.Sprintf(this.context.ReadStatement, this.context.EntityName)
 	}
 	return this.context, nil
 }
@@ -77,7 +77,7 @@ func (this *ResourceTestContextBuilder[T]) Initialize() *ResourceTestContextBuil
 	return this
 }
 
-func (this *ResourceTestContextBuilder[T]) Test(test  *testing.T) *ResourceTestContextBuilder[T] {
+func (this *ResourceTestContextBuilder[T]) Test(test *testing.T) *ResourceTestContextBuilder[T] {
 	this.context.Test = test
 	return this
 }
@@ -139,7 +139,7 @@ func (this *ResourceTestContext[T]) GetADXEntity() (*T, error) {
 	if len(entities) == 0 {
 		return nil, nil
 	} else if len(entities) > 1 {
-		return nil, fmt.Errorf("ADX returned too many rows for entity read query (%s) (%s)",this.EntityName, this.GetTFName())
+		return nil, fmt.Errorf("ADX returned too many rows for entity read query (%s) (%s)", this.EntityName, this.GetTFName())
 	}
 	return &entities[0], nil
 }
@@ -152,7 +152,7 @@ func (this *ResourceTestContext[T]) GetTestCheckEntityExists(entity *T) resource
 			return fmt.Errorf("Not found: %s", this.GetTFName())
 		}
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("ID is not set for (%s) (%s)",this.EntityName, this.GetTFName())
+			return fmt.Errorf("ID is not set for (%s) (%s)", this.EntityName, this.GetTFName())
 		}
 		result, err := this.GetADXEntity()
 		if err != nil {
