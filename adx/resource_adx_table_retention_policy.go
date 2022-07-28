@@ -88,7 +88,7 @@ func resourceADXTableRetentionPolicyRead(ctx context.Context, d *schema.Resource
 
 	var policy TableRetentionPolicy
 	if err := json.Unmarshal([]byte(resultSet[0].Policy), &policy); err != nil {
-		return diag.Errorf("error parsing policy retention for Table %q (Database %q): %+v", id.Name, id.DatabaseName)
+		return diag.Errorf("error parsing policy retention for Table %q (Database %q): %+v", id.Name, id.DatabaseName, err)
 	}
 
 	originalSoftDeletePeriod := d.Get("soft_delete_period")
