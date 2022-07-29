@@ -27,19 +27,19 @@ func GetTestClusterConfig() *ClusterConfig {
 }
 
 type ResourceTestContext[T any] struct {
-	Test          *testing.T
-	Cluster       *ClusterConfig
-	DatabaseName  string
-	EntityType    string
-	EntityName    string
-	Type          string
-	Label         string
-	ReadStatement string
+	Test              *testing.T
+	Cluster           *ClusterConfig
+	DatabaseName      string
+	EntityType        string
+	EntityName        string
+	Type              string
+	Label         	  string
+	ReadStatementFunc func(string)string
+	IDParserFunc      func(string)(*adxResourceId,error)
 }
 
 type ResourceTestContextBuilder[T any] struct {
 	context               *ResourceTestContext[T]
-	interpolateEntityName bool
 }
 
 func (this *ResourceTestContextBuilder[T]) Build() (*ResourceTestContext[T], error) {
@@ -64,10 +64,13 @@ func (this *ResourceTestContextBuilder[T]) Build() (*ResourceTestContext[T], err
 	if this.context.Type == "" {
 		return nil, fmt.Errorf("Type cannot be empty")
 	}
-	if this.context.ReadStatement == "" {
-		return nil, fmt.Errorf("ReadStatement cannot be empty")
-	} else if this.interpolateEntityName {
-		this.context.ReadStatement = fmt.Sprintf(this.context.ReadStatement, this.context.EntityName)
+	if this.context.ReadStatementFunc == nil {
+		return nil, fmt.Errorf("ReadStatementFunc cannot be nil")
+	}
+	if(this.context.IDParserFunc == nil) {
+		this.context.IDParserFunc = func (id string) (*adxResourceId, error) {
+			return parseADXResourceID(id, 4, 0, 1, 2, 3)
+		}
 	}
 	return this.context, nil
 }
@@ -112,9 +115,13 @@ func (this *ResourceTestContextBuilder[T]) Label(value string) *ResourceTestCont
 	return this
 }
 
-func (this *ResourceTestContextBuilder[T]) ReadStatement(value string, interpolateEntityName bool) *ResourceTestContextBuilder[T] {
-	this.context.ReadStatement = value
-	this.interpolateEntityName = interpolateEntityName
+func (this *ResourceTestContextBuilder[T]) ReadStatementFunc(f func(string)string) *ResourceTestContextBuilder[T] {
+	this.context.ReadStatementFunc = f
+	return this
+}
+
+func (this *ResourceTestContextBuilder[T]) IDParserFunc(f func(string)(*adxResourceId,error)) *ResourceTestContextBuilder[T] {
+	this.context.IDParserFunc = f
 	return this
 }
 
@@ -132,7 +139,12 @@ func (this *ResourceTestContext[T]) GetADXClient() (*kusto.Client, error) {
 }
 
 func (this *ResourceTestContext[T]) GetADXEntity() (*T, error) {
-	entities, err := queryADXMgmtAndParse[T](context.Background(), testAccProvider.Meta(), this.Cluster, this.DatabaseName, this.ReadStatement)
+	return this.GetADXEntityByName(this.EntityName)
+}
+
+func (this *ResourceTestContext[T]) GetADXEntityByName(entityName string) (*T, error) {
+	readStatement := this.ReadStatementFunc(entityName)
+	entities, err := queryADXMgmtAndParse[T](context.Background(), testAccProvider.Meta(), this.Cluster, this.DatabaseName, readStatement)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +199,7 @@ func (this *ResourceTestContext[T]) CheckEntityDestroyed(entityNameOverride stri
 		entityName = entityNameOverride
 	}
 
-	entity, err := this.GetADXEntity()
+	entity, err := this.GetADXEntityByName(entityName)
 	if err != nil {
 		return fmt.Errorf("Failed to check entity destroyed in ADX (%s) (%s): %+v", entityName, this.GetTFName(), err)
 	}
