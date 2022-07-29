@@ -30,10 +30,10 @@ func TestAccADXTablePartitioningPolicy_basic(t *testing.T) {
 					rtc.GetTestCheckEntityExists(&entity),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "table_name", rtc.EntityName),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
-					resource.TestCheckResourceAttrSet(rtc.GetTFName(), "partition_key"),
+					//resource.TestCheckResourceAttrSet(rtc.GetTFName(), "partition_key"),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "partition_key.0.column_name", "f1"),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "partition_key.0.kind", "Hash"),
-					resource.TestCheckResourceAttrSet(rtc.GetTFName(), "partition_key.0.hash_properties"),
+					//resource.TestCheckResourceAttrSet(rtc.GetTFName(), "partition_key.0.hash_properties"),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "partition_key.0.hash_properties.0.function", "XxHash64"),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "partition_key.0.hash_properties.0.max_partition_count", "64"),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "partition_key.0.hash_properties.0.seed", "2"),
@@ -46,8 +46,8 @@ func TestAccADXTablePartitioningPolicy_basic(t *testing.T) {
 					rtc.GetTestCheckEntityExists(&entity),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "table_name", rtc.EntityName),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
-					resource.TestCheckResourceAttrSet(rtc.GetTFName(), "partition_key"),
-					resource.TestCheckResourceAttrSet(rtc.GetTFName(), "partition_key.0.hash_properties"),
+					//resource.TestCheckResourceAttrSet(rtc.GetTFName(), "partition_key"),
+					//resource.TestCheckResourceAttrSet(rtc.GetTFName(), "partition_key.0.hash_properties"),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "partition_key.0.hash_properties.0.max_partition_count", "128"),
 				),
 			},
@@ -55,8 +55,8 @@ func TestAccADXTablePartitioningPolicy_basic(t *testing.T) {
 				Config: r.uniformrange(rtc),
 				Check: resource.ComposeTestCheckFunc(
 					rtc.GetTestCheckEntityExists(&entity),
-					resource.TestCheckResourceAttrSet(rtc.GetTFName(), "partition_key"),
-					resource.TestCheckResourceAttrSet(rtc.GetTFName(), "partition_key.0.uniform_range_properties"),
+					//resource.TestCheckResourceAttrSet(rtc.GetTFName(), "partition_key"),
+					//resource.TestCheckResourceAttrSet(rtc.GetTFName(), "partition_key.0.uniform_range_properties"),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "partition_key.0.uniform_range_properties.0.range_size", "2.00:00:00"),
 				),
 			},
@@ -103,7 +103,7 @@ func (this ADXTablePartitioningPolicyTestResource) uniformrange(rtc *ResourceTes
 
 			uniform_range_properties {
 				range_size                = "2.00:00:00"
-				reference                 = "1990-01-01 00:00:00"
+				reference                 = "1990-01-01T00:00:00"
 				override_creation_time    = true
 			}
 		}
@@ -116,7 +116,7 @@ func (this ADXTablePartitioningPolicyTestResource) template(rtc *ResourceTestCon
 	resource "adx_table" "test" {
 		database_name = "%s"
 		name          = "%s"
-		table_schema  = "f1:string,f2:string,f4:string,f3:int"
+		table_schema  = "f1:string,f2:string,f4:string,f3:datetime"
 	}
 	`, rtc.DatabaseName, rtc.EntityName)
 }
