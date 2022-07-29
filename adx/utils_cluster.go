@@ -50,8 +50,8 @@ func getClusterConfigInputSchema() *schema.Schema {
 }
 
 func clusterConfigCustomDiff(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
-	id := diff.Id()
-	log.Printf("[DEBUG] Prcoessing resource with id(%s): %s", id)
+	//id := diff.Id()
+	//log.Printf("[DEBUG] Prcoessing resource with id(%s): %s", id)
 
 	oldCluster, newCluster := diff.GetChange("cluster")
 	var newClusterMap map[string]interface{}
@@ -131,7 +131,7 @@ func getAndExpandClusterConfigWithDefaults(ctx context.Context, d *schema.Resour
 
 func getAndExpandClusterConfig(ctx context.Context, d *schema.ResourceData) *ClusterConfig {
 	cluster, ok := d.GetOk("cluster")
-	log.Printf("[DEBUG] Cluster configuration block ok: %s", ok)
+	log.Printf("[DEBUG] Cluster configuration block ok: %t", ok)
 	if !ok || len(cluster.([]interface{})) == 0 {
 		log.Printf("[DEBUG] No cluster configuration block found in resource definition, defaulting to cluster specified in provider config")
 		return expandClusterConfig(nil)
