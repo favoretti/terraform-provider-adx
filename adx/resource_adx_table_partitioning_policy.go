@@ -243,13 +243,13 @@ func flattenPartitionKeys(adxPartitionKeys *[]TablePartitioningPolicyKey) []inte
 				hashProperties["max_partition_count"] = adxPartitionKey.Properties.MaxPartitionCount
 				hashProperties["seed"] = adxPartitionKey.Properties.Seed
 				hashProperties["partition_assignment_mode"] = adxPartitionKey.Properties.PartitionAssignmentMode
-				partitionKey["hash_properties"] = hashProperties
+				partitionKey["hash_properties"] = [1]map[string]interface{}{hashProperties}
 			} else if adxPartitionKey.Kind == "UniformRange" {
 				uniformRangeProperties := make(map[string]interface{})
 				uniformRangeProperties["reference"] = adxPartitionKey.Properties.Reference
 				uniformRangeProperties["range_size"] = adxPartitionKey.Properties.RangeSize
 				uniformRangeProperties["override_creation_time"] = adxPartitionKey.Properties.OverrideCreationTime
-				partitionKey["uniform_range_properties"] = uniformRangeProperties
+				partitionKey["uniform_range_properties"] = [1]map[string]interface{}{uniformRangeProperties}
 			}
 
 			partitionKeys[i] = partitionKey
