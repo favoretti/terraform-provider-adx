@@ -16,7 +16,9 @@ func TestAccADXFunction_basic(t *testing.T) {
 	rtc, _ := rtcBuilder.Test(t).Type("adx_function").
 		DatabaseName("test-db").
 		EntityType("function").
-		ReadStatement(".show functions | where Name == '%s'", true).Build()
+		ReadStatementFunc(func(name string) string {
+			return fmt.Sprintf(".show functions | where Name == '%s'", name)
+		}).Build()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
