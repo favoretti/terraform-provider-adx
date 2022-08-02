@@ -10,9 +10,9 @@ import (
 	"github.com/Azure/azure-kusto-go/kusto/data/table"
 	"github.com/Azure/azure-kusto-go/kusto/data/value"
 	"github.com/Azure/azure-kusto-go/kusto/unsafe"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 type TableMapping struct {
@@ -66,7 +66,7 @@ func resourceADXTableMapping() *schema.Resource {
 				Required: true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 					"Json",
-				},true)),
+				}, true)),
 			},
 			"mapping": {
 				Type:     schema.TypeList,
