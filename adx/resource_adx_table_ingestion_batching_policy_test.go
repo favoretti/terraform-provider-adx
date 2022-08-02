@@ -16,8 +16,7 @@ func TestAccADXTableIngestionBatchingPolicy_basic(t *testing.T) {
 	rtc, _ := rtcBuilder.Test(t).Type("adx_table_ingestion_batching_policy").
 		DatabaseName("test-db").
 		EntityType("ingestionbatching").
-		ReadStatementFunc(GetAccTestPolicyReadStatementFunc("table","ingestionbatching")).
-		IDParserFunc(GetAccTestPolicyIDParserFunc()).Build()
+		ReadStatementFunc(GetAccTestPolicyReadStatementFunc()).Build()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

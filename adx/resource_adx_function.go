@@ -50,7 +50,7 @@ func resourceADXFunction() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ValidateDiagFunc: validate.StringMatch(
-					regexp.MustCompile("{.*}"),
+					regexp.MustCompile("(?s)^{.*}$"),
 					"function body must include outer curly brackets {}",
 				),
 			},

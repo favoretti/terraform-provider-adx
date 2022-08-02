@@ -35,8 +35,8 @@ type ResourceTestContext[T any] struct {
 	EntityName        string
 	Type              string
 	Label             string
-	ReadStatementFunc func(string) string
-	IDParserFunc      func(string) (*adxResourceId, error)
+	ReadStatementFunc func(string) (string, error)
+	//IDParserFunc      func(string) (*adxResourceId, error)
 }
 
 type ResourceTestContextBuilder[T any] struct {
@@ -68,11 +68,11 @@ func (this *ResourceTestContextBuilder[T]) Build() (*ResourceTestContext[T], err
 	if this.context.ReadStatementFunc == nil {
 		return nil, fmt.Errorf("ReadStatementFunc cannot be nil")
 	}
-	if this.context.IDParserFunc == nil {
+	/*if this.context.IDParserFunc == nil {
 		this.context.IDParserFunc = func(id string) (*adxResourceId, error) {
 			return parseADXResourceID(id, 4, 0, 1, 2, 3)
 		}
-	}
+	}*/
 	return this.context, nil
 }
 
@@ -116,13 +116,8 @@ func (this *ResourceTestContextBuilder[T]) Label(value string) *ResourceTestCont
 	return this
 }
 
-func (this *ResourceTestContextBuilder[T]) ReadStatementFunc(f func(string) string) *ResourceTestContextBuilder[T] {
+func (this *ResourceTestContextBuilder[T]) ReadStatementFunc(f func(string) (string, error)) *ResourceTestContextBuilder[T] {
 	this.context.ReadStatementFunc = f
-	return this
-}
-
-func (this *ResourceTestContextBuilder[T]) IDParserFunc(f func(string) (*adxResourceId, error)) *ResourceTestContextBuilder[T] {
-	this.context.IDParserFunc = f
 	return this
 }
 
@@ -139,12 +134,11 @@ func (this *ResourceTestContext[T]) GetADXClient() (*kusto.Client, error) {
 	return getADXClient(testAccProvider.Meta(), this.Cluster)
 }
 
-func (this *ResourceTestContext[T]) GetADXEntity() (*T, error) {
-	return this.GetADXEntityByName(this.EntityName)
-}
-
-func (this *ResourceTestContext[T]) GetADXEntityByName(entityName string) (*T, error) {
-	readStatement := this.ReadStatementFunc(entityName)
+func (this *ResourceTestContext[T]) GetADXEntityById(id string) (*T, error) {
+	readStatement, err := this.ReadStatementFunc(id)
+	if err != nil {
+		return nil, err
+	}
 	entities, err := queryADXMgmtAndParse[T](context.Background(), testAccProvider.Meta(), this.Cluster, this.DatabaseName, readStatement)
 	if err != nil {
 		return nil, err
@@ -152,7 +146,7 @@ func (this *ResourceTestContext[T]) GetADXEntityByName(entityName string) (*T, e
 	if len(entities) == 0 {
 		return nil, nil
 	} else if len(entities) > 1 {
-		return nil, fmt.Errorf("ADX returned too many rows for entity read query (%s) (%s)", this.EntityName, this.GetTFName())
+		return nil, fmt.Errorf("ADX returned too many rows for entity read query (%s) (%s)", id, this.GetTFName())
 	}
 	return &entities[0], nil
 }
@@ -167,7 +161,7 @@ func (this *ResourceTestContext[T]) GetTestCheckEntityExists(entity *T) resource
 		if rs.Primary.ID == "" {
 			return fmt.Errorf("ID is not set for (%s) (%s)", this.EntityName, this.GetTFName())
 		}
-		result, err := this.GetADXEntity()
+		result, err := this.GetADXEntityById(rs.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("Failed to retrieve entity from ADX (%s) (%s): %+v", this.EntityName, this.GetTFName(), err)
 		}
@@ -184,11 +178,11 @@ func (this *ResourceTestContext[T]) GetTestCheckEntityDestroyed() func(*terrafor
 			if rs.Type != this.Type {
 				continue
 			}
-			id, err := this.IDParserFunc(rs.Primary.ID)
+			/*id, err := this.IDParserFunc(rs.Primary.ID)
 			if err != nil {
 				return fmt.Errorf("Could not parse ADX ID (%s): %+v", rs.Primary.ID, err)
-			}
-			err = this.CheckEntityDestroyed(id.Name)
+			}*/
+			err := this.CheckEntityDestroyedById(rs.Primary.ID)
 			if err != nil {
 				return fmt.Errorf("%+v. ID: %s", err, rs.Primary.ID)
 			}
@@ -197,18 +191,13 @@ func (this *ResourceTestContext[T]) GetTestCheckEntityDestroyed() func(*terrafor
 	}
 }
 
-func (this *ResourceTestContext[T]) CheckEntityDestroyed(entityNameOverride string) error {
-	entityName := this.EntityName
-	if entityNameOverride != "" {
-		entityName = entityNameOverride
-	}
-
-	entity, err := this.GetADXEntityByName(entityName)
+func (this *ResourceTestContext[T]) CheckEntityDestroyedById(id string) error {
+	entity, err := this.GetADXEntityById(id)
 	if err != nil && !strings.Contains(err.Error(), "BadRequest_EntityNotFound") {
-		return fmt.Errorf("Failed to check entity destroyed in ADX (%s) (%s): %+v", entityName, this.GetTFName(), err)
+		return fmt.Errorf("Failed to check entity destroyed in ADX (%s) (%s): %+v", id, this.GetTFName(), err)
 	}
 	if entity != nil {
-		return fmt.Errorf("Entity (%s) of type (%s) not destroyed in ADX", entityName, this.EntityType)
+		return fmt.Errorf("Entity (%s) of type (%s) not destroyed in ADX", id, this.EntityType)
 	}
 	return nil
 }
@@ -231,18 +220,12 @@ func testAccPreCheck(t *testing.T) {
 	}
 }
 
-func GetAccTestPolicyIDParserFunc() func(string)(*adxResourceId, error) {
-	return func(id string) (*adxResourceId, error) {
-		resp, err := parseADXPolicyID(id)
+func GetAccTestPolicyReadStatementFunc() func(string) (string, error) {
+	return func(id string) (string, error) {
+		policyId, err := parseADXPolicyID(id)
 		if err != nil {
-			return nil, err
+			return "", err
 		}
-		return &resp.adxResourceId, nil
-	}
-}
-
-func GetAccTestPolicyReadStatementFunc(entityType string, policyType string) func(string) string {
-	return func(entityName string) string {
-		return fmt.Sprintf(".show %s %s policy %s", entityType, entityName, policyType)
+		return fmt.Sprintf(".show %s %s policy %s", policyId.EntityType, policyId.Name, policyId.PolicyName), nil
 	}
 }
