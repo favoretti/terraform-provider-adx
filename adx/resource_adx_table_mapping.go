@@ -10,7 +10,7 @@ import (
 	"github.com/Azure/azure-kusto-go/kusto/data/table"
 	"github.com/Azure/azure-kusto-go/kusto/data/value"
 	"github.com/Azure/azure-kusto-go/kusto/unsafe"
-	"github.com/favoretti/terraform-provider-adx/adx/validate"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -47,26 +47,26 @@ func resourceADXTableMapping() *schema.Resource {
 			"name": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: validate.StringIsNotEmpty,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 			},
 			"database_name": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: validate.StringIsNotEmpty,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 			},
 
 			"table_name": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: validate.StringIsNotEmpty,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 			},
 
 			"kind": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateDiagFunc: validate.StringInSlice([]string{
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 					"Json",
-				}),
+				},true)),
 			},
 			"mapping": {
 				Type:     schema.TypeList,
@@ -184,9 +184,9 @@ func resourceADXTableMappingRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("name", schemas[0].Name)
 	d.Set("table_name", schemas[0].Table)
 	d.Set("database_name", schemas[0].Database)
-	d.Set("kind", schemas[0].Kind)
+	d.Set("kind", strings.ToLower(schemas[0].Kind))
 	d.Set("mapping", flattenTableMapping(schemas[0].Mapping))
-	d.Set("last_updated_on", schemas[0].LastUpdatedOn)
+	d.Set("last_updated_on", schemas[0].LastUpdatedOn.String())
 
 	return diags
 }

@@ -16,8 +16,7 @@ func TestAccADXTableCachingPolicy_basic(t *testing.T) {
 	rtc, _ := rtcBuilder.Test(t).Type("adx_table_caching_policy").
 		DatabaseName("test-db").
 		EntityType("caching").
-		ReadStatementFunc(GetAccTestPolicyReadStatementFunc("table","caching")).
-		IDParserFunc(GetAccTestPolicyIDParserFunc()).Build()
+		ReadStatementFunc(GetAccTestPolicyReadStatementFunc()).Build()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
