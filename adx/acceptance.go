@@ -36,7 +36,6 @@ type ResourceTestContext[T any] struct {
 	Type              string
 	Label             string
 	ReadStatementFunc func(string) (string, error)
-	//IDParserFunc      func(string) (*adxResourceId, error)
 }
 
 type ResourceTestContextBuilder[T any] struct {
@@ -68,11 +67,6 @@ func (this *ResourceTestContextBuilder[T]) Build() (*ResourceTestContext[T], err
 	if this.context.ReadStatementFunc == nil {
 		return nil, fmt.Errorf("ReadStatementFunc cannot be nil")
 	}
-	/*if this.context.IDParserFunc == nil {
-		this.context.IDParserFunc = func(id string) (*adxResourceId, error) {
-			return parseADXResourceID(id, 4, 0, 1, 2, 3)
-		}
-	}*/
 	return this.context, nil
 }
 
@@ -178,10 +172,6 @@ func (this *ResourceTestContext[T]) GetTestCheckEntityDestroyed() func(*terrafor
 			if rs.Type != this.Type {
 				continue
 			}
-			/*id, err := this.IDParserFunc(rs.Primary.ID)
-			if err != nil {
-				return fmt.Errorf("Could not parse ADX ID (%s): %+v", rs.Primary.ID, err)
-			}*/
 			err := this.CheckEntityDestroyedById(rs.Primary.ID)
 			if err != nil {
 				return fmt.Errorf("%+v. ID: %s", err, rs.Primary.ID)

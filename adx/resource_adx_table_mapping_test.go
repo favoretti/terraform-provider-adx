@@ -67,9 +67,9 @@ func (this ADXTableMappingTestResource) basic(rtc *ResourceTestContext[TableMapp
 		  datatype = "string"
 		}
 		mapping {
-			column   = "f3"
-			path     = "$.something3"
-			datatype = "int"
+		  column   = "f3"
+	      path     = "$.something3"
+		  datatype = "int"
 		}
 	  }
 	`, this.template(rtc), rtc.Type, rtc.Label, rtc.EntityName, rtc.DatabaseName, rtc.Label)
