@@ -2,9 +2,9 @@ package adx
 
 import (
 	"context"
-	"strings"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/Azure/azure-kusto-go/kusto"

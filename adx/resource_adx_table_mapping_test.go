@@ -2,8 +2,8 @@ package adx
 
 import (
 	"fmt"
-	"testing"
 	"strings"
+	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
@@ -72,7 +72,7 @@ func (this ADXTableMappingTestResource) basic(rtc *ResourceTestContext[TableMapp
 			datatype = "int"
 		}
 	  }
-	`, this.template(rtc), rtc.Type, rtc.Label, rtc.EntityName, rtc.DatabaseName,rtc.Label)
+	`, this.template(rtc), rtc.Type, rtc.Label, rtc.EntityName, rtc.DatabaseName, rtc.Label)
 }
 
 func (this ADXTableMappingTestResource) template(rtc *ResourceTestContext[TableMapping]) string {
