@@ -16,8 +16,12 @@ func TestAccADXFunction_basic(t *testing.T) {
 	rtc, _ := rtcBuilder.Test(t).Type("adx_function").
 		DatabaseName("test-db").
 		EntityType("function").
-		ReadStatementFunc(func(name string) string {
-			return fmt.Sprintf(".show functions | where Name == '%s'", name)
+		ReadStatementFunc(func(id string) (string, error) {
+			funcId, err := parseADXFunctionID(id)
+			if err != nil {
+				return "", err
+			}
+			return fmt.Sprintf(".show functions | where Name == '%s'", funcId.Name), nil
 		}).Build()
 
 	resource.Test(t, resource.TestCase{
@@ -32,7 +36,7 @@ func TestAccADXFunction_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "name", rtc.EntityName),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "parameters", "()"),
-					resource.TestCheckResourceAttr(rtc.GetTFName(), "body", "{Test1 | limit 10}"),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "body", "{Test1 \n| limit 10}"),
 				),
 			},
 		},
@@ -46,7 +50,7 @@ func (this ADXFunctionTestResource) basic(rtc *ResourceTestContext[ADXFunction])
 	resource "%s" %s {
 		database_name = "%s"
 		name          = "%s"
-		body          = "{${adx_table.test.name} | limit 10}"
+		body          = "{${adx_table.test.name} \n| limit 10}"
 	}
 	`, this.template(rtc), rtc.Type, rtc.Label, rtc.DatabaseName, rtc.EntityName)
 }

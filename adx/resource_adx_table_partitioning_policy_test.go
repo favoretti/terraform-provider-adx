@@ -16,8 +16,7 @@ func TestAccADXTablePartitioningPolicy_basic(t *testing.T) {
 	rtc, _ := rtcBuilder.Test(t).Type("adx_table_partitioning_policy").
 		DatabaseName("test-db").
 		EntityType("partitioning").
-		ReadStatementFunc(GetAccTestPolicyReadStatementFunc("table","partitioning")).
-		IDParserFunc(GetAccTestPolicyIDParserFunc()).Build()
+		ReadStatementFunc(GetAccTestPolicyReadStatementFunc()).Build()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -25,7 +24,7 @@ func TestAccADXTablePartitioningPolicy_basic(t *testing.T) {
 		CheckDestroy: rtc.GetTestCheckEntityDestroyed(),
 		Steps: []resource.TestStep{
 			{
-				Config: r.basic(rtc,64),
+				Config: r.basic(rtc, 64),
 				Check: resource.ComposeTestCheckFunc(
 					rtc.GetTestCheckEntityExists(&entity),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "table_name", rtc.EntityName),
@@ -41,7 +40,7 @@ func TestAccADXTablePartitioningPolicy_basic(t *testing.T) {
 				),
 			},
 			{
-				Config: r.basic(rtc,128),
+				Config: r.basic(rtc, 128),
 				Check: resource.ComposeTestCheckFunc(
 					rtc.GetTestCheckEntityExists(&entity),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "table_name", rtc.EntityName),
