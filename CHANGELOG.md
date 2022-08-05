@@ -1,3 +1,15 @@
+## v0.0.13
+
+* Added retention, caching, and RLS policies for materialized views
+
+`adx_materialized_view_caching_policy`
+`adx_materialized_view_retention_policy`
+`adx_materialized_view_row_level_security_policy`
+
+* Input validation bug fixes for mapping and function resources
+* Fixed cluster uri param name in docs
+* Fixed possible duplication of function resources
+
 ## v0.0.12
 
 * Resource IDs of `adx_table` and `adx_table_mapping` were changed to match the structure of the newly added resources. Should have no impact on normal operation.
@@ -16,6 +28,7 @@
 ## v0.0.10
 
 ### Table resource improvements:
+
 * Ability to update table definitions (.alter & .alter-merge),
 * Table creation from query (.set, .set-or-replace etc..)
 
