@@ -139,7 +139,10 @@ func buildADXClient(clusterConfig *ClusterConfig) (*kusto.Client, error) {
 }
 
 func getADXClient(meta interface{}, clusterConfig *ClusterConfig) (*kusto.Client, error) {
+
+	meta.(*Meta).KustoClientsMapMU.RLock()
 	client := getCachedADXClient(meta, clusterConfig)
+	meta.(*Meta).KustoClientsMapMU.RUnlock()
 
 	if client == nil {
 		var err error
@@ -147,8 +150,10 @@ func getADXClient(meta interface{}, clusterConfig *ClusterConfig) (*kusto.Client
 		if err != nil {
 			return nil, err
 		}
+		meta.(*Meta).KustoClientsMapMU.Lock()
+		setCachedADXClient(meta, clusterConfig, client)
+		meta.(*Meta).KustoClientsMapMU.Unlock()
 	}
-	setCachedADXClient(meta, clusterConfig, client)
 
 	return client, nil
 }
@@ -232,10 +237,10 @@ func isEntityExists(ctx context.Context, meta interface{}, clusterConfig *Cluste
 
 func hasStatementResults(ctx context.Context, meta interface{}, clusterConfig *ClusterConfig, databaseName, statement string, desc string) (bool, error) {
 	resp, err := queryADXMgmt(ctx, meta, clusterConfig, databaseName, statement)
-	defer resp.Stop()
 	if err != nil {
 		return false, fmt.Errorf("error %s in database (%s): %+v", desc, databaseName, err)
 	}
+	defer resp.Stop()
 	var hasResults bool
 	err = resp.Do(
 		func(row *table.Row) error {
