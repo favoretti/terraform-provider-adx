@@ -2,6 +2,7 @@ package adx
 
 import (
 	"context"
+	"sync"
 
 	"github.com/Azure/azure-kusto-go/kusto"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -17,6 +18,7 @@ type Config struct {
 
 type Meta struct {
 	KustoClientsMap      map[string]*kusto.Client
+	KustoClientsMapMU    sync.RWMutex
 	DefaultClusterConfig *ClusterConfig
 	StopContext          context.Context
 }
