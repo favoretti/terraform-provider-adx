@@ -25,10 +25,14 @@ type TableMapping struct {
 }
 
 type Mapping struct {
-	Column    string `json:"column"`
-	Path      string `json:"path"`
-	DataType  string `json:"datatype"`
-	Transform string `json:"transform"`
+	Column     string `json:"column,omitempty"`
+	Path       string `json:"path,omitempty"`
+	Ordinal    string `json:"ordinal,omitempty"`
+	ConstValue string `json:"constvalue,omitempty"`
+	DataType   string `json:"datatype,omitempty"`
+	Transform  string `json:"transform,omitempty"`
+	Field      string `json:"field,omitempty"`
+	Name       string `json:"name,omitempty"`
 }
 
 func resourceADXTableMapping() *schema.Resource {
@@ -65,7 +69,7 @@ func resourceADXTableMapping() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
-					"Json",
+					"json", "csv", "parquet", "avro", "orc", "w3clogfile",
 				}, true)),
 			},
 			"mapping": {
@@ -79,11 +83,23 @@ func resourceADXTableMapping() *schema.Resource {
 						},
 						"path": {
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
+						},
+						"field": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"ordinal": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"constvalue": {
+							Type:     schema.TypeString,
+							Optional: true,
 						},
 						"datatype": {
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
 						},
 						"transform": {
 							Type:     schema.TypeString,
@@ -208,13 +224,18 @@ func expandTableMapping(input []interface{}) string {
 		return ""
 	}
 
+	optionalFields := [6]string{"path", "datatype", "transform", "ordinal", "constvalue", "field"}
+
+	// TODO Convert this to use json.Marshall
 	mappings := make([]string, 0)
 	for _, v := range input {
 		block := v.(map[string]interface{})
-		mapping := fmt.Sprintf(`"column":"%s","path":"%s","datatype":"%s"`, block["column"].(string), block["path"].(string), block["datatype"].(string))
-		if t, ok := block["transform"].(string); ok {
-			if len(t) != 0 {
-				mapping = fmt.Sprintf(`%s,"transform":"%s"`, mapping, t)
+		mapping := fmt.Sprintf(`"column":"%s"`, block["column"].(string))
+		for _, field := range optionalFields {
+			if t, ok := block[field].(string); ok {
+				if len(t) != 0 {
+					mapping = fmt.Sprintf(`%s,"%s":"%s"`, mapping, field, t)
+				}
 			}
 		}
 		mapping = fmt.Sprintf("{%s}", mapping)
@@ -231,13 +252,22 @@ func flattenTableMapping(input string) []interface{} {
 	var oMappings []Mapping
 	json.Unmarshal([]byte(input), &oMappings)
 
+	// For certain mapping types, kusto returns very inconsistent data models (variations in both case and parameter name)
+	// Example: For CSV, the "column" param in input is reflected as "Name" in output
+
 	mappings := make([]interface{}, 0)
 	for _, v := range oMappings {
 		block := make(map[string]interface{})
 		block["column"] = v.Column
 		block["path"] = v.Path
+		block["ordinal"] = v.Ordinal
 		block["datatype"] = v.DataType
 		block["transform"] = v.Transform
+		block["constvalue"] = v.ConstValue
+
+		if block["column"] == "" {
+			block["column"] = v.Name
+		}
 		mappings = append(mappings, block)
 	}
 	return mappings
