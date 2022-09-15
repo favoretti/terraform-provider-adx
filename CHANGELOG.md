@@ -1,3 +1,8 @@
+## v0.0.14
+
+* added csv, orc, parquet mapping types
+* fixed cache concurrecy issue, fixed bug in hasStatementResults
+
 ## v0.0.13
 
 * Added retention, caching, and RLS policies for materialized views
