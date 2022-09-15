@@ -9,6 +9,8 @@ description: |-
 
 Manages a table mapping in ADX.
 
+[ADX - Data Mappings](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/management/mappings)
+
 ## Example Usage
 
 ```terraform
@@ -41,18 +43,21 @@ resource "adx_table_mapping" "test" {
 - **name** (String, Required) Name of the Table mapping to create.
 - **database_name** (String, Required) Database name in which this Table mapping should be created.
 - **table_name** (String, Required) Table name in which this mapping should be created.
-- **kind** (String, Required) Mapping kind. The only currently supported value is `Json`.
+- **kind** (String, Required) Mapping kind. (json, csv, orc, avro, parquet, w3clogfile)
 - **mapping** A `mapping` block defined below.
 - **cluster** (Optional) `cluster` Configuration block (defined below) for the target cluster (overrides any config specified in the provider)
 
 `mapping` Configures a mapping and supports the following:
 
 - **column** (String, Required)
-- **path** (String, Required)
-- **datatype** (String, Required)
+- **path** (String, Optional)
+- **ordinal** (String, Optional)
+- **field** (String, Optional)
+- **constvalue** (String, Optional)
+- **datatype** (String, Optional)
 - **transform** (String, Optional)
 
-`cluster` Configuration block for connection details about the target ADX cluster 
+`cluster` Configuration block for connection details about the target ADX cluster
 
 *Note*: Any attributes specified here override the cluster config specified in the provider. Once a resource overrides an attribute specified in the provider, it will be stored explicitly as state for that resource and will not be possible to go back to the provider config unless explicitly unset.
 
