@@ -98,11 +98,12 @@ func (this ADXMaterializedViewTestResource) mvRLSTable(rtc *ResourceTestContext[
 	%s
 
 	resource "%s" "%s" {
-		name              = "%s"
-		database_name     = "%s"
-		source_table_name = adx_table.%s.name
-		backfill          = true
-		query             = "${adx_table.%s.name} | summarize arg_max(score,*) by team"
+		name                 = "%s"
+		database_name        = "%s"
+		source_table_name    = adx_table.%s.name
+		backfill             = true
+		query                = "${adx_table.%s.name} | summarize arg_max(score,*) by team"
+		allow_mv_without_rls = true
 	  }
 	`, this.rlsTable(rtc, tableName), rtc.Type, rtc.Label, rtc.EntityName, rtc.DatabaseName, rtc.Label, rtc.Label)
 }
@@ -152,6 +153,8 @@ func (this ADXMaterializedViewTestResource) rlsTable(rtc *ResourceTestContext[AD
 		table_name    = adx_table.%s.name
 		query         = adx_function.%s.name
 		enabled       = true
+
+		allow_mv_without_rls = true
 	}
 	`, this.basicTable(rtc, tableName), rtc.Label, rtc.DatabaseName, rtc.Label, rtc.Label, rtc.DatabaseName, rtc.Label, rtc.Label)
 }
