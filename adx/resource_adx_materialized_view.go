@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/Azure/azure-kusto-go/kusto/data/value"
@@ -79,6 +80,7 @@ func resourceADXMaterializedView() *schema.Resource {
 
 			"effective_date_time": {
 				Type:     schema.TypeString,
+				Computed: true,
 				Optional: true,
 			},
 
@@ -169,6 +171,7 @@ func resourceADXMaterializedViewRead(ctx context.Context, d *schema.ResourceData
 	}
 
 	showCommand := fmt.Sprintf(".show materialized-views | where Name == '%s' | extend Lookback=tostring(Lookback), IsHealthy=tolower(tostring(IsHealthy)), IsEnabled=tolower(tostring(IsEnabled)), AutoUpdateSchema=tolower(tostring(AutoUpdateSchema)), EffectiveDateTime", id.Name)
+	//showCommand := fmt.Sprintf(".show materialized-views | where Name == '%s' | extend Lookback=tostring(Lookback)", id.Name)
 	resultSet, diags := readADXEntity[ADXMaterializedView](ctx, meta, clusterConfig, id, showCommand, "materialized-view")
 	if diags.HasError() {
 		return diags
@@ -177,12 +180,15 @@ func resourceADXMaterializedViewRead(ctx context.Context, d *schema.ResourceData
 	if len(resultSet) < 1 {
 		d.SetId("")
 	} else {
+
+		autoUpdateSchema, _ := strconv.ParseBool(resultSet[0].AutoUpdateSchema)
+
 		d.Set("name", id.Name)
 		d.Set("database_name", id.DatabaseName)
 		d.Set("source_table_name", resultSet[0].SourceTable)
 		d.Set("query", resultSet[0].Query)
-		d.Set("auto_update_schema", resultSet[0].AutoUpdateSchema)
-		d.Set("effective_date_time", resultSet[0].EffectiveDateTime)
+		d.Set("auto_update_schema", autoUpdateSchema)
+		d.Set("effective_date_time", resultSet[0].EffectiveDateTime.String())
 	}
 
 	return diags
