@@ -80,7 +80,7 @@ resource "adx_table" "test" {
 See [ADX - Ingest from Query](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/management/data-ingestion/ingest-from-query) for behavioral details of these parameters
 
 - **query** (String, Required) Result of this query will be used to build the target table
-- **append** (Boolean, Optional) If table already contains data, add to it instead of replacing. Default is false
+- **append** (Boolean, Required) If table already contains data, add to it instead of replacing.
 - **extend_schema** (Boolean, Optional) True if the command may extend the schema of the table. Default is "false". Only applied for updates
 - **recreate_schema** (Boolean, Optional) True if the command may recreate the schema of the table. Default is "false". Only applied for updates. Takes precedence over recreate_schema
 - **distributed** (Boolean, Optional) Indicates that the command ingests from all nodes executing the query in parallel. Default is "false"
