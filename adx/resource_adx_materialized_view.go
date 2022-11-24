@@ -95,6 +95,12 @@ func resourceADXMaterializedView() *schema.Resource {
 				Optional: true,
 				Default:  false,
 			},
+
+			"allow_mv_without_rls": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
 		},
 		CustomizeDiff: clusterConfigCustomDiff,
 	}
@@ -125,6 +131,9 @@ func resourceADXMaterializedViewCreateUpdate(ctx context.Context, d *schema.Reso
 
 	if backfill, ok := d.GetOk("backfill"); ok {
 		withParams = append(withParams, fmt.Sprintf("backfill=%t", backfill.(bool)))
+	}
+	if allowMVWithoutRLS, ok := d.GetOk("allow_mv_without_rls"); ok {
+		withParams = append(withParams, fmt.Sprintf("allowMaterializedViewsWithoutRowLevelSecurity=%t", allowMVWithoutRLS.(bool)))
 	}
 	if updateExtentsCreationTime, ok := d.GetOk("update_extents_creation_time"); ok {
 		withParams = append(withParams, fmt.Sprintf("UpdateExtentsCreationTime=%t", updateExtentsCreationTime.(bool)))

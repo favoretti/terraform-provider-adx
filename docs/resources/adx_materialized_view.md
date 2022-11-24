@@ -19,6 +19,7 @@ resource "adx_materialized_view" "test" {
   database_name                = "test-db"
   source_table_name            = adx_table.test.name
   query                        = format("%s | extend hi=true | summarize count(), dcount(f1) by f2",adx_table.test.name)
+  allow_mv_without_rls         = true
 }
 ```
 
@@ -33,6 +34,7 @@ resource "adx_materialized_view" "test" {
 - **effective_date_time** (String, Optional) ISO8601 Date time string. If set, creation only backfills with records ingested after the datetime. `backfill` must also be set to true.
 - **auto_update_schema** (Boolean, Optional) Whether to auto-update the view on source table changes. Default is false. This option is valid only for views of type `arg_max(Timestamp,*)`, `arg_min(Timestamp, *)`, `take_any(*)` (only when columns argument is *). If this option is set to true, changes to source table will be automatically reflected in the materialized view.
 - **update_extents_creation_time** (Boolean, Optional) Relevant only when using `backfill`. If true, extent creation time is assigned based on datetime group-by key during the backfill process
+- **allow_mv_without_rls** (Boolean, Optional) Enables `allowMaterializedViewsWithoutRowLevelSecurity` flag during policy creation
 - **cluster** (Optional) `cluster` Configuration block (defined below) for the target cluster (overrides any config specified in the provider)
 
 `cluster` Configuration block for connection details about the target ADX cluster 
