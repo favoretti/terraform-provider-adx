@@ -252,3 +252,11 @@ func hasStatementResults(ctx context.Context, meta interface{}, clusterConfig *C
 	}
 	return hasResults, nil
 }
+
+func escapeEntityName(name string) string {
+	escapedName := name
+	if strings.Contains(name, "-") && !strings.HasPrefix(name, "[") {
+		escapedName = fmt.Sprintf("['%s']", name)
+	}
+	return escapedName
+}

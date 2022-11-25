@@ -41,6 +41,7 @@ resource "adx_materialized_view_caching_policy" "test" {
 - **view_name** (String, Required) Name of the materialized view containing the policy to modify
 - **database_name** (String, Required) Database name that the target materialized view is in
 - **data_hot_span** (String, Required) Timespan to store rows in SSD hot cache (Example: 30d for 30 days)
+- **follower_database** (Bool, Optional) True if the target materialized view is from an attached/follower database
 - **cluster** (Optional) `cluster` Configuration block (defined below) for the target cluster (overrides any config specified in the provider)
 
 `cluster` Configuration block for connection details about the target ADX cluster
