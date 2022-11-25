@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/Azure/azure-kusto-go/kusto/data/value"
@@ -79,6 +80,7 @@ func resourceADXMaterializedView() *schema.Resource {
 
 			"effective_date_time": {
 				Type:     schema.TypeString,
+				Computed: true,
 				Optional: true,
 			},
 
@@ -89,6 +91,12 @@ func resourceADXMaterializedView() *schema.Resource {
 			},
 
 			"update_extents_creation_time": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
+
+			"allow_mv_without_rls": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
@@ -123,6 +131,9 @@ func resourceADXMaterializedViewCreateUpdate(ctx context.Context, d *schema.Reso
 
 	if backfill, ok := d.GetOk("backfill"); ok {
 		withParams = append(withParams, fmt.Sprintf("backfill=%t", backfill.(bool)))
+	}
+	if allowMVWithoutRLS, ok := d.GetOk("allow_mv_without_rls"); ok {
+		withParams = append(withParams, fmt.Sprintf("allowMaterializedViewsWithoutRowLevelSecurity=%t", allowMVWithoutRLS.(bool)))
 	}
 	if updateExtentsCreationTime, ok := d.GetOk("update_extents_creation_time"); ok {
 		withParams = append(withParams, fmt.Sprintf("UpdateExtentsCreationTime=%t", updateExtentsCreationTime.(bool)))
@@ -169,6 +180,7 @@ func resourceADXMaterializedViewRead(ctx context.Context, d *schema.ResourceData
 	}
 
 	showCommand := fmt.Sprintf(".show materialized-views | where Name == '%s' | extend Lookback=tostring(Lookback), IsHealthy=tolower(tostring(IsHealthy)), IsEnabled=tolower(tostring(IsEnabled)), AutoUpdateSchema=tolower(tostring(AutoUpdateSchema)), EffectiveDateTime", id.Name)
+	//showCommand := fmt.Sprintf(".show materialized-views | where Name == '%s' | extend Lookback=tostring(Lookback)", id.Name)
 	resultSet, diags := readADXEntity[ADXMaterializedView](ctx, meta, clusterConfig, id, showCommand, "materialized-view")
 	if diags.HasError() {
 		return diags
@@ -177,12 +189,15 @@ func resourceADXMaterializedViewRead(ctx context.Context, d *schema.ResourceData
 	if len(resultSet) < 1 {
 		d.SetId("")
 	} else {
+
+		autoUpdateSchema, _ := strconv.ParseBool(resultSet[0].AutoUpdateSchema)
+
 		d.Set("name", id.Name)
 		d.Set("database_name", id.DatabaseName)
 		d.Set("source_table_name", resultSet[0].SourceTable)
 		d.Set("query", resultSet[0].Query)
-		d.Set("auto_update_schema", resultSet[0].AutoUpdateSchema)
-		d.Set("effective_date_time", resultSet[0].EffectiveDateTime)
+		d.Set("auto_update_schema", autoUpdateSchema)
+		d.Set("effective_date_time", resultSet[0].EffectiveDateTime.String())
 	}
 
 	return diags

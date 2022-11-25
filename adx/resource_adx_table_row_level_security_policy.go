@@ -3,6 +3,7 @@ package adx
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"encoding/json"
 
@@ -50,6 +51,12 @@ func resourceADXTableRowLevelSecurityPolicy() *schema.Resource {
 				Optional: true,
 				Default:  true,
 			},
+
+			"allow_mv_without_rls": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
 		},
 		CustomizeDiff: clusterConfigCustomDiff,
 	}
@@ -66,7 +73,18 @@ func resourceADXTableRowLevelSecurityPolicyCreateUpdate(ctx context.Context, d *
 		enabledString = "disable"
 	}
 
-	createStatement := fmt.Sprintf(".alter table %s policy row_level_security %s \"%s\"", tableName, enabledString, query)
+	var withParams []string
+
+	if allowMVWithoutRLS, ok := d.GetOk("allow_mv_without_rls"); ok {
+		withParams = append(withParams, fmt.Sprintf("allowMaterializedViewsWithoutRowLevelSecurity=%t", allowMVWithoutRLS.(bool)))
+	}
+
+	withClause := ""
+	if len(withParams) > 0 {
+		withClause = fmt.Sprintf("with(%s)", strings.Join(withParams, ", "))
+	}
+
+	createStatement := fmt.Sprintf(".alter table %s policy row_level_security %s %s \"%s\"", tableName, enabledString, withClause, query)
 
 	if err := createADXPolicy(ctx, d, meta, "table", "row_level_security", databaseName, tableName, createStatement); err != nil {
 		return diag.Errorf("%+v", err)

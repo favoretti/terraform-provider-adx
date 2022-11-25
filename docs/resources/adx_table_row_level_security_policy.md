@@ -42,6 +42,7 @@ resource "adx_table_row_level_security_policy" "test" {
 - **database_name** (String, Required) Database name that the target table is in
 - **query** (String, Required) The query to be run automatically when the target table is queried
 - **enabled** (Boolean, Optional) Enable or disable this policy
+- **allow_mv_without_rls** (Boolean, Optional) Enables the allowMaterializedViewsWithoutRowLevelSecurity flag during policy creation
 - **cluster** (Optional) `cluster` Configuration block (defined below) for the target cluster (overrides any config specified in the provider)
 
 `cluster` Configuration block for connection details about the target ADX cluster

@@ -192,6 +192,36 @@ func (this *ResourceTestContext[T]) CheckEntityDestroyedById(id string) error {
 	return nil
 }
 
+// Query must return a single (string) column named "Result"
+func (this ResourceTestContext[T]) CheckQueryResultSingleValue(query string, expectedResult string, checkName string) resource.TestCheckFunc {
+	return func(state *terraform.State) error {
+		resultSet, err := queryADXAndParse[adxSimpleQueryResult](context.Background(), testAccProvider.Meta(), this.Cluster, this.DatabaseName, query)
+		if err != nil {
+			return err
+		}
+		if len(resultSet) == 0 {
+			return fmt.Errorf("%s: Query result was empty", checkName)
+		}
+		if resultSet[0].Result != expectedResult {
+			return fmt.Errorf("%s: Query result (%s) did not match expected (%s)", checkName, resultSet[0].Result, expectedResult)
+		}
+		return nil
+	}
+}
+
+func (this ResourceTestContext[T]) CheckQueryResultSize(query string, expectedRowCount int, checkName string) resource.TestCheckFunc {
+	return func(state *terraform.State) error {
+		resultSet, err := queryADXAndParse[adxSimpleQueryResult](context.Background(), testAccProvider.Meta(), this.Cluster, this.DatabaseName, query)
+		if err != nil {
+			return err
+		}
+		if len(resultSet) != expectedRowCount {
+			return fmt.Errorf("%s: Query result count (%d) did not match expected (%d)", checkName, len(resultSet), expectedRowCount)
+		}
+		return nil
+	}
+}
+
 func testAccPreCheck(t *testing.T) {
 	if err := os.Getenv("ADX_CLIENT_ID"); err == "" {
 		t.Fatal("ADX_CLIENT_ID must be set for acceptance tests")
