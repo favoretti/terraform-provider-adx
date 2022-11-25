@@ -47,6 +47,12 @@ func resourceADXTableCachingPolicy() *schema.Resource {
 					"data_hot_span must be in the format of <amount><unit> such as 1m for (one minute) or 30d (thirty days)",
 				),
 			},
+
+			"follower_database": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
 		},
 		CustomizeDiff: clusterConfigCustomDiff,
 	}
@@ -56,8 +62,14 @@ func resourceADXTableCachingPolicyCreateUpdate(ctx context.Context, d *schema.Re
 	tableName := d.Get("table_name").(string)
 	databaseName := d.Get("database_name").(string)
 	dataHotSpan := d.Get("data_hot_span").(string)
+	followerDatabase := d.Get("follower_database").(bool)
 
-	createStatement := fmt.Sprintf(".alter table %s policy caching hot = %s", tableName, dataHotSpan)
+	followerDatabaseClause := ""
+	if followerDatabase {
+		followerDatabaseClause = fmt.Sprintf("follower database %s", escapeEntityName(databaseName))
+	}
+
+	createStatement := fmt.Sprintf(".alter %s table %s policy caching hot = %s", followerDatabaseClause, tableName, dataHotSpan)
 
 	if err := createADXPolicy(ctx, d, meta, "table", "caching", databaseName, tableName, createStatement); err != nil {
 		return diag.Errorf("%+v", err)
