@@ -47,6 +47,12 @@ func resourceADXMaterializedViewCachingPolicy() *schema.Resource {
 					"data_hot_span must be in the format of <amount><unit> such as 1m for (one minute) or 30d (thirty days)",
 				),
 			},
+
+			"follower_database": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
 		},
 		CustomizeDiff: clusterConfigCustomDiff,
 	}
@@ -56,8 +62,14 @@ func resourceADXMaterializedViewCachingPolicyCreateUpdate(ctx context.Context, d
 	viewName := d.Get("view_name").(string)
 	databaseName := d.Get("database_name").(string)
 	dataHotSpan := d.Get("data_hot_span").(string)
+	followerDatabase := d.Get("follower_database").(bool)
 
-	createStatement := fmt.Sprintf(".alter materialized-view %s policy caching hot = %s", viewName, dataHotSpan)
+	followerDatabaseClause := ""
+	if followerDatabase {
+		followerDatabaseClause = fmt.Sprintf("follower database %s", escapeEntityName(databaseName))
+	}
+
+	createStatement := fmt.Sprintf(".alter %s materialized-view %s policy caching hot = %s", followerDatabaseClause, viewName, dataHotSpan)
 
 	if err := createADXPolicy(ctx, d, meta, "materialized-view", "caching", databaseName, viewName, createStatement); err != nil {
 		return diag.Errorf("%+v", err)

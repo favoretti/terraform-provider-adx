@@ -102,5 +102,12 @@ func deleteADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface
 		return diag.Errorf("could not delete adx policy due to error parsing ID: %+v", err)
 	}
 
-	return deleteADXEntity(ctx, d, meta, clusterConfig, id.DatabaseName, fmt.Sprintf(".delete %s %s policy %s", entityType, id.Name, policyName))
+	followerDatabaseClause := ""
+	if followerDatabase, ok := d.GetOk("follower_database"); ok {
+		if followerDatabase.(bool) {
+			followerDatabaseClause = fmt.Sprintf("follower database %s", escapeEntityName(id.DatabaseName))
+		}
+	}
+
+	return deleteADXEntity(ctx, d, meta, clusterConfig, id.DatabaseName, fmt.Sprintf(".delete %s %s %s policy %s", followerDatabaseClause, entityType, id.Name, policyName))
 }

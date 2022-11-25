@@ -36,6 +36,34 @@ func TestAccADXTableCachingPolicy_basic(t *testing.T) {
 	})
 }
 
+// Requires a follower database already configured with table `sample_shared_table`
+func TestAccADXTableCachingPolicy_follower(t *testing.T) {
+	var entity TableCachingPolicy
+	r := ADXTableCachingPolicyTestResource{}
+	rtcBuilder := BuildResourceTestContext[TableCachingPolicy]()
+	rtc, _ := rtcBuilder.Test(t).Type("adx_table_caching_policy").
+		DatabaseName("shareable-db").
+		EntityType("caching").
+		EntityName("sample_shared_table").
+		ReadStatementFunc(GetAccTestPolicyReadStatementFunc()).Build()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: r.follower(rtc, rtc.EntityName),
+				Check: resource.ComposeTestCheckFunc(
+					rtc.GetTestCheckEntityExists(&entity),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "table_name", rtc.EntityName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "data_hot_span", "3d"),
+				),
+			},
+		},
+	})
+}
+
 func (this ADXTableCachingPolicyTestResource) basic(rtc *ResourceTestContext[TableCachingPolicy]) string {
 	return fmt.Sprintf(`
 	%s
@@ -46,6 +74,18 @@ func (this ADXTableCachingPolicyTestResource) basic(rtc *ResourceTestContext[Tab
 		data_hot_span = "3d"
 	}
 	`, this.template(rtc), rtc.Type, rtc.Label, rtc.DatabaseName)
+}
+
+func (this ADXTableCachingPolicyTestResource) follower(rtc *ResourceTestContext[TableCachingPolicy], tableName string) string {
+	return fmt.Sprintf(`
+
+	resource "%s" %s {
+		database_name     = "%s"
+		table_name        = "%s"
+		data_hot_span     = "3d"
+		follower_database = true
+	}
+	`, rtc.Type, rtc.Label, rtc.DatabaseName, tableName)
 }
 
 func (this ADXTableCachingPolicyTestResource) template(rtc *ResourceTestContext[TableCachingPolicy]) string {
