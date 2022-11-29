@@ -1,3 +1,16 @@
+## v0.0.15
+
+### Caching polices for tables and views in follower databases
+
+* Added acceptance tests for caching policies on materialized views
+* `follower_database` flag for both table and mv caching policies
+
+### Materialized View Improvements
+
+* Acceptance tests for materialized views
+* Materialized view bug fixes (found by new acceptance tests)
+* allow_mv_without_rls flag for both rls & mv policy creation to help with common issues creating views on top of tables configured with RLS
+
 ## v0.0.14
 
 * added csv, orc, parquet mapping types
