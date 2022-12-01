@@ -3,6 +3,8 @@
 * [Terraform Website](https://www.terraform.io)
 * [ADX Provider Documentation](https://registry.terraform.io/providers/favoretti/adx/latest/docs)
 
+[![release](https://github.com/favoretti/terraform-provider-adx/actions/workflows/release.yml/badge.svg)](https://github.com/favoretti/terraform-provider-adx/actions/workflows/release.yml)
+
 ## Usage Example
 
 ```hcl
