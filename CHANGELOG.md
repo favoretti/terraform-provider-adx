@@ -1,3 +1,7 @@
+## v0.0.16
+
+* Due to a glitch in time-space continuum, this is identical to v0.0.15
+
 ## v0.0.15
 
 ### Caching polices for tables and views in follower databases
