@@ -1,3 +1,10 @@
+## v0.0.17
+
+* Bug fixes for tables and views "with" attributes when resource is updated (some are incompatible with .alter)
+* Bug fix for cache policies on follower databases (API is eventually consistent, had to add polling for state read)
+* Added TF import functionality to all resources
+* Acceptance tests for resource updates
+
 ## v0.0.16
 
 * Due to a glitch in time-space continuum, this is identical to v0.0.15
