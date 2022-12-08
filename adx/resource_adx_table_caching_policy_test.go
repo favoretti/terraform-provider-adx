@@ -24,12 +24,21 @@ func TestAccADXTableCachingPolicy_basic(t *testing.T) {
 		CheckDestroy: rtc.GetTestCheckEntityDestroyed(),
 		Steps: []resource.TestStep{
 			{
-				Config: r.basic(rtc),
+				Config: r.basic(rtc, "3d"),
 				Check: resource.ComposeTestCheckFunc(
 					rtc.GetTestCheckEntityExists(&entity),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "table_name", rtc.EntityName),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "data_hot_span", "3d"),
+				),
+			},
+			{
+				Config: r.basic(rtc, "1d"),
+				Check: resource.ComposeTestCheckFunc(
+					rtc.GetTestCheckEntityExists(&entity),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "table_name", rtc.EntityName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "data_hot_span", "1d"),
 				),
 			},
 		},
@@ -52,7 +61,7 @@ func TestAccADXTableCachingPolicy_follower(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: r.follower(rtc, rtc.EntityName),
+				Config: r.follower(rtc, rtc.EntityName, "3d"),
 				Check: resource.ComposeTestCheckFunc(
 					rtc.GetTestCheckEntityExists(&entity),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "table_name", rtc.EntityName),
@@ -60,32 +69,41 @@ func TestAccADXTableCachingPolicy_follower(t *testing.T) {
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "data_hot_span", "3d"),
 				),
 			},
+			{
+				Config: r.follower(rtc, rtc.EntityName, "1d"),
+				Check: resource.ComposeTestCheckFunc(
+					rtc.GetTestCheckEntityExists(&entity),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "table_name", rtc.EntityName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "data_hot_span", "1d"),
+				),
+			},
 		},
 	})
 }
 
-func (this ADXTableCachingPolicyTestResource) basic(rtc *ResourceTestContext[TableCachingPolicy]) string {
+func (this ADXTableCachingPolicyTestResource) basic(rtc *ResourceTestContext[TableCachingPolicy], hotCache string) string {
 	return fmt.Sprintf(`
 	%s
 
 	resource "%s" %s {
 		database_name = "%s"
 		table_name    = "${adx_table.test.name}"
-		data_hot_span = "3d"
+		data_hot_span = "%s"
 	}
-	`, this.template(rtc), rtc.Type, rtc.Label, rtc.DatabaseName)
+	`, this.template(rtc), rtc.Type, rtc.Label, rtc.DatabaseName, hotCache)
 }
 
-func (this ADXTableCachingPolicyTestResource) follower(rtc *ResourceTestContext[TableCachingPolicy], tableName string) string {
+func (this ADXTableCachingPolicyTestResource) follower(rtc *ResourceTestContext[TableCachingPolicy], tableName string, hotCache string) string {
 	return fmt.Sprintf(`
 
 	resource "%s" %s {
 		database_name     = "%s"
 		table_name        = "%s"
-		data_hot_span     = "3d"
+		data_hot_span     = "%s"
 		follower_database = true
 	}
-	`, rtc.Type, rtc.Label, rtc.DatabaseName, tableName)
+	`, rtc.Type, rtc.Label, rtc.DatabaseName, tableName, hotCache)
 }
 
 func (this ADXTableCachingPolicyTestResource) template(rtc *ResourceTestContext[TableCachingPolicy]) string {

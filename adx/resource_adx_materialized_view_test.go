@@ -31,7 +31,19 @@ func TestAccMaterializedView(t *testing.T) {
 		CheckDestroy: rtc.GetTestCheckEntityDestroyed(),
 		Steps: []resource.TestStep{
 			{
-				Config: r.basicMv(rtc, tableName),
+				ImportState:       true,
+				ImportStateVerify: true,
+				Config:            r.basicMv(rtc, tableName, ""),
+				Check: resource.ComposeTestCheckFunc(
+					rtc.GetTestCheckEntityExists(&entity),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "name", rtc.EntityName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "source_table_name", tableName),
+					rtc.CheckQueryResultSize(rtc.EntityName, 6, "Materialized view query check"),
+				),
+			},
+			{
+				Config: r.basicMv(rtc, tableName, "| extend newcol = 1"),
 				Check: resource.ComposeTestCheckFunc(
 					rtc.GetTestCheckEntityExists(&entity),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "name", rtc.EntityName),
@@ -66,7 +78,17 @@ func TestAccMaterializedView_RLSSourceTable(t *testing.T) {
 		CheckDestroy: rtc.GetTestCheckEntityDestroyed(),
 		Steps: []resource.TestStep{
 			{
-				Config: r.mvRLSTable(rtc, tableName),
+				Config: r.mvRLSTable(rtc, tableName, ""),
+				Check: resource.ComposeTestCheckFunc(
+					rtc.GetTestCheckEntityExists(&entity),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "name", rtc.EntityName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "source_table_name", tableName),
+					rtc.CheckQueryResultSize(rtc.EntityName, 6, "Materialized view query check"),
+				),
+			},
+			{
+				Config: r.mvRLSTable(rtc, tableName, "| extend newcol = 1"),
 				Check: resource.ComposeTestCheckFunc(
 					rtc.GetTestCheckEntityExists(&entity),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "name", rtc.EntityName),
@@ -79,7 +101,7 @@ func TestAccMaterializedView_RLSSourceTable(t *testing.T) {
 	})
 }
 
-func (this ADXMaterializedViewTestResource) basicMv(rtc *ResourceTestContext[ADXMaterializedView], tableName string) string {
+func (this ADXMaterializedViewTestResource) basicMv(rtc *ResourceTestContext[ADXMaterializedView], tableName string, extraClause string) string {
 	return fmt.Sprintf(`
 	%s
 
@@ -88,12 +110,12 @@ func (this ADXMaterializedViewTestResource) basicMv(rtc *ResourceTestContext[ADX
 		database_name     = "%s"
 		source_table_name = adx_table.%s.name
 		backfill          = true
-		query             = "${adx_table.%s.name} | summarize arg_max(score,*) by team"
+		query             = "${adx_table.%s.name} %s | summarize arg_max(score,*) by team"
 	  }
-	`, this.basicTable(rtc, tableName), rtc.Type, rtc.Label, rtc.EntityName, rtc.DatabaseName, rtc.Label, rtc.Label)
+	`, this.basicTable(rtc, tableName), rtc.Type, rtc.Label, rtc.EntityName, rtc.DatabaseName, rtc.Label, rtc.Label, extraClause)
 }
 
-func (this ADXMaterializedViewTestResource) mvRLSTable(rtc *ResourceTestContext[ADXMaterializedView], tableName string) string {
+func (this ADXMaterializedViewTestResource) mvRLSTable(rtc *ResourceTestContext[ADXMaterializedView], tableName string, extraClause string) string {
 	return fmt.Sprintf(`
 	%s
 
@@ -102,10 +124,10 @@ func (this ADXMaterializedViewTestResource) mvRLSTable(rtc *ResourceTestContext[
 		database_name        = "%s"
 		source_table_name    = adx_table.%s.name
 		backfill             = true
-		query                = "${adx_table.%s.name} | summarize arg_max(score,*) by team"
+		query                = "${adx_table.%s.name} %s | summarize arg_max(score,*) by team"
 		allow_mv_without_rls = true
 	  }
-	`, this.rlsTable(rtc, tableName), rtc.Type, rtc.Label, rtc.EntityName, rtc.DatabaseName, rtc.Label, rtc.Label)
+	`, this.rlsTable(rtc, tableName), rtc.Type, rtc.Label, rtc.EntityName, rtc.DatabaseName, rtc.Label, rtc.Label, extraClause)
 }
 
 func (this ADXMaterializedViewTestResource) basicTable(rtc *ResourceTestContext[ADXMaterializedView], tableName string) string {

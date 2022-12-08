@@ -24,7 +24,7 @@ func TestAccADXTableIngestionBatchingPolicy_basic(t *testing.T) {
 		CheckDestroy: rtc.GetTestCheckEntityDestroyed(),
 		Steps: []resource.TestStep{
 			{
-				Config: r.basic(rtc),
+				Config: r.basic(rtc, "00:10:00", "100"),
 				Check: resource.ComposeTestCheckFunc(
 					rtc.GetTestCheckEntityExists(&entity),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "table_name", rtc.EntityName),
@@ -34,22 +34,33 @@ func TestAccADXTableIngestionBatchingPolicy_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "max_raw_size_mb", "100"),
 				),
 			},
+			{
+				Config: r.basic(rtc, "00:05:00", "200"),
+				Check: resource.ComposeTestCheckFunc(
+					rtc.GetTestCheckEntityExists(&entity),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "table_name", rtc.EntityName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "max_batching_timespan", "00:05:00"),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "max_items", "30000"),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "max_raw_size_mb", "200"),
+				),
+			},
 		},
 	})
 }
 
-func (this ADXTableIngestionBatchingPolicyTestResource) basic(rtc *ResourceTestContext[TableIngestionBatchingPolicy]) string {
+func (this ADXTableIngestionBatchingPolicyTestResource) basic(rtc *ResourceTestContext[TableIngestionBatchingPolicy], timespan string, maxSize string) string {
 	return fmt.Sprintf(`
 	%s
 
 	resource "%s" %s {
 		database_name         = "%s"
 		table_name            = "${adx_table.test.name}"
-		max_batching_timespan = "00:10:00"
+		max_batching_timespan = "%s"
 		max_items             = 30000
-		max_raw_size_mb       = 100
+		max_raw_size_mb       = %s
 	}
-	`, this.template(rtc), rtc.Type, rtc.Label, rtc.DatabaseName)
+	`, this.template(rtc), rtc.Type, rtc.Label, rtc.DatabaseName, timespan, maxSize)
 }
 
 func (this ADXTableIngestionBatchingPolicyTestResource) template(rtc *ResourceTestContext[TableIngestionBatchingPolicy]) string {

@@ -311,7 +311,8 @@ func buildTableFromQueryStatement(tableName string, new bool, config *tableFromQ
 	if config.ExtendSchema {
 		withParams = append(withParams, "extend_schema=true")
 	}
-	if config.RecreateSchema {
+	// recreate_schema Only applies for .set-or-replace
+	if config.RecreateSchema && !new {
 		withParams = append(withParams, "recreate_schema=true")
 	}
 
