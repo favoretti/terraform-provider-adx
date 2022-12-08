@@ -37,6 +37,9 @@ func resourceADXTable() *schema.Resource {
 		ReadContext:   resourceADXTableRead,
 		DeleteContext: resourceADXTableDelete,
 		UpdateContext: resourceADXTableUpdate,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 		StateUpgraders: []schema.StateUpgrader{
 			TableV0ToV1Upgrader(),
 		},

@@ -23,6 +23,9 @@ func resourceADXMaterializedViewCachingPolicy() *schema.Resource {
 		ReadContext:   resourceADXMaterializedViewCachingPolicyRead,
 		DeleteContext: resourceADXMaterializedViewCachingPolicyDelete,
 		UpdateContext: resourceADXMaterializedViewCachingPolicyCreateUpdate,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"cluster": getClusterConfigInputSchema(),

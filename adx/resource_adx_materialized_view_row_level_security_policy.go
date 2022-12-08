@@ -22,6 +22,9 @@ func resourceADXMaterializedViewRowLevelSecurityPolicy() *schema.Resource {
 		ReadContext:   resourceADXMaterializedViewRowLevelSecurityPolicyRead,
 		DeleteContext: resourceADXMaterializedViewRowLevelSecurityPolicyDelete,
 		UpdateContext: resourceADXMaterializedViewRowLevelSecurityPolicyCreateUpdate,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"cluster": getClusterConfigInputSchema(),

@@ -24,6 +24,9 @@ func resourceADXTableCachingPolicy() *schema.Resource {
 		ReadContext:   resourceADXTableCachingPolicyRead,
 		DeleteContext: resourceADXTableCachingPolicyDelete,
 		UpdateContext: resourceADXTableCachingPolicyCreateUpdate,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"cluster": getClusterConfigInputSchema(),
