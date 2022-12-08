@@ -2,13 +2,14 @@ package adx
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
-
-	"encoding/json"
+	"time"
 
 	"github.com/favoretti/terraform-provider-adx/adx/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -75,6 +76,25 @@ func resourceADXMaterializedViewCachingPolicyCreateUpdate(ctx context.Context, d
 		return diag.Errorf("%+v", err)
 	}
 
+	// Setting cache for follower database appears to be eventually consistent.
+	// Delay is sometimes up to 10 seconds before API returns new value
+	if followerDatabase {
+		dataHotSpanTimeUnit := dataHotSpan[len(dataHotSpan)-1:]
+		clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
+		createWait := resource.StateChangeConf{
+			Target: []string{
+				dataHotSpan,
+			},
+			MinTimeout: 5 * time.Second,
+			Timeout:    d.Timeout(schema.TimeoutCreate) - time.Minute,
+			Delay:      1 * time.Second,
+			Refresh:    policyCacheValueStateRefresh(ctx, meta, clusterConfig, databaseName, "materialized-view", viewName, dataHotSpanTimeUnit),
+		}
+		if _, err := createWait.WaitForStateContext(ctx); err != nil {
+			return diag.Errorf("waiting for the create/update of materialized-view %s policy caching: %+v", viewName, err)
+		}
+	}
+
 	return resourceADXMaterializedViewCachingPolicyRead(ctx, d, meta)
 }
 
@@ -86,27 +106,35 @@ func resourceADXMaterializedViewCachingPolicyRead(ctx context.Context, d *schema
 		return diags
 	}
 
-	var policy MaterializedViewCachingPolicy
-	if err := json.Unmarshal([]byte(resultSet[0].Policy), &policy); err != nil {
-		return diag.Errorf("error parsing policy caching for materialized-view %q (Database %q): %+v", id.Name, id.DatabaseName, err)
-	}
-
-	originalDataHotSpan := d.Get("data_hot_span")
-
-	if originalDataHotSpan != "" {
-		originalDataHotSpanTimeUnit := originalDataHotSpan.(string)[len(originalDataHotSpan.(string))-1:]
-
-		dataHotSpan, err := toADXTimespanLiteral(ctx, meta, clusterConfig, id.DatabaseName, policy.DataHotSpan.Value, originalDataHotSpanTimeUnit)
-		if err != nil {
-			return diag.Errorf("%+v", err)
-		}
-		d.Set("data_hot_span", dataHotSpan)
+	if resultSet[0].Policy == "null" {
+		d.SetId("")
 	} else {
-		d.Set("data_hot_span", policy.DataHotSpan.Value)
-	}
+		var policy MaterializedViewCachingPolicy
+		if err := json.Unmarshal([]byte(resultSet[0].Policy), &policy); err != nil {
+			return diag.Errorf("error parsing policy caching for materialized-view %q (Database %q): %+v", id.Name, id.DatabaseName, err)
+		}
 
-	d.Set("view_name", id.Name)
-	d.Set("database_name", id.DatabaseName)
+		if policy.DataHotSpan == nil {
+			return diag.Errorf("invalid object returned for policy caching for materialized-view %q (Database %q): %s", id.Name, id.DatabaseName, resultSet[0])
+		}
+
+		originalDataHotSpan := d.Get("data_hot_span")
+
+		if originalDataHotSpan != "" {
+			originalDataHotSpanTimeUnit := originalDataHotSpan.(string)[len(originalDataHotSpan.(string))-1:]
+
+			dataHotSpan, err := toADXTimespanLiteral(ctx, meta, clusterConfig, id.DatabaseName, policy.DataHotSpan.Value, originalDataHotSpanTimeUnit)
+			if err != nil {
+				return diag.Errorf("%+v", err)
+			}
+			d.Set("data_hot_span", dataHotSpan)
+		} else {
+			d.Set("data_hot_span", policy.DataHotSpan.Value)
+		}
+
+		d.Set("view_name", id.Name)
+		d.Set("database_name", id.DatabaseName)
+	}
 
 	return diags
 }

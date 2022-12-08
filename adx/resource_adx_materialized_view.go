@@ -129,19 +129,19 @@ func resourceADXMaterializedViewCreateUpdate(ctx context.Context, d *schema.Reso
 
 	var withParams []string
 
-	if backfill, ok := d.GetOk("backfill"); ok {
+	if backfill, ok := d.GetOk("backfill"); ok && new {
 		withParams = append(withParams, fmt.Sprintf("backfill=%t", backfill.(bool)))
 	}
-	if allowMVWithoutRLS, ok := d.GetOk("allow_mv_without_rls"); ok {
+	if allowMVWithoutRLS, ok := d.GetOk("allow_mv_without_rls"); ok && new {
 		withParams = append(withParams, fmt.Sprintf("allowMaterializedViewsWithoutRowLevelSecurity=%t", allowMVWithoutRLS.(bool)))
 	}
-	if updateExtentsCreationTime, ok := d.GetOk("update_extents_creation_time"); ok {
+	if updateExtentsCreationTime, ok := d.GetOk("update_extents_creation_time"); ok && new {
 		withParams = append(withParams, fmt.Sprintf("UpdateExtentsCreationTime=%t", updateExtentsCreationTime.(bool)))
 	}
-	if autoUpdateSchema, ok := d.GetOk("auto_update_schema"); ok {
+	if autoUpdateSchema, ok := d.GetOk("auto_update_schema"); ok && new {
 		withParams = append(withParams, fmt.Sprintf("autoUpdateSchema=%t", autoUpdateSchema.(bool)))
 	}
-	if effectiveDateTime, ok := d.GetOk("effective_date_time"); ok {
+	if effectiveDateTime, ok := d.GetOk("effective_date_time"); ok && new {
 		withParams = append(withParams, fmt.Sprintf("effectiveDateTime=%s", effectiveDateTime.(string)))
 	}
 
