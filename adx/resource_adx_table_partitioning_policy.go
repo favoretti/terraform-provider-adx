@@ -38,6 +38,9 @@ func resourceADXTablePartitioningPolicy() *schema.Resource {
 		ReadContext:   resourceADXTablePartitioningPolicyRead,
 		DeleteContext: resourceADXTablePartitioningPolicyDelete,
 		UpdateContext: resourceADXTablePartitioningPolicyCreateUpdate,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"cluster": getClusterConfigInputSchema(),

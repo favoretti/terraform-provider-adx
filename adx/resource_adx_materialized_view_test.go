@@ -31,9 +31,7 @@ func TestAccMaterializedView(t *testing.T) {
 		CheckDestroy: rtc.GetTestCheckEntityDestroyed(),
 		Steps: []resource.TestStep{
 			{
-				ImportState:       true,
-				ImportStateVerify: true,
-				Config:            r.basicMv(rtc, tableName, ""),
+				Config: r.basicMv(rtc, tableName, ""),
 				Check: resource.ComposeTestCheckFunc(
 					rtc.GetTestCheckEntityExists(&entity),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "name", rtc.EntityName),
@@ -51,6 +49,12 @@ func TestAccMaterializedView(t *testing.T) {
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "source_table_name", tableName),
 					rtc.CheckQueryResultSize(rtc.EntityName, 6, "Materialized view query check"),
 				),
+			},
+			{
+				ResourceName:            rtc.GetTFName(),
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"allow_mv_without_rls", "async", "backfill", "update_extents_creation_time"},
 			},
 		},
 	})
@@ -96,6 +100,12 @@ func TestAccMaterializedView_RLSSourceTable(t *testing.T) {
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "source_table_name", tableName),
 					rtc.CheckQueryResultSize(rtc.EntityName, 6, "Materialized view query check"),
 				),
+			},
+			{
+				ResourceName:            rtc.GetTFName(),
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"allow_mv_without_rls", "async", "backfill", "update_extents_creation_time"},
 			},
 		},
 	})

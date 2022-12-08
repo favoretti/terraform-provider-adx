@@ -45,6 +45,11 @@ func TestAccADXTableIngestionBatchingPolicy_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "max_raw_size_mb", "200"),
 				),
 			},
+			{
+				ResourceName:      rtc.GetTFName(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }

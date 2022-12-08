@@ -42,6 +42,12 @@ func TestAccADXMaterializedViewCachingPolicy_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "data_hot_span", "1d"),
 				),
 			},
+			{
+				ResourceName:            rtc.GetTFName(),
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"data_hot_span", "follower_database"},
+			},
 		},
 	})
 }
@@ -78,6 +84,12 @@ func TestAccADXMaterializedViewCachingPolicy_follower(t *testing.T) {
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "data_hot_span", "1d"),
 				),
+			},
+			{
+				ResourceName:            rtc.GetTFName(),
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"data_hot_span", "follower_database"},
 			},
 		},
 	})

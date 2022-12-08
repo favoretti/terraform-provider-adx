@@ -30,6 +30,9 @@ func resourceADXMaterializedView() *schema.Resource {
 		UpdateContext: resourceADXMaterializedViewUpdate,
 		ReadContext:   resourceADXMaterializedViewRead,
 		DeleteContext: resourceADXMaterializedViewDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"cluster": getClusterConfigInputSchema(),

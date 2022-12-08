@@ -43,6 +43,11 @@ func TestAccTableMapping_basicJson(t *testing.T) {
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "mapping.2.datatype", "int"),
 				),
 			},
+			{
+				ResourceName:      rtc.GetTFName(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -84,6 +89,11 @@ func TestAccTableMapping_basicCsv(t *testing.T) {
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "mapping.3.ordinal", ""),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "mapping.3.constvalue", "constant_value"),
 				),
+			},
+			{
+				ResourceName:      rtc.GetTFName(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})

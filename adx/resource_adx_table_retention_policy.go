@@ -23,6 +23,9 @@ func resourceADXTableRetentionPolicy() *schema.Resource {
 		ReadContext:   resourceADXTableRetentionPolicyRead,
 		DeleteContext: resourceADXTableRetentionPolicyDelete,
 		UpdateContext: resourceADXTableRetentionPolicyCreateUpdate,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"cluster": getClusterConfigInputSchema(),
