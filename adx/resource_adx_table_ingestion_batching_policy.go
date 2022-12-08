@@ -24,6 +24,9 @@ func resourceADXTableIngestionBatchingPolicy() *schema.Resource {
 		ReadContext:   resourceADXTableIngestionBatchingPolicyRead,
 		DeleteContext: resourceADXTableIngestionBatchingPolicyDelete,
 		UpdateContext: resourceADXTableIngestionBatchingPolicyCreateUpdate,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"cluster": getClusterConfigInputSchema(),

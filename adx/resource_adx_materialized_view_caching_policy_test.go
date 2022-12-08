@@ -25,13 +25,28 @@ func TestAccADXMaterializedViewCachingPolicy_basic(t *testing.T) {
 		CheckDestroy: rtc.GetTestCheckEntityDestroyed(),
 		Steps: []resource.TestStep{
 			{
-				Config: r.basic(rtc),
+				Config: r.basic(rtc, "3d"),
 				Check: resource.ComposeTestCheckFunc(
 					rtc.GetTestCheckEntityExists(&entity),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "view_name", rtc.EntityName),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "data_hot_span", "3d"),
 				),
+			},
+			{
+				Config: r.basic(rtc, "1d"),
+				Check: resource.ComposeTestCheckFunc(
+					rtc.GetTestCheckEntityExists(&entity),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "view_name", rtc.EntityName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "data_hot_span", "1d"),
+				),
+			},
+			{
+				ResourceName:            rtc.GetTFName(),
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"data_hot_span", "follower_database"},
 			},
 		},
 	})
@@ -53,7 +68,7 @@ func TestAccADXMaterializedViewCachingPolicy_follower(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: r.follower(rtc, rtc.EntityName),
+				Config: r.follower(rtc, rtc.EntityName, "3d"),
 				Check: resource.ComposeTestCheckFunc(
 					rtc.GetTestCheckEntityExists(&entity),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "view_name", rtc.EntityName),
@@ -61,32 +76,47 @@ func TestAccADXMaterializedViewCachingPolicy_follower(t *testing.T) {
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "data_hot_span", "3d"),
 				),
 			},
+			{
+				Config: r.follower(rtc, rtc.EntityName, "1d"),
+				Check: resource.ComposeTestCheckFunc(
+					rtc.GetTestCheckEntityExists(&entity),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "view_name", rtc.EntityName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "data_hot_span", "1d"),
+				),
+			},
+			{
+				ResourceName:            rtc.GetTFName(),
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"data_hot_span", "follower_database"},
+			},
 		},
 	})
 }
 
-func (this ADXMaterializedViewCachingPolicyTestResource) basic(rtc *ResourceTestContext[MaterializedViewCachingPolicy]) string {
+func (this ADXMaterializedViewCachingPolicyTestResource) basic(rtc *ResourceTestContext[MaterializedViewCachingPolicy], hotCache string) string {
 	return fmt.Sprintf(`
 	%s
 
 	resource "%s" %s {
 		database_name = "%s"
-		view_name    = "${adx_materialized_view.test.name}"
-		data_hot_span = "3d"
+		view_name     = "${adx_materialized_view.test.name}"
+		data_hot_span = "%s"
 	}
-	`, this.template(rtc), rtc.Type, rtc.Label, rtc.DatabaseName)
+	`, this.template(rtc), rtc.Type, rtc.Label, rtc.DatabaseName, hotCache)
 }
 
-func (this ADXMaterializedViewCachingPolicyTestResource) follower(rtc *ResourceTestContext[MaterializedViewCachingPolicy], viewName string) string {
+func (this ADXMaterializedViewCachingPolicyTestResource) follower(rtc *ResourceTestContext[MaterializedViewCachingPolicy], viewName string, hotCache string) string {
 	return fmt.Sprintf(`
 
 	resource "%s" %s {
 		database_name     = "%s"
 		view_name         = "%s"
-		data_hot_span     = "3d"
+		data_hot_span     = "%s"
 		follower_database = true
 	}
-	`, rtc.Type, rtc.Label, rtc.DatabaseName, viewName)
+	`, rtc.Type, rtc.Label, rtc.DatabaseName, viewName, hotCache)
 }
 
 func (this ADXMaterializedViewCachingPolicyTestResource) template(rtc *ResourceTestContext[MaterializedViewCachingPolicy]) string {
