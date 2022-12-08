@@ -41,6 +41,9 @@ func resourceADXTableMapping() *schema.Resource {
 		UpdateContext: resourceADXTableMappingCreateUpdate,
 		ReadContext:   resourceADXTableMappingRead,
 		DeleteContext: resourceADXTableMappingDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 		StateUpgraders: []schema.StateUpgrader{
 			TableMappingV0ToV1Upgrader(),
 		},

@@ -59,6 +59,11 @@ func TestAccADXTablePartitioningPolicy_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "partition_key.0.uniform_range_properties.0.range_size", "2.00:00:00"),
 				),
 			},
+			{
+				ResourceName:      rtc.GetTFName(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }

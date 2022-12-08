@@ -8,6 +8,7 @@ import (
 	"github.com/Azure/azure-kusto-go/kusto"
 	"github.com/Azure/azure-kusto-go/kusto/unsafe"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -110,4 +111,24 @@ func deleteADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface
 	}
 
 	return deleteADXEntity(ctx, d, meta, clusterConfig, id.DatabaseName, fmt.Sprintf(".delete %s %s %s policy %s", followerDatabaseClause, entityType, id.Name, policyName))
+}
+
+func policyCacheValueStateRefresh(ctx context.Context, meta interface{}, clusterConfig *ClusterConfig, databaseName string, entityType string, entityName string, expectedUnit string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		cacheValue, err := getPolicyHotCacheValue(ctx, meta, clusterConfig, databaseName, entityType, entityName, expectedUnit)
+		if err != nil {
+			return "", "", err
+		}
+		return cacheValue, string(cacheValue), nil
+	}
+}
+
+func getPolicyHotCacheValue(ctx context.Context, meta interface{}, clusterConfig *ClusterConfig, databaseName string, entityType string, entityName string, expectedUnit string) (string, error) {
+	// Expected unit can be d,h,m,s
+	query := fmt.Sprintf(".show %s %s policy caching | project Result=tostring(toint(totimespan(todynamic(Policy).DataHotSpan.Value)/1%s))", entityType, entityName, expectedUnit)
+	resultSet, err := queryADXMgmtAndParse[adxSimpleQueryResult](ctx, meta, clusterConfig, databaseName, query)
+	if err != nil {
+		return "", fmt.Errorf("error checking hot cache value for %s %s: %+v", entityType, entityName, err)
+	}
+	return fmt.Sprintf("%s%s", resultSet[0].Result, expectedUnit), nil
 }

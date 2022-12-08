@@ -23,6 +23,9 @@ func resourceADXTableRowLevelSecurityPolicy() *schema.Resource {
 		ReadContext:   resourceADXTableRowLevelSecurityPolicyRead,
 		DeleteContext: resourceADXTableRowLevelSecurityPolicyDelete,
 		UpdateContext: resourceADXTableRowLevelSecurityPolicyCreateUpdate,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"cluster": getClusterConfigInputSchema(),
