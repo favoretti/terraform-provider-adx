@@ -1,6 +1,7 @@
 ## v0.0.18
 
 * Added folder and docstring parameters to functions, materialized views, and tables
+* Adding streamingingestion policy resource for tables
 
 ## v0.0.17
 
