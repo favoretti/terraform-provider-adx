@@ -141,6 +141,16 @@ func resourceADXTable() *schema.Resource {
 				Optional: true,
 				Default:  false,
 			},
+
+			"folder": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+
+			"docstring": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 		},
 		CustomizeDiff: clusterConfigCustomDiff,
 	}
@@ -155,9 +165,10 @@ func resourceADXTableCreate(ctx context.Context, d *schema.ResourceData, meta in
 	createStatement := ""
 
 	if fromQueryList, ok := d.GetOk("from_query"); ok {
-		createStatement = buildTableFromQueryStatement(tableName, true, getTableFromQueryConfig(fromQueryList.([]interface{})))
+		createStatement = buildTableFromQueryStatement(tableName, true, getTableFromQueryConfig(fromQueryList.([]interface{})), d)
 	} else {
-		createStatement = fmt.Sprintf(".create table %s (%s)", tableName, getTableDefinition(d))
+		withClause := buildTableWithClause(d)
+		createStatement = fmt.Sprintf(".create table %s (%s) %s", tableName, getTableDefinition(d), withClause)
 	}
 
 	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
@@ -188,13 +199,14 @@ func resourceADXTableUpdate(ctx context.Context, d *schema.ResourceData, meta in
 	createStatement := ""
 
 	if fromQueryList, ok := d.GetOk("from_query"); ok {
-		createStatement = buildTableFromQueryStatement(tableName, false, getTableFromQueryConfig(fromQueryList.([]interface{})))
+		createStatement = buildTableFromQueryStatement(tableName, false, getTableFromQueryConfig(fromQueryList.([]interface{})), d)
 	} else {
 		alterCmd := ".alter"
 		if mergeOnUpdate {
 			alterCmd = ".alter-merge"
 		}
-		createStatement = fmt.Sprintf("%s table %s (%s)", alterCmd, tableName, getTableDefinition(d))
+		withClause := buildTableWithClause(d)
+		createStatement = fmt.Sprintf("%s table %s (%s) %s", alterCmd, tableName, getTableDefinition(d), withClause)
 	}
 
 	kStmtOpts := kusto.UnsafeStmt(unsafe.Stmt{Add: true})
@@ -290,6 +302,8 @@ func resourceADXTableRead(ctx context.Context, d *schema.ResourceData, meta inte
 	d.Set("database_name", schemas[0].DatabaseName)
 	d.Set("table_schema", schemas[0].Schema)
 	d.Set("column", flattenTableColumn(schemas[0].Schema))
+	d.Set("docstring", schemas[0].DocString)
+	d.Set("folder", schemas[0].Folder)
 
 	return diags
 }
@@ -305,7 +319,7 @@ func resourceADXTableDelete(ctx context.Context, d *schema.ResourceData, meta in
 	return deleteADXEntity(ctx, d, meta, clusterConfig, id.DatabaseName, fmt.Sprintf(".drop table %s", id.Name))
 }
 
-func buildTableFromQueryStatement(tableName string, new bool, config *tableFromQueryConfig) string {
+func buildTableFromQueryStatement(tableName string, new bool, config *tableFromQueryConfig, d *schema.ResourceData) string {
 	var withParams []string
 
 	if config.Distributed {
@@ -317,6 +331,12 @@ func buildTableFromQueryStatement(tableName string, new bool, config *tableFromQ
 	// recreate_schema Only applies for .set-or-replace
 	if config.RecreateSchema && !new {
 		withParams = append(withParams, "recreate_schema=true")
+	}
+	if docstring, ok := d.GetOk("docstring"); ok {
+		withParams = append(withParams, fmt.Sprintf("docstring='%s'", docstring))
+	}
+	if folder, ok := d.GetOk("folder"); ok {
+		withParams = append(withParams, fmt.Sprintf("folder='%s'", folder))
 	}
 
 	withParamsString := ""
@@ -368,4 +388,22 @@ func flattenTableColumn(input string) []interface{} {
 
 func parseADXTableID(input string) (*adxResourceId, error) {
 	return parseADXResourceID(input, 4, 0, 1, 2, 3)
+}
+
+func buildTableWithClause(d *schema.ResourceData) string {
+	var withParams []string
+
+	if docstring, ok := d.GetOk("docstring"); ok {
+		withParams = append(withParams, fmt.Sprintf("docstring='%s'", docstring))
+	}
+	if folder, ok := d.GetOk("folder"); ok {
+		withParams = append(withParams, fmt.Sprintf("folder='%s'", folder))
+	}
+
+	withClause := ""
+	if len(withParams) > 0 {
+		withClause = fmt.Sprintf("with(%s)", strings.Join(withParams, ", "))
+	}
+
+	return withClause
 }

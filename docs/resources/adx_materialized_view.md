@@ -35,6 +35,8 @@ resource "adx_materialized_view" "test" {
 - **auto_update_schema** (Boolean, Optional) Whether to auto-update the view on source table changes. Default is false. This option is valid only for views of type `arg_max(Timestamp,*)`, `arg_min(Timestamp, *)`, `take_any(*)` (only when columns argument is *). If this option is set to true, changes to source table will be automatically reflected in the materialized view.
 - **update_extents_creation_time** (Boolean, Optional) Relevant only when using `backfill`. If true, extent creation time is assigned based on datetime group-by key during the backfill process
 - **allow_mv_without_rls** (Boolean, Optional) Enables `allowMaterializedViewsWithoutRowLevelSecurity` flag during policy creation
+- **folder** (String, Optional) Name of the folder in which to place this entity
+- **docstring** (String, Optional) Free text describing the entity to be added. This string is presented in various UX settings next to the entity names.
 - **cluster** (Optional) `cluster` Configuration block (defined below) for the target cluster (overrides any config specified in the provider)
 
 `cluster` Configuration block for connection details about the target ADX cluster 

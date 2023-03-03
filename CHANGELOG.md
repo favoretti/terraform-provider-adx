@@ -1,3 +1,7 @@
+## v0.0.18
+
+* Added folder and docstring parameters to functions, materialized views, and tables
+
 ## v0.0.17
 
 * Bug fixes for tables and views "with" attributes when resource is updated (some are incompatible with .alter)
