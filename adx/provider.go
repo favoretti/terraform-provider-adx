@@ -61,6 +61,7 @@ func Provider() *schema.Provider {
 			"adx_table_partitioning_policy":                   resourceADXTablePartitioningPolicy(),
 			"adx_table_caching_policy":                        resourceADXTableCachingPolicy(),
 			"adx_table_update_policy":                         resourceADXTableUpdatePolicy(),
+			"adx_table_streaming_ingestion_policy":            resourceADXTableStreamingIngestionPolicy(),
 			"adx_function":                                    resourceADXFunction(),
 			"adx_materialized_view":                           resourceADXMaterializedView(),
 			"adx_materialized_view_caching_policy":            resourceADXMaterializedViewCachingPolicy(),
