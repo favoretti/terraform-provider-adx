@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/Azure/azure-kusto-go/kusto"
 	"github.com/Azure/azure-kusto-go/kusto/unsafe"
@@ -18,6 +19,8 @@ type ADXFunction struct {
 	Name       string
 	Parameters string
 	Body       string
+	Folder     string
+	DocString  string
 }
 
 func resourceADXFunction() *schema.Resource {
@@ -60,6 +63,16 @@ func resourceADXFunction() *schema.Resource {
 				Optional: true,
 				Default:  "()",
 			},
+
+			"folder": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+
+			"docstring": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 		},
 		CustomizeDiff: clusterConfigCustomDiff,
 	}
@@ -84,7 +97,21 @@ func resourceADXFunctionCreateUpdate(ctx context.Context, d *schema.ResourceData
 		cmd = ".create"
 	}
 
-	createStatement := fmt.Sprintf("%s function \n%s%s\n%s", cmd, name, parameters, body)
+	var withParams []string
+
+	if docstring, ok := d.GetOk("docstring"); ok && new {
+		withParams = append(withParams, fmt.Sprintf("docstring='%s'", docstring))
+	}
+	if folder, ok := d.GetOk("folder"); ok && new {
+		withParams = append(withParams, fmt.Sprintf("folder='%s'", folder))
+	}
+
+	withClause := ""
+	if len(withParams) > 0 {
+		withClause = fmt.Sprintf("with(%s)", strings.Join(withParams, ", "))
+	}
+
+	createStatement := fmt.Sprintf("%s function %s\n%s%s\n%s", cmd, withClause, name, parameters, body)
 
 	client, err := getADXClient(meta, clusterConfig)
 	if err != nil {
@@ -121,6 +148,8 @@ func resourceADXFunctionRead(ctx context.Context, d *schema.ResourceData, meta i
 		d.Set("database_name", id.DatabaseName)
 		d.Set("body", resultSet[0].Body)
 		d.Set("parameters", resultSet[0].Parameters)
+		d.Set("docstring", resultSet[0].DocString)
+		d.Set("folder", resultSet[0].Folder)
 	}
 
 	return diags
