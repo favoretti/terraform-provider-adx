@@ -68,6 +68,8 @@ resource "adx_table" "test" {
 - **column** (String, Optional) One or more `column` blocks defined below.
 - **from_query** (String, Optional) One `from_query` blocks defined below.
 - **merge_on_update** (Boolean, Optional) If true, prevent removal of columns or configuration during schema changes. Changes become additive only. See Azure docs on difference between `.alter` and `.alter-merge`. Default is false
+- **folder** (String, Optional) Name of the folder in which to place this entity
+- **docstring** (String, Optional) Free text describing the entity to be added. This string is presented in various UX settings next to the entity names.
 - **cluster** (Optional) `cluster` Configuration block (defined below) for the target cluster (overrides any config specified in the provider)
 
 `column` Configures a column and supports the following:

@@ -22,6 +22,8 @@ type ADXMaterializedView struct {
 	AutoUpdateSchema  string
 	EffectiveDateTime value.DateTime
 	Lookback          string
+	Folder            string
+	DocString         string
 }
 
 func resourceADXMaterializedView() *schema.Resource {
@@ -31,7 +33,7 @@ func resourceADXMaterializedView() *schema.Resource {
 		ReadContext:   resourceADXMaterializedViewRead,
 		DeleteContext: resourceADXMaterializedViewDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -104,6 +106,16 @@ func resourceADXMaterializedView() *schema.Resource {
 				Optional: true,
 				Default:  false,
 			},
+
+			"folder": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+
+			"docstring": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 		},
 		CustomizeDiff: clusterConfigCustomDiff,
 	}
@@ -146,6 +158,12 @@ func resourceADXMaterializedViewCreateUpdate(ctx context.Context, d *schema.Reso
 	}
 	if effectiveDateTime, ok := d.GetOk("effective_date_time"); ok && new {
 		withParams = append(withParams, fmt.Sprintf("effectiveDateTime=%s", effectiveDateTime.(string)))
+	}
+	if docstring, ok := d.GetOk("docstring"); ok && new {
+		withParams = append(withParams, fmt.Sprintf("docstring='%s'", docstring))
+	}
+	if folder, ok := d.GetOk("folder"); ok && new {
+		withParams = append(withParams, fmt.Sprintf("folder='%s'", folder))
 	}
 
 	withClause := ""
@@ -201,6 +219,8 @@ func resourceADXMaterializedViewRead(ctx context.Context, d *schema.ResourceData
 		d.Set("query", resultSet[0].Query)
 		d.Set("auto_update_schema", autoUpdateSchema)
 		d.Set("effective_date_time", resultSet[0].EffectiveDateTime.String())
+		d.Set("docstring", resultSet[0].DocString)
+		d.Set("folder", resultSet[0].Folder)
 	}
 
 	return diags

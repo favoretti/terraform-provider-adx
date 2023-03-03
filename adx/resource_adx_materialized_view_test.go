@@ -37,6 +37,8 @@ func TestAccMaterializedView(t *testing.T) {
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "name", rtc.EntityName),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "source_table_name", tableName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "folder", ""),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "docstring", ""),
 					rtc.CheckQueryResultSize(rtc.EntityName, 6, "Materialized view query check"),
 				),
 			},
@@ -88,6 +90,8 @@ func TestAccMaterializedView_RLSSourceTable(t *testing.T) {
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "name", rtc.EntityName),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "source_table_name", tableName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "folder", "iamafolder"),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "docstring", "alwaysuptodate"),
 					rtc.CheckQueryResultSize(rtc.EntityName, 6, "Materialized view query check"),
 				),
 			},
@@ -98,6 +102,8 @@ func TestAccMaterializedView_RLSSourceTable(t *testing.T) {
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "name", rtc.EntityName),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "source_table_name", tableName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "folder", "iamafolder"),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "docstring", "alwaysuptodate"),
 					rtc.CheckQueryResultSize(rtc.EntityName, 6, "Materialized view query check"),
 				),
 			},
@@ -136,6 +142,8 @@ func (this ADXMaterializedViewTestResource) mvRLSTable(rtc *ResourceTestContext[
 		backfill             = true
 		query                = "${adx_table.%s.name} %s | summarize arg_max(score,*) by team"
 		allow_mv_without_rls = true
+		folder     			 = "iamafolder"
+		docstring     	     = "alwaysuptodate"
 	  }
 	`, this.rlsTable(rtc, tableName), rtc.Type, rtc.Label, rtc.EntityName, rtc.DatabaseName, rtc.Label, rtc.Label, extraClause)
 }

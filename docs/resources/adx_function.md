@@ -28,6 +28,8 @@ resource "adx_function" "test" {
 - **database_name** (String, Required) Database name in which this function should be created.
 - **body** (String, Required) Function body enclosed in curly braces {}
 - **parameters** (String, Optional) Function parameters enclosed in parenthesis (myLimit:long)
+- **folder** (String, Optional) Name of the folder in which to place this entity
+- **docstring** (String, Optional) Free text describing the entity to be added. This string is presented in various UX settings next to the entity names.
 - **cluster** (Optional) `cluster` Configuration block (defined below) for the target cluster (overrides any config specified in the provider)
 
 `cluster` Configuration block for connection details about the target ADX cluster
