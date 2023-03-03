@@ -35,7 +35,7 @@ resource "adx_table_streaming_ingestion_policy" "test" {
 - **table_name** (String, Required) Name of the table containing the policy to modify
 - **database_name** (String, Required) Database name that the target table is in
 - **enabled** (Boolean, Required) Defines the status of streaming ingestion functionality for the table. Must explicitly be set to true or false.
-- **hint_allocated_rate** If set provides a hint on the hourly volume of data in gigabytes expected for the table. This hint helps the system adjust the amount of resources that are allocated for a table in support of streaming ingestion. default value null (unset)
+- **hint_allocated_rate** (Decimal, Optional) If set provides a hint on the hourly volume of data in gigabytes expected for the table. This hint helps the system adjust the amount of resources that are allocated for a table in support of streaming ingestion. default value null (unset)
 - **cluster** (Optional) `cluster` Configuration block (defined below) for the target cluster (overrides any config specified in the provider)
 
 `cluster` Configuration block for connection details about the target ADX cluster
