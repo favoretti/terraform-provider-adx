@@ -14,7 +14,7 @@ import (
 
 type TableStreamingIngestionPolicy struct {
 	IsEnabled         bool
-	HintAllocatedRate float64
+	HintAllocatedRate string
 }
 
 func resourceADXTableStreamingIngestionPolicy() *schema.Resource {
@@ -93,10 +93,15 @@ func resourceADXTableStreamingIngestionPolicyRead(ctx context.Context, d *schema
 			return diag.Errorf("error parsing policy streamingingestion for Table %q (Database %q): %+v", id.Name, id.DatabaseName, err)
 		}
 
+		rate, rateErr := strconv.ParseFloat(policy.HintAllocatedRate, 64)
+		if rateErr != nil {
+			return diag.Errorf("error parsing hint_allocated_rate from ADX API for policy streamingingestion for Table %q (Database %q): %+v", id.Name, id.DatabaseName, rateErr)
+		}
+
 		d.Set("table_name", id.Name)
 		d.Set("database_name", id.DatabaseName)
 		d.Set("enabled", policy.IsEnabled)
-		d.Set("hint_allocated_rate", policy.HintAllocatedRate)
+		d.Set("hint_allocated_rate", rate)
 	}
 
 	return diags
