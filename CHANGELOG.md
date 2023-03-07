@@ -1,3 +1,7 @@
+## v0.0.19
+
+* Fixed issue #30. Float parsing issues for default and empty values from ADX for streamingingestion policy
+
 ## v0.0.18
 
 * Added folder and docstring parameters to functions, materialized views, and tables
