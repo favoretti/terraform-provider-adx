@@ -72,7 +72,7 @@ func resourceADXTableMapping() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
-					"json", "csv", "parquet", "avro", "orc", "w3clogfile",
+					"json", "csv", "parquet", "avro", "orc", "w3clogfile", "apacheavro",
 				}, true)),
 			},
 			"mapping": {
