@@ -49,8 +49,20 @@ func resourceADXTableStreamingIngestionPolicy() *schema.Resource {
 			},
 
 			"hint_allocated_rate": {
-				Type:     schema.TypeFloat,
+				Type:     schema.TypeString,
+				Computed: true,
 				Optional: true,
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					oldFloat, err := strconv.ParseFloat(old, 64)
+					if err != nil {
+						return false
+					}
+					newFloat, err := strconv.ParseFloat(new, 64)
+					if err != nil {
+						return false
+					}
+					return oldFloat == newFloat
+				},
 			},
 		},
 		CustomizeDiff: clusterConfigCustomDiff,
@@ -64,7 +76,7 @@ func resourceADXTableStreamingIngestionPolicyCreateUpdate(ctx context.Context, d
 
 	hintAllocatedRateString := "null"
 	if hintAllocatedRate, ok := d.GetOk("hint_allocated_rate"); ok {
-		hintAllocatedRateString = strconv.FormatFloat(hintAllocatedRate.(float64), 'f', -1, 64)
+		hintAllocatedRateString = fmt.Sprintf("\"%s\"", hintAllocatedRate)
 	}
 
 	enabledString := strconv.FormatBool(enabled)
@@ -93,15 +105,10 @@ func resourceADXTableStreamingIngestionPolicyRead(ctx context.Context, d *schema
 			return diag.Errorf("error parsing policy streamingingestion for Table %q (Database %q): %+v", id.Name, id.DatabaseName, err)
 		}
 
-		rate, rateErr := strconv.ParseFloat(policy.HintAllocatedRate, 64)
-		if rateErr != nil {
-			return diag.Errorf("error parsing hint_allocated_rate from ADX API for policy streamingingestion for Table %q (Database %q): %+v", id.Name, id.DatabaseName, rateErr)
-		}
-
 		d.Set("table_name", id.Name)
 		d.Set("database_name", id.DatabaseName)
 		d.Set("enabled", policy.IsEnabled)
-		d.Set("hint_allocated_rate", rate)
+		d.Set("hint_allocated_rate", policy.HintAllocatedRate)
 	}
 
 	return diags

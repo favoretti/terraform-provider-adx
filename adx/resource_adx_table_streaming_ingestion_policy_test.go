@@ -24,13 +24,33 @@ func TestAccADXTableStreamingIngestionPolicy_basic(t *testing.T) {
 		CheckDestroy: rtc.GetTestCheckEntityDestroyed(),
 		Steps: []resource.TestStep{
 			{
+				Config: r.basic_defaultRate(rtc),
+				Check: resource.ComposeTestCheckFunc(
+					rtc.GetTestCheckEntityExists(&entity),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "table_name", rtc.EntityName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "enabled", "true"),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "hint_allocated_rate", ""),
+				),
+			},
+			{
+				Config: r.basicRateString(rtc),
+				Check: resource.ComposeTestCheckFunc(
+					rtc.GetTestCheckEntityExists(&entity),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "table_name", rtc.EntityName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "enabled", "true"),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "hint_allocated_rate", "2.100"),
+				),
+			},
+			{
 				Config: r.basic(rtc),
 				Check: resource.ComposeTestCheckFunc(
 					rtc.GetTestCheckEntityExists(&entity),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "table_name", rtc.EntityName),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "enabled", "true"),
-					resource.TestCheckResourceAttr(rtc.GetTFName(), "hint_allocated_rate", "2.1"),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "hint_allocated_rate", "8.900"),
 				),
 			},
 			{
@@ -50,7 +70,32 @@ func (this ADXTableStreamingIngestionPolicyTestResource) basic(rtc *ResourceTest
 		database_name         = "%s"
 		table_name            = "${adx_table.test.name}"
 		enabled 		      = true
-		hint_allocated_rate   = 2.1
+		hint_allocated_rate   = 8.9
+	}
+	`, this.template(rtc), rtc.Type, rtc.Label, rtc.DatabaseName)
+}
+
+func (this ADXTableStreamingIngestionPolicyTestResource) basicRateString(rtc *ResourceTestContext[TableStreamingIngestionPolicy]) string {
+	return fmt.Sprintf(`
+	%s
+
+	resource "%s" %s {
+		database_name         = "%s"
+		table_name            = "${adx_table.test.name}"
+		enabled 		      = true
+		hint_allocated_rate   = "2.1"
+	}
+	`, this.template(rtc), rtc.Type, rtc.Label, rtc.DatabaseName)
+}
+
+func (this ADXTableStreamingIngestionPolicyTestResource) basic_defaultRate(rtc *ResourceTestContext[TableStreamingIngestionPolicy]) string {
+	return fmt.Sprintf(`
+	%s
+
+	resource "%s" %s {
+		database_name         = "%s"
+		table_name            = "${adx_table.test.name}"
+		enabled 		      = true
 	}
 	`, this.template(rtc), rtc.Type, rtc.Label, rtc.DatabaseName)
 }
