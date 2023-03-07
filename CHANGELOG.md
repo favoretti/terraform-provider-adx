@@ -1,6 +1,7 @@
 ## v0.0.19
 
 * Fixed issue #30. Float parsing issues for default and empty values from ADX for streamingingestion policy
+* Fixed #32. Add `apacheavro` to table_mapping valid types
 
 ## v0.0.18
 
