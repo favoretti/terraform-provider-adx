@@ -56,7 +56,7 @@ func TestAccMaterializedView(t *testing.T) {
 				ResourceName:            rtc.GetTFName(),
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"allow_mv_without_rls", "async", "backfill", "update_extents_creation_time"},
+				ImportStateVerifyIgnore: []string{"allow_mv_without_rls", "async", "backfill", "update_extents_creation_time", "max_source_records_for_single_ingest", "concurrency"},
 			},
 		},
 	})
@@ -111,7 +111,7 @@ func TestAccMaterializedView_RLSSourceTable(t *testing.T) {
 				ResourceName:            rtc.GetTFName(),
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"allow_mv_without_rls", "async", "backfill", "update_extents_creation_time"},
+				ImportStateVerifyIgnore: []string{"allow_mv_without_rls", "async", "backfill", "update_extents_creation_time", "max_source_records_for_single_ingest", "concurrency"},
 			},
 		},
 	})
@@ -162,7 +162,7 @@ func TestAccMaterializedView_BackfillAsync(t *testing.T) {
 				ResourceName:            rtc.GetTFName(),
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"allow_mv_without_rls", "async", "backfill", "update_extents_creation_time"},
+				ImportStateVerifyIgnore: []string{"allow_mv_without_rls", "async", "backfill", "update_extents_creation_time", "max_source_records_for_single_ingest", "concurrency"},
 			},
 		},
 	})
@@ -173,11 +173,13 @@ func (this ADXMaterializedViewTestResource) basicMv(rtc *ResourceTestContext[ADX
 	%s
 
 	resource "%s" "%s" {
-		name              = "%s"
-		database_name     = "%s"
-		source_table_name = adx_table.%s.name
-		backfill          = true
-		query             = "${adx_table.%s.name} %s | summarize arg_max(score,*) by team"
+		name              						= "%s"
+		database_name     						= "%s"
+		source_table_name 						= adx_table.%s.name
+		backfill          						= true
+		query             						= "${adx_table.%s.name} %s | summarize arg_max(score,*) by team"
+		max_source_records_for_single_ingest 	= 3000000
+		concurrency								= 2
 	  }
 	`, this.basicTable(rtc, tableName), rtc.Type, rtc.Label, rtc.EntityName, rtc.DatabaseName, rtc.Label, rtc.Label, extraClause)
 }
@@ -187,14 +189,16 @@ func (this ADXMaterializedViewTestResource) mvRLSTable(rtc *ResourceTestContext[
 	%s
 
 	resource "%s" "%s" {
-		name                 = "%s"
-		database_name        = "%s"
-		source_table_name    = adx_table.%s.name
-		backfill             = true
-		query                = "${adx_table.%s.name} %s | summarize arg_max(score,*) by team"
-		allow_mv_without_rls = true
-		folder     			 = "iamafolder"
-		docstring     	     = "alwaysuptodate"
+		name                 					= "%s"
+		database_name        					= "%s"
+		source_table_name    					= adx_table.%s.name
+		backfill             					= true
+		query                					= "${adx_table.%s.name} %s | summarize arg_max(score,*) by team"
+		allow_mv_without_rls 					= true
+		folder     			 					= "iamafolder"
+		docstring     	     					= "alwaysuptodate"
+		max_source_records_for_single_ingest 	= 3000000
+		concurrency								= 2
 	  }
 	`, this.rlsTable(rtc, tableName), rtc.Type, rtc.Label, rtc.EntityName, rtc.DatabaseName, rtc.Label, rtc.Label, extraClause)
 }
@@ -204,12 +208,14 @@ func (this ADXMaterializedViewTestResource) mvAsyncBackfillTable(rtc *ResourceTe
 	%s
 
 	resource "%s" "%s" {
-		name                 = "%s"
-		database_name        = "%s"
-		source_table_name    = adx_table.%s.name
-		backfill             = true
-		async     			 = true
-		query                = "${adx_table.%s.name} %s | summarize arg_max(score,*) by team"
+		name                 					= "%s"
+		database_name        					= "%s"
+		source_table_name    					= adx_table.%s.name
+		backfill             					= true
+		async     			 					= true
+		query                					= "${adx_table.%s.name} %s | summarize arg_max(score,*) by team"
+		max_source_records_for_single_ingest 	= 3000000
+		concurrency								= 2
 
 		timeouts {
 			create = "1m"
