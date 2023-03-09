@@ -71,7 +71,7 @@ func resourceADXTableCachingPolicyCreateUpdate(ctx context.Context, d *schema.Re
 
 	followerDatabaseClause := ""
 	if followerDatabase {
-		followerDatabaseClause = fmt.Sprintf("follower database %s", escapeEntityName(databaseName))
+		followerDatabaseClause = fmt.Sprintf("follower database %s", escapeEntityNameIfRequired(databaseName))
 	}
 
 	createStatement := fmt.Sprintf(".alter %s table %s policy caching hot = %s", followerDatabaseClause, tableName, dataHotSpan)
