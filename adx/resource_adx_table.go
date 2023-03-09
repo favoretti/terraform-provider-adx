@@ -71,6 +71,9 @@ func resourceADXTable() *schema.Resource {
 					regexp.MustCompile("[a-zA-Z0-9:-_,]+"),
 					"Table schema must contain only letters, number, dashes, semicolons, commas and underscores and no spaces",
 				),
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					return unescapeTableSchema(old) == unescapeTableSchema(new)
+				},
 			},
 
 			"column": {
@@ -85,6 +88,9 @@ func resourceADXTable() *schema.Resource {
 							Type:             schema.TypeString,
 							Required:         true,
 							ValidateDiagFunc: validate.StringIsNotEmpty,
+							DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+								return unescapeEntityName(old) == unescapeEntityName(new)
+							},
 						},
 						"type": {
 							Type:             schema.TypeString,
@@ -214,6 +220,7 @@ func resourceADXTableUpdate(ctx context.Context, d *schema.ResourceData, meta in
 	if err != nil {
 		return diag.Errorf("error creating adx client connection: %+v", err)
 	}
+
 	_, err = client.Mgmt(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(createStatement), kusto.AllowWrite())
 	if err != nil {
 		return diag.Errorf("error updating Table %q (Database %q): %+v", tableName, databaseName, err)
@@ -226,8 +233,8 @@ func resourceADXTableUpdate(ctx context.Context, d *schema.ResourceData, meta in
 
 func getTableDefinition(d *schema.ResourceData) string {
 	tableDef := ""
-	if tableSchema := d.Get("table_schema").(string); len(tableSchema) != 0 {
-		tableDef = tableSchema
+	if tableSchema, ok := d.GetOk("table_schema"); ok && d.HasChange("table_schema") {
+		tableDef = tableSchema.(string)
 	} else {
 		tableDef = expandTableColumn(d.Get("column").([]interface{}))
 	}
@@ -384,6 +391,14 @@ func flattenTableColumn(input string) []interface{} {
 		columns = append(columns, block)
 	}
 	return columns
+}
+
+func unescapeTableSchema(inlineSchema string) string {
+	schemaColumns := strings.Split(inlineSchema, ",")
+	for i, column := range schemaColumns {
+		schemaColumns[i] = strings.ReplaceAll(strings.ReplaceAll(column, "['", ""), "']", "")
+	}
+	return strings.Join(schemaColumns, ",")
 }
 
 func parseADXTableID(input string) (*adxResourceId, error) {

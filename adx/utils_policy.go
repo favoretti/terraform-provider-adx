@@ -106,7 +106,7 @@ func deleteADXPolicy(ctx context.Context, d *schema.ResourceData, meta interface
 	followerDatabaseClause := ""
 	if followerDatabase, ok := d.GetOk("follower_database"); ok {
 		if followerDatabase.(bool) {
-			followerDatabaseClause = fmt.Sprintf("follower database %s", escapeEntityName(id.DatabaseName))
+			followerDatabaseClause = fmt.Sprintf("follower database %s", escapeEntityNameIfRequired(id.DatabaseName))
 		}
 	}
 
