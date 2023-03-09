@@ -6,14 +6,17 @@ import (
 	_ "crypto/md5"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Azure/azure-kusto-go/kusto"
 	"github.com/Azure/azure-kusto-go/kusto/data/table"
+	"github.com/Azure/azure-kusto-go/kusto/data/value"
 	"github.com/Azure/azure-kusto-go/kusto/unsafe"
 
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -26,6 +29,21 @@ type adxResourceId struct {
 
 type adxSimpleQueryResult struct {
 	Result string
+}
+
+type adxAsyncOperationResp struct {
+	OperationId value.GUID
+}
+
+type adxAsyncOperationsDetails struct {
+	OperationId   value.GUID
+	Operation     string
+	NodeId        string
+	StartedOn     value.DateTime
+	LastUpdatedOn value.DateTime
+	Duration      value.Timespan
+	State         string
+	Status        string
 }
 
 func readADXEntity[T any](ctx context.Context, meta interface{}, clusterConfig *ClusterConfig, id *adxResourceId, query string, entityType string) ([]T, diag.Diagnostics) {
@@ -259,4 +277,32 @@ func escapeEntityName(name string) string {
 		escapedName = fmt.Sprintf("['%s']", name)
 	}
 	return escapedName
+}
+
+func pollAsyncOperation(ctx context.Context, d *schema.ResourceData, meta interface{}, clusterConfig *ClusterConfig, databaseName string, operationId string, delay time.Duration, minTimeout time.Duration) (interface{}, error) {
+	createWait := resource.StateChangeConf{
+		Pending: []string{
+			"Scheduled",
+			"InProgress",
+		},
+		Target: []string{
+			"Completed",
+		},
+		MinTimeout: minTimeout,
+		Timeout:    d.Timeout(schema.TimeoutCreate),
+		Delay:      delay,
+		Refresh:    refreshStateAsyncOperation(ctx, meta, clusterConfig, databaseName, operationId),
+	}
+	return createWait.WaitForStateContext(ctx)
+}
+
+func refreshStateAsyncOperation(ctx context.Context, meta interface{}, clusterConfig *ClusterConfig, databaseName string, operationId string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		query := fmt.Sprintf(".show operations %s", operationId)
+		resultSet, err := queryADXMgmtAndParse[adxAsyncOperationsDetails](ctx, meta, clusterConfig, databaseName, query)
+		if err != nil {
+			return nil, "", fmt.Errorf("error checking status of operation %s: %+v", operationId, err)
+		}
+		return resultSet, resultSet[0].State, nil
+	}
 }

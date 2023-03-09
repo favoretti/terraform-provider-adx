@@ -117,6 +117,57 @@ func TestAccMaterializedView_RLSSourceTable(t *testing.T) {
 	})
 }
 
+func TestAccMaterializedView_BackfillAsync(t *testing.T) {
+	var entity ADXMaterializedView
+	tableName := "MvTest1BackfillAsync"
+	r := ADXMaterializedViewTestResource{}
+	rtcBuilder := BuildResourceTestContext[ADXMaterializedView]()
+	rtc, _ := rtcBuilder.Test(t).Type("adx_materialized_view").
+		DatabaseName("test-db").
+		EntityType("materializedview").
+		ReadStatementFunc(func(id string) (string, error) {
+			viewId, err := parseADXMaterializedViewID(id)
+			if err != nil {
+				return "", err
+			}
+			return fmt.Sprintf(".show materialized-views | where Name == '%s' | extend Lookback=tostring(Lookback), IsHealthy=tolower(tostring(IsHealthy)), IsEnabled=tolower(tostring(IsEnabled)), AutoUpdateSchema=tolower(tostring(AutoUpdateSchema)), EffectiveDateTime", viewId.Name), nil
+		}).Build()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: rtc.GetTestCheckEntityDestroyed(),
+		Steps: []resource.TestStep{
+			{
+				Config: r.mvAsyncBackfillTable(rtc, tableName, ""),
+				Check: resource.ComposeTestCheckFunc(
+					rtc.GetTestCheckEntityExists(&entity),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "name", rtc.EntityName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "source_table_name", tableName),
+					rtc.CheckQueryResultSize(rtc.EntityName, 6, "Materialized view query check"),
+				),
+			},
+			{
+				Config: r.mvAsyncBackfillTable(rtc, tableName, "| extend newcol = 1"),
+				Check: resource.ComposeTestCheckFunc(
+					rtc.GetTestCheckEntityExists(&entity),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "name", rtc.EntityName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "source_table_name", tableName),
+					rtc.CheckQueryResultSize(rtc.EntityName, 6, "Materialized view query check"),
+				),
+			},
+			{
+				ResourceName:            rtc.GetTFName(),
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"allow_mv_without_rls", "async", "backfill", "update_extents_creation_time"},
+			},
+		},
+	})
+}
+
 func (this ADXMaterializedViewTestResource) basicMv(rtc *ResourceTestContext[ADXMaterializedView], tableName string, extraClause string) string {
 	return fmt.Sprintf(`
 	%s
@@ -146,6 +197,25 @@ func (this ADXMaterializedViewTestResource) mvRLSTable(rtc *ResourceTestContext[
 		docstring     	     = "alwaysuptodate"
 	  }
 	`, this.rlsTable(rtc, tableName), rtc.Type, rtc.Label, rtc.EntityName, rtc.DatabaseName, rtc.Label, rtc.Label, extraClause)
+}
+
+func (this ADXMaterializedViewTestResource) mvAsyncBackfillTable(rtc *ResourceTestContext[ADXMaterializedView], tableName string, extraClause string) string {
+	return fmt.Sprintf(`
+	%s
+
+	resource "%s" "%s" {
+		name                 = "%s"
+		database_name        = "%s"
+		source_table_name    = adx_table.%s.name
+		backfill             = true
+		async     			 = true
+		query                = "${adx_table.%s.name} %s | summarize arg_max(score,*) by team"
+
+		timeouts {
+			create = "1m"
+		}
+	  }
+	`, this.basicTable(rtc, tableName), rtc.Type, rtc.Label, rtc.EntityName, rtc.DatabaseName, rtc.Label, rtc.Label, extraClause)
 }
 
 func (this ADXMaterializedViewTestResource) basicTable(rtc *ResourceTestContext[ADXMaterializedView], tableName string) string {
