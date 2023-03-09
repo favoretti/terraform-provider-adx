@@ -99,10 +99,10 @@ func resourceADXFunctionCreateUpdate(ctx context.Context, d *schema.ResourceData
 
 	var withParams []string
 
-	if docstring, ok := d.GetOk("docstring"); ok && new {
+	if docstring, ok := d.GetOk("docstring"); ok {
 		withParams = append(withParams, fmt.Sprintf("docstring='%s'", docstring))
 	}
-	if folder, ok := d.GetOk("folder"); ok && new {
+	if folder, ok := d.GetOk("folder"); ok {
 		withParams = append(withParams, fmt.Sprintf("folder='%s'", folder))
 	}
 

@@ -37,6 +37,16 @@ func TestAccADXFunction_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "parameters", "()"),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "body", "{Test1 \n| limit 10}"),
+				),
+			},
+			{
+				Config: r.basic_update(rtc),
+				Check: resource.ComposeTestCheckFunc(
+					rtc.GetTestCheckEntityExists(&entity),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "name", rtc.EntityName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "parameters", "()"),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "body", "{Test1 \n| limit 100}"),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "docstring", "This is table"),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "folder", "iamafolder"),
 				),
@@ -53,6 +63,18 @@ func (this ADXFunctionTestResource) basic(rtc *ResourceTestContext[ADXFunction])
 		database_name = "%s"
 		name          = "%s"
 		body          = "{${adx_table.test.name} \n| limit 10}"
+	}
+	`, this.template(rtc), rtc.Type, rtc.Label, rtc.DatabaseName, rtc.EntityName)
+}
+
+func (this ADXFunctionTestResource) basic_update(rtc *ResourceTestContext[ADXFunction]) string {
+	return fmt.Sprintf(`
+	%s
+
+	resource "%s" %s {
+		database_name = "%s"
+		name          = "%s"
+		body          = "{${adx_table.test.name} \n| limit 100}"
 		docstring     = "This is table"
 		folder        = "iamafolder"
 	}

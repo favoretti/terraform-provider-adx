@@ -1,3 +1,7 @@
+## v0.0.20
+
+* Fixed issue #35. Async materialized view creation now properly polls ADX operations to wait for completion
+
 ## v0.0.19
 
 * Fixed issue #30. Float parsing issues for default and empty values from ADX for streamingingestion policy
