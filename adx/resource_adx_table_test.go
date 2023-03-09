@@ -36,6 +36,15 @@ func TestAccADXTable_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "name", rtc.EntityName),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "table_schema", "f1:string,f2:string,f4:string,f3:int"),
+				),
+			},
+			{
+				Config: r.basic_update(rtc),
+				Check: resource.ComposeTestCheckFunc(
+					rtc.GetTestCheckEntityExists(&entity),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "name", rtc.EntityName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
+					resource.TestCheckResourceAttr(rtc.GetTFName(), "table_schema", "f1:string,f2:string,f4:string,f3:int"),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "docstring", "This is table"),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "folder", "iamafolder"),
 				),
@@ -45,6 +54,17 @@ func TestAccADXTable_basic(t *testing.T) {
 }
 
 func (this ADXTableTestResource) basic(rtc *ResourceTestContext[TableSchema]) string {
+	return fmt.Sprintf(`
+
+	resource "%s" %s {
+		database_name = "%s"
+		name          = "%s"
+		table_schema  = "f1:string,f2:string,f4:string,f3:int"
+	}
+	`, rtc.Type, rtc.Label, rtc.DatabaseName, rtc.EntityName)
+}
+
+func (this ADXTableTestResource) basic_update(rtc *ResourceTestContext[TableSchema]) string {
 	return fmt.Sprintf(`
 
 	resource "%s" %s {

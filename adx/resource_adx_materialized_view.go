@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Azure/azure-kusto-go/kusto/data/value"
 	"github.com/favoretti/terraform-provider-adx/adx/validate"
@@ -118,6 +119,9 @@ func resourceADXMaterializedView() *schema.Resource {
 			},
 		},
 		CustomizeDiff: clusterConfigCustomDiff,
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(30 * time.Minute),
+		},
 	}
 }
 
@@ -137,11 +141,6 @@ func resourceADXMaterializedViewCreateUpdate(ctx context.Context, d *schema.Reso
 	sourceTableName := d.Get("source_table_name").(string)
 	async := d.Get("async").(bool)
 
-	asyncString := ""
-	if async {
-		asyncString = "async"
-	}
-
 	var withParams []string
 
 	if backfill, ok := d.GetOk("backfill"); ok && new {
@@ -159,10 +158,10 @@ func resourceADXMaterializedViewCreateUpdate(ctx context.Context, d *schema.Reso
 	if effectiveDateTime, ok := d.GetOk("effective_date_time"); ok && new {
 		withParams = append(withParams, fmt.Sprintf("effectiveDateTime=%s", effectiveDateTime.(string)))
 	}
-	if docstring, ok := d.GetOk("docstring"); ok && new {
+	if docstring, ok := d.GetOk("docstring"); ok {
 		withParams = append(withParams, fmt.Sprintf("docstring='%s'", docstring))
 	}
-	if folder, ok := d.GetOk("folder"); ok && new {
+	if folder, ok := d.GetOk("folder"); ok {
 		withParams = append(withParams, fmt.Sprintf("folder='%s'", folder))
 	}
 
@@ -176,11 +175,22 @@ func resourceADXMaterializedViewCreateUpdate(ctx context.Context, d *schema.Reso
 		cmd = ".create"
 	}
 
-	createStatement := fmt.Sprintf("%s %s materialized-view %s %s on table %s \n{\n%s\n}", cmd, asyncString, withClause, name, sourceTableName, query)
-
-	_, err := queryADXMgmt(ctx, meta, clusterConfig, databaseName, createStatement)
-	if err != nil {
-		return diag.Errorf("error creating materialized-view %s (Database %q): %+v", name, databaseName, err)
+	if !async || !new {
+		createStatement := fmt.Sprintf("%s materialized-view %s %s on table %s \n{\n%s\n}", cmd, withClause, name, sourceTableName, query)
+		_, err := queryADXMgmt(ctx, meta, clusterConfig, databaseName, createStatement)
+		if err != nil {
+			return diag.Errorf("error creating materialized-view %s (Database %q): %+v", name, databaseName, err)
+		}
+	} else {
+		createStatement := fmt.Sprintf("%s async materialized-view %s %s on table %s \n{\n%s\n}", cmd, withClause, name, sourceTableName, query)
+		resultSet, err := queryADXMgmtAndParse[adxAsyncOperationResp](ctx, meta, clusterConfig, databaseName, createStatement)
+		if err != nil {
+			return diag.Errorf("error creating materialized-view %s (Database %q): %+v", name, databaseName, err)
+		}
+		_, err = pollAsyncOperation(ctx, d, meta, clusterConfig, databaseName, resultSet[0].OperationId.String(), 5*time.Second, 10*time.Second)
+		if err != nil {
+			return diag.Errorf("error polling for materialized-view %s async completion (Database %q): %+v", name, databaseName, err)
+		}
 	}
 
 	client, err := getADXClient(meta, clusterConfig)
