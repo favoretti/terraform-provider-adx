@@ -37,6 +37,8 @@ resource "adx_materialized_view" "test" {
 - **allow_mv_without_rls** (Boolean, Optional) Enables `allowMaterializedViewsWithoutRowLevelSecurity` flag during policy creation
 - **folder** (String, Optional) Name of the folder in which to place this entity
 - **docstring** (String, Optional) Free text describing the entity to be added. This string is presented in various UX settings next to the entity names.
+- **max_source_records_for_single_ingest** (Int, Optional) By default, the number of source records in each ingest operation during backfill is 2 million per node. You can change this default by setting this property to the desired number of records. (The value is the total number of records in each ingest operation.)
+- **concurrency** (Int, Optional) The ingest operations, running as part of the backfill process, run concurrently. By default, concurrency is min(number_of_nodes * 2, 5).
 - **cluster** (Optional) `cluster` Configuration block (defined below) for the target cluster (overrides any config specified in the provider)
 
 `cluster` Configuration block for connection details about the target ADX cluster 

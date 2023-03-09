@@ -117,6 +117,16 @@ func resourceADXMaterializedView() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+
+			"max_source_records_for_single_ingest": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
+
+			"concurrency": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
 		},
 		CustomizeDiff: clusterConfigCustomDiff,
 		Timeouts: &schema.ResourceTimeout{
@@ -163,6 +173,12 @@ func resourceADXMaterializedViewCreateUpdate(ctx context.Context, d *schema.Reso
 	}
 	if folder, ok := d.GetOk("folder"); ok {
 		withParams = append(withParams, fmt.Sprintf("folder='%s'", folder))
+	}
+	if maxSourceRecordsForSingleIngest, ok := d.GetOk("max_source_records_for_single_ingest"); ok {
+		withParams = append(withParams, fmt.Sprintf("MaxSourceRecordsForSingleIngest=%d", maxSourceRecordsForSingleIngest))
+	}
+	if concurrency, ok := d.GetOk("concurrency"); ok {
+		withParams = append(withParams, fmt.Sprintf("Concurrency=%d", concurrency))
 	}
 
 	withClause := ""
