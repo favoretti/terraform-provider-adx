@@ -1,6 +1,9 @@
 ## v0.0.20
 
 * Fixed issue #35. Async materialized view creation now properly polls ADX operations to wait for completion
+* Documentation fix for `adx_table_update_policy` attribute `source_table`
+* Fixed adding columns to a table using `column` method (previously it only worked using `table_schema` method)
+* Fixed Issue #33 "adx_table: Column always wants to be updated" by using DiffSuppression
 
 ## v0.0.19
 

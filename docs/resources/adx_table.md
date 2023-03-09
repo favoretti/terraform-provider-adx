@@ -64,9 +64,9 @@ resource "adx_table" "test" {
 
 - **name** (String, Required) Name of the Table to create.
 - **database_name** (String, Required) Database name in which this Table should be created.
-- **table_schema** (String, Optional) Table schema. Must contain only letters, numbers, dashes, semicolons, commas and underscores and no spaces.
-- **column** (String, Optional) One or more `column` blocks defined below.
-- **from_query** (String, Optional) One `from_query` blocks defined below.
+- **table_schema** (String, Optional) Table schema (Incompatible with `from_query` and `column`). Must contain only letters, numbers, dashes, semicolons, commas and underscores and no spaces.
+- **column** (String, Optional) One or more `column` blocks defined below (incompatible with `table_schema` and `from_query`).
+- **from_query** (String, Optional) One `from_query` blocks defined below (incompatible with `table_schema` and `column`).
 - **merge_on_update** (Boolean, Optional) If true, prevent removal of columns or configuration during schema changes. Changes become additive only. See Azure docs on difference between `.alter` and `.alter-merge`. Default is false
 - **folder** (String, Optional) Name of the folder in which to place this entity
 - **docstring** (String, Optional) Free text describing the entity to be added. This string is presented in various UX settings next to the entity names.

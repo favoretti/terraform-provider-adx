@@ -5,6 +5,7 @@ import (
 	"crypto"
 	_ "crypto/md5"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -271,14 +272,6 @@ func hasStatementResults(ctx context.Context, meta interface{}, clusterConfig *C
 	return hasResults, nil
 }
 
-func escapeEntityName(name string) string {
-	escapedName := name
-	if strings.Contains(name, "-") && !strings.HasPrefix(name, "[") {
-		escapedName = fmt.Sprintf("['%s']", name)
-	}
-	return escapedName
-}
-
 func pollAsyncOperation(ctx context.Context, d *schema.ResourceData, meta interface{}, clusterConfig *ClusterConfig, databaseName string, operationId string, delay time.Duration, minTimeout time.Duration) (interface{}, error) {
 	createWait := resource.StateChangeConf{
 		Pending: []string{
@@ -305,4 +298,30 @@ func refreshStateAsyncOperation(ctx context.Context, meta interface{}, clusterCo
 		}
 		return resultSet, resultSet[0].State, nil
 	}
+}
+
+func isEntityNameEscaped(name string) bool {
+	return strings.HasPrefix(name, "['") && strings.HasSuffix(name, "']")
+}
+
+func escapeEntityNameIfRequired(name string) string {
+	escapedName := name
+	if strings.Contains(name, "-") && !strings.HasPrefix(name, "[") {
+		escapedName = escapeEntityName(name)
+	}
+	return escapedName
+}
+
+func escapeEntityName(name string) string {
+	return fmt.Sprintf("['%s']", name)
+}
+
+var escapedEntityNamePattern = regexp.MustCompile(`^\['(.+)'\]$`)
+
+func unescapeEntityName(name string) string {
+	matches := escapedEntityNamePattern.FindStringSubmatch(name)
+	if len(matches) == 2 {
+		return matches[1]
+	}
+	return name
 }
