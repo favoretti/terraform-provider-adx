@@ -48,7 +48,7 @@ resource "adx_table_update_policy" "test_update" {
 
 - **table_name** (String, Required) Name of the table containing the policy to modify
 - **database_name** (String, Required) Database name that the target table is in
-source_table
+- **source_table** (String, Required) Name of the table that represents the source for the update policy
 - **query** (String, Required) A query used to produce data for the update
 - **transactional** (Boolean, Required) States if the update policy is transactional or not, default is false). If transactional and the update policy fails, the source table is not updated.
 - **propagate_ingestion_properties** (Boolean, Optional) States if properties specified during ingestion to the source table, such as extent tags and creation time, apply to the target table. Default: false
