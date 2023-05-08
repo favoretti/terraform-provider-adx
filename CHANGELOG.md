@@ -1,3 +1,13 @@
+## v0.0.22
+
+* `adx_function` supports imports now (#48)
+
+## v0.0.21
+
+* Add concurrency and maxSourceRecordsForSingleIngest as optional params to MVs (#42)
+* add concurrency and maxSourceRecordsForSingleIngest as optional parameter to mv
+* add new predicate and augmented tests
+
 ## v0.0.20
 
 * Fixed issue #35. Async materialized view creation now properly polls ADX operations to wait for completion
