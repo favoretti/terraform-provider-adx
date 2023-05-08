@@ -29,6 +29,9 @@ func resourceADXFunction() *schema.Resource {
 		UpdateContext: resourceADXFunctionUpdate,
 		ReadContext:   resourceADXFunctionRead,
 		DeleteContext: resourceADXFunctionDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"cluster": getClusterConfigInputSchema(),
