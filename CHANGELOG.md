@@ -1,3 +1,9 @@
+## v0.0.23
+
+* update autoUpdateSchema property for given MVs
+* Issue #50 - Missing option - ingestiontime
+* New resource: `adx_table_ingestion_time_policy`
+
 ## v0.0.22
 
 * `adx_function` supports imports now (#48)
