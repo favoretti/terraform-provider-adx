@@ -31,7 +31,7 @@ resource "adx_column_encoding_policy" "test" {
 
 ## Argument Reference
 
-- **database_name** (String, Required) Database name that the target table is in
+- **database_name** (String, Required) Database name that the target column is in
 - **entity_identifier** (String, Required) The identifier for the column.
 - **encoding_policy_type** (String, Optional) The type of the encoding policy to apply to the specified column. If you omit the type, the existing encoding policy profile is cleared reset to the default value.
 
