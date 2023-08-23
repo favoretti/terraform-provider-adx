@@ -1,3 +1,7 @@
+## v0.0.24
+
+* Add feature: column encoding policy
+
 ## v0.0.23
 
 * update autoUpdateSchema property for given MVs
