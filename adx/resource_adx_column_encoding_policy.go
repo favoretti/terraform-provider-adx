@@ -21,6 +21,7 @@ func resourceADXColumnEncodingPolicy() *schema.Resource {
 		CreateContext: resourceADXColumnEncodingPolicyCreateUpdate,
 		ReadContext:   resourceADXColumnEncodingPolicyRead,
 		UpdateContext: resourceADXColumnEncodingPolicyCreateUpdate,
+		DeleteContext: resourceADXColumnEncodingPolicyDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -82,4 +83,16 @@ func resourceADXColumnEncodingPolicyRead(ctx context.Context, d *schema.Resource
 	d.Set("encoding_policy_type", policy.EncodingPolicyType)
 
 	return diags
+}
+
+func resourceADXColumnEncodingPolicyDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	entityIdentifier := d.Get("entity_identifier").(string)
+
+	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
+	id, err := parseADXPolicyID(d.Id())
+	if err != nil {
+		return diag.Errorf("could not delete adx policy due to error parsing ID: %+v", err)
+	}
+
+	return deleteADXEntity(ctx, d, meta, clusterConfig, id.DatabaseName, fmt.Sprintf(".alter column (%s) policy encoding type='Null'", entityIdentifier)) //Encoding policy can't be deleted. So set it back to default.
 }
