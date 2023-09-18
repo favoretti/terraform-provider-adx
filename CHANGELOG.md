@@ -1,3 +1,7 @@
+## v0.0.26
+
+* Add feature: delete for column encoding policy
+
 ## v0.0.24
 
 * Add feature: column encoding policy
