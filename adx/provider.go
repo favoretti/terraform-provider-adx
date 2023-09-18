@@ -67,7 +67,7 @@ func Provider() *schema.Provider {
 			"adx_materialized_view_caching_policy":            resourceADXMaterializedViewCachingPolicy(),
 			"adx_materialized_view_retention_policy":          resourceADXMaterializedViewRetentionPolicy(),
 			"adx_materialized_view_row_level_security_policy": resourceADXMaterializedViewRowLevelSecurityPolicy(),
-			"adx_encoding_policy":                             resourceADXColumnEncodingPolicy(),
+			"adx_column_encoding_policy":                      resourceADXColumnEncodingPolicy(),
 		},
 	}
 
