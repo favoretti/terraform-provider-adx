@@ -57,7 +57,7 @@ func resourceADXColumnEncodingPolicyCreateUpdate(ctx context.Context, d *schema.
 	entityIdentifier := d.Get("entity_identifier").(string)
 	encodingPolicyType := d.Get("encoding_policy_type").(string)
 
-	createStatement := fmt.Sprintf(".alter column (%s) policy encoding type='%s'", entityIdentifier, encodingPolicyType)
+	createStatement := fmt.Sprintf(".alter column %s policy encoding type='%s'", entityIdentifier, encodingPolicyType)
 
 	if err := createADXPolicy(ctx, d, meta, "column", "encoding", databaseName, entityIdentifier, createStatement); err != nil {
 		return diag.Errorf("%+v", err)
@@ -94,5 +94,5 @@ func resourceADXColumnEncodingPolicyDelete(ctx context.Context, d *schema.Resour
 		return diag.Errorf("could not delete adx policy due to error parsing ID: %+v", err)
 	}
 
-	return deleteADXEntity(ctx, d, meta, clusterConfig, id.DatabaseName, fmt.Sprintf(".alter column (%s) policy encoding type='Null'", entityIdentifier)) //Encoding policy can't be deleted. So set it back to default.
+	return deleteADXEntity(ctx, d, meta, clusterConfig, id.DatabaseName, fmt.Sprintf(".alter column %s policy encoding type='Null'", entityIdentifier)) //Encoding policy can't be deleted. So set it back to default.
 }
