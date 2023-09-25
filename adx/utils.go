@@ -243,6 +243,11 @@ func isFunctionExists(ctx context.Context, meta interface{}, clusterConfig *Clus
 	return hasStatementResults(ctx, meta, clusterConfig, databaseName, showStatement, "checking if function exists")
 }
 
+func isColumnExists(ctx context.Context, meta interface{}, clusterConfig *ClusterConfig, databaseName, columnName string) (bool, error) {
+	showStatement := fmt.Sprintf(".show column %s policy encoding", columnName)
+	return hasStatementResults(ctx, meta, clusterConfig, databaseName, showStatement, "checking if column exists")
+}
+
 func isEntityExists(ctx context.Context, meta interface{}, clusterConfig *ClusterConfig, databaseName, entityType string, entityName string) (bool, error) {
 	if entityType == "table" {
 		return isTableExists(ctx, meta, clusterConfig, databaseName, entityName)
@@ -250,6 +255,8 @@ func isEntityExists(ctx context.Context, meta interface{}, clusterConfig *Cluste
 		return isMaterializedViewExists(ctx, meta, clusterConfig, databaseName, entityName)
 	} else if entityType == "function" {
 		return isFunctionExists(ctx, meta, clusterConfig, databaseName, entityName)
+	} else if entityType == "column" {
+		return isColumnExists(ctx, meta, clusterConfig, databaseName, entityName)
 	}
 	return false, fmt.Errorf("checking for existance of entity type (%s) is not yet supported", entityType)
 }

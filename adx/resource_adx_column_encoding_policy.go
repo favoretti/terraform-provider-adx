@@ -77,9 +77,8 @@ func resourceADXColumnEncodingPolicyRead(ctx context.Context, d *schema.Resource
 		return diag.Errorf("error parsing policy encoding for Column %q (Database %q): %+v", id.Name, id.DatabaseName, err)
 	}
 
-	d.Set("column_name", id.Name)
+	d.Set("entity_identifier", id.Name)
 	d.Set("database_name", id.DatabaseName)
-	d.Set("entity_identifier", policy.EntityIdentifier)
 	d.Set("encoding_policy_type", policy.EncodingPolicyType)
 
 	return diags
