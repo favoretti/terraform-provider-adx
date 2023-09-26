@@ -12,8 +12,8 @@ import (
 )
 
 type ColumnEncodingPolicy struct {
-	EntityIdentifier   string
-	EncodingPolicyType string
+	EntityIdentifier string
+	Profile          string
 }
 
 func resourceADXColumnEncodingPolicy() *schema.Resource {
@@ -79,7 +79,7 @@ func resourceADXColumnEncodingPolicyRead(ctx context.Context, d *schema.Resource
 
 	d.Set("entity_identifier", id.Name)
 	d.Set("database_name", id.DatabaseName)
-	d.Set("encoding_policy_type", policy.EncodingPolicyType)
+	d.Set("encoding_policy_type", policy.Profile)
 
 	return diags
 }
