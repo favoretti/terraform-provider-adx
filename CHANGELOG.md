@@ -1,3 +1,7 @@
+## v0.0.29
+
+* Bugfix for `adx_column_encoding_policy`
+
 ## v0.0.28
 
 * Bugfix for `adx_column_encoding_policy`
