@@ -68,6 +68,8 @@ func Provider() *schema.Provider {
 			"adx_materialized_view_retention_policy":          resourceADXMaterializedViewRetentionPolicy(),
 			"adx_materialized_view_row_level_security_policy": resourceADXMaterializedViewRowLevelSecurityPolicy(),
 			"adx_column_encoding_policy":                      resourceADXColumnEncodingPolicy(),
+			"adx_table_continuous_export":                     resourceADXTableContinuousExport(),
+			"adx_external_table":                              resourceADXExternalTable(),
 		},
 	}
 

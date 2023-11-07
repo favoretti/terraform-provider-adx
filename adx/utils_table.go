@@ -16,6 +16,11 @@ type adxTableMappingResourceId struct {
 	adxResourceId
 }
 
+type adxTableContinuousExportResourceId struct {
+	ExternalTableName string
+	adxResourceId
+}
+
 func parseADXTableMappingID(input string) (*adxTableMappingResourceId, error) {
 	parts := strings.Split(input, "|")
 	if len(parts) != 7 {
