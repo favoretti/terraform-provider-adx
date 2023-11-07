@@ -55,6 +55,7 @@ func resourceADXExternalTable() *schema.Resource {
 			"storage_connection_string": {
 				Type:             schema.TypeString,
 				Required:         true,
+				Sensitive:        true,
 				ValidateDiagFunc: validate.StringIsNotEmpty,
 			},
 
