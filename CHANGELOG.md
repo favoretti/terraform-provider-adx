@@ -1,3 +1,7 @@
+## v0.0.30
+
+* Add new resources: continuous export and external table
+
 ## v0.0.29
 
 * Bugfix for `adx_column_encoding_policy`
