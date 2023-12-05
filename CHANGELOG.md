@@ -1,3 +1,7 @@
+## v0.0.31
+
+* Bugfix: add `adx_table_ingestion_time_policy` to provider init
+
 ## v0.0.30
 
 * Add new resources: continuous export and external table
