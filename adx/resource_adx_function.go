@@ -113,7 +113,7 @@ func resourceADXFunctionCreateUpdate(ctx context.Context, d *schema.ResourceData
 		withParams = append(withParams, fmt.Sprintf("folder='%s'", folder))
 	}
 	if skip_validation, ok := d.Get("skip_validation").(bool); ok {
-		withParams = append(withParams, fmt.Sprintf("skipvalidation='%s'", strconv.FormatBool(skip_validation)))
+		withParams = append(withParams, fmt.Sprintf("skipvalidation=%s", strconv.FormatBool(skip_validation)))
 	}
 
 	withClause := ""
