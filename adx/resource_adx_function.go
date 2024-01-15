@@ -16,11 +16,12 @@ import (
 )
 
 type ADXFunction struct {
-	Name       string
-	Parameters string
-	Body       string
-	Folder     string
-	DocString  string
+	Name           string
+	Parameters     string
+	Body           string
+	Folder         string
+	DocString      string
+	SkipValidation bool
 }
 
 func resourceADXFunction() *schema.Resource {
@@ -73,6 +74,12 @@ func resourceADXFunction() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+
+			"skipvalidation": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
 		},
 		CustomizeDiff: clusterConfigCustomDiff,
 	}
@@ -104,6 +111,9 @@ func resourceADXFunctionCreateUpdate(ctx context.Context, d *schema.ResourceData
 	}
 	if folder, ok := d.GetOk("folder"); ok {
 		withParams = append(withParams, fmt.Sprintf("folder='%s'", folder))
+	}
+	if skipvalidation, ok := d.GetOk("skipvalidation"); ok {
+		withParams = append(withParams, fmt.Sprintf("skipvalidation=%s", skipvalidation))
 	}
 
 	withClause := ""
