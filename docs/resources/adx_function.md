@@ -30,7 +30,7 @@ resource "adx_function" "test" {
 - **parameters** (String, Optional) Function parameters enclosed in parenthesis (myLimit:long)
 - **folder** (String, Optional) Name of the folder in which to place this entity
 - **docstring** (String, Optional) Free text describing the entity to be added. This string is presented in various UX settings next to the entity names.
-- **skipvalidation** (Bool, Optional) Determines whether or not to run validation logic on the function and fail the process if the function isn't valid. The default is `false`. *Note*: If a function involves cross-cluster queries and you plan to recreate the function using a [Kusto Query Language script](https://learn.microsoft.com/en-us/azure/data-explorer/database-script), set `skipvalidation` to `true`.
+- **skip_validation** (Bool, Optional) Determines whether or not to run validation logic on the function and fail the process if the function isn't valid. The default is `false`. *Note*: If a function involves cross-cluster queries and you plan to recreate the function using a [Kusto Query Language script](https://learn.microsoft.com/en-us/azure/data-explorer/database-script), set `skip_validation` to `true`.
 - **cluster** (Optional) `cluster` Configuration block (defined below) for the target cluster (overrides any config specified in the provider)
 
 `cluster` Configuration block for connection details about the target ADX cluster

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"strconv"
 
 	"github.com/Azure/azure-kusto-go/kusto"
 	"github.com/Azure/azure-kusto-go/kusto/unsafe"
@@ -75,10 +76,9 @@ func resourceADXFunction() *schema.Resource {
 				Optional: true,
 			},
 
-			"skipvalidation": {
+			"skip_validation": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Default:  false,
 			},
 		},
 		CustomizeDiff: clusterConfigCustomDiff,
@@ -112,8 +112,8 @@ func resourceADXFunctionCreateUpdate(ctx context.Context, d *schema.ResourceData
 	if folder, ok := d.GetOk("folder"); ok {
 		withParams = append(withParams, fmt.Sprintf("folder='%s'", folder))
 	}
-	if skipvalidation, ok := d.GetOk("skipvalidation"); ok {
-		withParams = append(withParams, fmt.Sprintf("skipvalidation=%s", skipvalidation))
+	if skip_validation, ok := d.Get("skip_validation").(bool); ok {
+		withParams = append(withParams, fmt.Sprintf("skipvalidation='%s'", strconv.FormatBool(skip_validation)))
 	}
 
 	withClause := ""
