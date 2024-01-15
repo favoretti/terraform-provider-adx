@@ -1,6 +1,6 @@
 ## v0.0.32
 
-* Fixed #45. Add `skipvalidation` parameter to `adx_function` resource
+* Fixed #45. Add `skip_validation` parameter to `adx_function` resource
 
 ## v0.0.31
 
