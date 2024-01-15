@@ -53,20 +53,28 @@ func Provider() *schema.Provider {
 		DataSourcesMap: map[string]*schema.Resource{},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"adx_table":                                       resourceADXTable(),
-			"adx_table_mapping":                               resourceADXTableMapping(),
-			"adx_table_ingestion_batching_policy":             resourceADXTableIngestionBatchingPolicy(),
-			"adx_table_retention_policy":                      resourceADXTableRetentionPolicy(),
-			"adx_table_row_level_security_policy":             resourceADXTableRowLevelSecurityPolicy(),
-			"adx_table_partitioning_policy":                   resourceADXTablePartitioningPolicy(),
-			"adx_table_caching_policy":                        resourceADXTableCachingPolicy(),
-			"adx_table_update_policy":                         resourceADXTableUpdatePolicy(),
-			"adx_table_streaming_ingestion_policy":            resourceADXTableStreamingIngestionPolicy(),
-			"adx_function":                                    resourceADXFunction(),
+			"adx_column_encoding_policy": resourceADXColumnEncodingPolicy(),
+
+			"adx_external_table": resourceADXExternalTable(),
+
+			"adx_function": resourceADXFunction(),
+
 			"adx_materialized_view":                           resourceADXMaterializedView(),
 			"adx_materialized_view_caching_policy":            resourceADXMaterializedViewCachingPolicy(),
 			"adx_materialized_view_retention_policy":          resourceADXMaterializedViewRetentionPolicy(),
 			"adx_materialized_view_row_level_security_policy": resourceADXMaterializedViewRowLevelSecurityPolicy(),
+
+			"adx_table":                            resourceADXTable(),
+			"adx_table_caching_policy":             resourceADXTableCachingPolicy(),
+			"adx_table_continuous_export":          resourceADXTableContinuousExport(),
+			"adx_table_ingestion_batching_policy":  resourceADXTableIngestionBatchingPolicy(),
+			"adx_table_ingestion_time_policy":      resourceADXTableIngestionTimePolicy(),
+			"adx_table_mapping":                    resourceADXTableMapping(),
+			"adx_table_partitioning_policy":        resourceADXTablePartitioningPolicy(),
+			"adx_table_retention_policy":           resourceADXTableRetentionPolicy(),
+			"adx_table_row_level_security_policy":  resourceADXTableRowLevelSecurityPolicy(),
+			"adx_table_streaming_ingestion_policy": resourceADXTableStreamingIngestionPolicy(),
+			"adx_table_update_policy":              resourceADXTableUpdatePolicy(),
 		},
 	}
 

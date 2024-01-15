@@ -51,6 +51,11 @@ func TestAccADXFunction_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "folder", "iamafolder"),
 				),
 			},
+			{
+				ResourceName:      rtc.GetTFName(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }

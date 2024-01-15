@@ -1,3 +1,47 @@
+## v0.0.31
+
+* Bugfix: add `adx_table_ingestion_time_policy` to provider init
+
+## v0.0.30
+
+* Add new resources: continuous export and external table
+
+## v0.0.29
+
+* Bugfix for `adx_column_encoding_policy`
+
+## v0.0.28
+
+* Bugfix for `adx_column_encoding_policy`
+
+## v0.0.27
+
+* Bugfix for `adx_column_encoding_policy`
+
+## v0.0.26
+
+* Add feature: delete for column encoding policy
+
+## v0.0.24
+
+* Add feature: column encoding policy
+
+## v0.0.23
+
+* update autoUpdateSchema property for given MVs
+* Issue #50 - Missing option - ingestiontime
+* New resource: `adx_table_ingestion_time_policy`
+
+## v0.0.22
+
+* `adx_function` supports imports now (#48)
+
+## v0.0.21
+
+* Add concurrency and maxSourceRecordsForSingleIngest as optional params to MVs (#42)
+* add concurrency and maxSourceRecordsForSingleIngest as optional parameter to mv
+* add new predicate and augmented tests
+
 ## v0.0.20
 
 * Fixed issue #35. Async materialized view creation now properly polls ADX operations to wait for completion

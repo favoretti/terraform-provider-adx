@@ -162,7 +162,7 @@ func resourceADXMaterializedViewCreateUpdate(ctx context.Context, d *schema.Reso
 	if updateExtentsCreationTime, ok := d.GetOk("update_extents_creation_time"); ok && new {
 		withParams = append(withParams, fmt.Sprintf("UpdateExtentsCreationTime=%t", updateExtentsCreationTime.(bool)))
 	}
-	if autoUpdateSchema, ok := d.GetOk("auto_update_schema"); ok && new {
+	if autoUpdateSchema, ok := d.GetOk("auto_update_schema"); ok {
 		withParams = append(withParams, fmt.Sprintf("autoUpdateSchema=%t", autoUpdateSchema.(bool)))
 	}
 	if effectiveDateTime, ok := d.GetOk("effective_date_time"); ok && new {
