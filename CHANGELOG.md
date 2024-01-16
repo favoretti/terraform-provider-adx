@@ -1,3 +1,7 @@
+## v0.0.32
+
+* Fixed #45. Add `skip_validation` parameter to `adx_function` resource
+
 ## v0.0.31
 
 * Bugfix: add `adx_table_ingestion_time_policy` to provider init
