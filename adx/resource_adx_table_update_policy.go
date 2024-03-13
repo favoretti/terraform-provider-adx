@@ -94,12 +94,11 @@ func resourceADXTableUpdatePolicyCreateUpdate(ctx context.Context, d *schema.Res
 	transactional := d.Get("transactional").(bool)
 	propagateIngestionProperties := d.Get("propagate_ingestion_properties").(bool)
 
-	var createStatement string
+	createStatement := fmt.Sprintf(".alter table %s policy update @'[{\"IsEnabled\": %t, \"Source\": \"%s\", \"Query\": \"%s\", \"IsTransactional\": %t, \"PropagateIngestionProperties\": %t}]'", tableName, enabled, sourceTable, query, transactional, propagateIngestionProperties)
+	
 	if len(d.Get("managed_identity").(string)) > 0 {
 		managedIdentity := d.Get("managed_identity").(string)
 		createStatement = fmt.Sprintf(".alter table %s policy update @'[{\"IsEnabled\": %t, \"Source\": \"%s\", \"Query\": \"%s\", \"IsTransactional\": %t, \"PropagateIngestionProperties\": %t, \"ManagedIdentity\": \"%s\"}]'", tableName, enabled, sourceTable, query, transactional, propagateIngestionProperties, managedIdentity)
-	} else {
-		createStatement = fmt.Sprintf(".alter table %s policy update @'[{\"IsEnabled\": %t, \"Source\": \"%s\", \"Query\": \"%s\", \"IsTransactional\": %t, \"PropagateIngestionProperties\": %t}]'", tableName, enabled, sourceTable, query, transactional, propagateIngestionProperties)
 	}
 
 	if err := createADXPolicy(ctx, d, meta, "table", "update", databaseName, tableName, createStatement); err != nil {
