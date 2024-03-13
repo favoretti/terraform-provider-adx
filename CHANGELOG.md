@@ -1,3 +1,7 @@
+## v0.0.33
+
+* Added ability to create an Update Policies with a System- or User-Assigned Managed Identity (#66)
+
 ## v0.0.32
 
 * Fixed #45. Add `skip_validation` parameter to `adx_function` resource
