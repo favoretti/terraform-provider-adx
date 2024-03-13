@@ -53,7 +53,7 @@ resource "adx_table_update_policy" "test_update" {
 - **query** (String, Required) A query used to produce data for the update
 - **transactional** (Boolean, Required) States if the update policy is transactional or not, default is false). If transactional and the update policy fails, the source table is not updated.
 - **propagate_ingestion_properties** (Boolean, Optional) States if properties specified during ingestion to the source table, such as extent tags and creation time, apply to the target table. Default: false
-- **managed_identity** (String, Optional) An update policy configured with a managed identity is performed on behalf of the managed identity. It must be the reserved word "system" to use the System-assigned Managed Identity of the cluster or an Object ID of an User-assigned Managed Identity.
+- **managed_identity** (String, Optional) An update policy configured with a managed identity is performed on behalf of the managed identity. It must be the reserved word "system" to use the System-assigned Managed Identity of the cluster or an Object ID of a User-assigned Managed Identity.
 - **enabled** (Boolean, Optional) States if update policy is enabled or disabled. Default: true
 - **cluster** (Optional) `cluster` Configuration block (defined below) for the target cluster (overrides any config specified in the provider)
 
