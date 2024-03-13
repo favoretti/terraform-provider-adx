@@ -17,6 +17,7 @@ type TableUpdatePolicy struct {
 	Query                        string
 	IsTransactional              bool
 	PropagateIngestionProperties bool
+	ManagedIdentity              string
 }
 
 func resourceADXTableUpdatePolicy() *schema.Resource {
@@ -73,6 +74,12 @@ func resourceADXTableUpdatePolicy() *schema.Resource {
 				Optional: true,
 				Default:  false,
 			},
+
+			"managed_identity": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				ValidateDiagFunc: validate.StringIsSystemOrUUID,
+			},
 		},
 		CustomizeDiff: clusterConfigCustomDiff,
 	}
@@ -88,6 +95,11 @@ func resourceADXTableUpdatePolicyCreateUpdate(ctx context.Context, d *schema.Res
 	propagateIngestionProperties := d.Get("propagate_ingestion_properties").(bool)
 
 	createStatement := fmt.Sprintf(".alter table %s policy update @'[{\"IsEnabled\": %t, \"Source\": \"%s\", \"Query\": \"%s\", \"IsTransactional\": %t, \"PropagateIngestionProperties\": %t}]'", tableName, enabled, sourceTable, query, transactional, propagateIngestionProperties)
+	
+	if len(d.Get("managed_identity").(string)) > 0 {
+		managedIdentity := d.Get("managed_identity").(string)
+		createStatement = fmt.Sprintf(".alter table %s policy update @'[{\"IsEnabled\": %t, \"Source\": \"%s\", \"Query\": \"%s\", \"IsTransactional\": %t, \"PropagateIngestionProperties\": %t, \"ManagedIdentity\": \"%s\"}]'", tableName, enabled, sourceTable, query, transactional, propagateIngestionProperties, managedIdentity)
+	}
 
 	if err := createADXPolicy(ctx, d, meta, "table", "update", databaseName, tableName, createStatement); err != nil {
 		return diag.Errorf("%+v", err)
@@ -114,6 +126,7 @@ func resourceADXTableUpdatePolicyRead(ctx context.Context, d *schema.ResourceDat
 	d.Set("query", policy[0].Query)
 	d.Set("transactional", policy[0].IsTransactional)
 	d.Set("propagate_ingestion_properties", policy[0].PropagateIngestionProperties)
+	d.Set("managed_identity", policy[0].ManagedIdentity)
 
 	return diags
 }
