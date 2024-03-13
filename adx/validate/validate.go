@@ -84,3 +84,20 @@ func StringIsUUID(i interface{}, k cty.Path) diag.Diagnostics {
 
 	return nil
 }
+
+func StringIsSystemOrUUID(i interface{}, k cty.Path) diag.Diagnostics {
+	v, ok := i.(string)
+	if !ok {
+		return diag.Errorf("expected type of %q to be string", k)
+	}
+
+	if v == "system" {
+		return nil
+	}
+
+	if _, err := uuid.ParseUUID(v); err != nil {
+		return diag.Errorf("expected the value \"system\" or a valid UUID, got: %v", v)
+	}
+
+	return nil
+}
