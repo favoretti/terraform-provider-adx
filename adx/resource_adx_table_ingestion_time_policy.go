@@ -90,5 +90,5 @@ func resourceADXTableIngestionTimeRead(ctx context.Context, d *schema.ResourceDa
 }
 
 func resourceADXTableIngestionTimeDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return deleteADXPolicy(ctx, d, meta, "table", "ingetiontime")
+	return deleteADXPolicy(ctx, d, meta, "table", "ingestiontime")
 }
