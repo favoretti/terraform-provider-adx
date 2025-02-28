@@ -1,6 +1,6 @@
 module github.com/favoretti/terraform-provider-adx
 
-go 1.18
+go 1.24
 
 require (
 	github.com/Azure/azure-kusto-go v0.7.0
