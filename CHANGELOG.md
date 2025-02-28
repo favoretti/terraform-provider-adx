@@ -1,3 +1,7 @@
+## v0.0.34
+
+* Fixed typo in ingstion_time_policy resource, preventing destroy from working (#69)
+
 ## v0.0.33
 
 * Added ability to create an Update Policies with a System- or User-Assigned Managed Identity (#66)
