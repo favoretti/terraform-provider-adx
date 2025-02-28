@@ -42,10 +42,11 @@ jobs:
           passphrase: ${{ secrets.PASSPHRASE }}
       -
         name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v3.2.0
+        uses: goreleaser/goreleaser-action@v6
         with:
+          distribution: goreleaser
           version: latest
-          args: release --rm-dist
+          args: release --clean
         env:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           # GitHub sets this automatically
