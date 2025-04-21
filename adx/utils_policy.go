@@ -24,6 +24,10 @@ type PolicyStringValue struct {
 	Value string
 }
 
+type PolicyBoolValue struct {
+	Value string
+}
+
 type adxPolicyResource struct {
 	PolicyName string
 	adxResourceId
@@ -131,4 +135,24 @@ func getPolicyHotCacheValue(ctx context.Context, meta interface{}, clusterConfig
 		return "", fmt.Errorf("error checking hot cache value for %s %s: %+v", entityType, entityName, err)
 	}
 	return fmt.Sprintf("%s%s", resultSet[0].Result, expectedUnit), nil
+}
+
+func policyRestrictedViewStateRefresh(ctx context.Context, meta interface{}, clusterConfig *ClusterConfig, databaseName string, entityType string, entityName string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		restrictedViewValue, err := getPolicyRestrictedViewValue(ctx, meta, clusterConfig, databaseName, entityType, entityName)
+		if err != nil {
+			return "", "", err
+		}
+		return restrictedViewValue, string(restrictedViewValue), nil
+	}
+}
+
+func getPolicyRestrictedViewValue(ctx context.Context, meta interface{}, clusterConfig *ClusterConfig, databaseName string, entityType string, entityName string) (string, error) {
+	// Expected unit can be d,h,m,s
+	query := fmt.Sprintf(".show %s %s policy restricted_view_access | project Result= parse_json(Policy).IsEnabled", entityType, entityName)
+	resultSet, err := queryADXMgmtAndParse[adxSimpleQueryResult](ctx, meta, clusterConfig, databaseName, query)
+	if err != nil {
+		return "", fmt.Errorf("error checking restricted view value for %s %s: %+v", entityType, entityName, err)
+	}
+	return fmt.Sprintf("%s", resultSet[0].Result), nil
 }
