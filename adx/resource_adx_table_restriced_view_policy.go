@@ -3,7 +3,6 @@ package adx
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"encoding/json"
 
@@ -14,8 +13,10 @@ import (
 	"time"
 )
 
+
+
 type TableRestrictedViewPolicy struct {
-	Enabled *PolicyStringValue
+	IsEnabled *bool
 }
 
 func resourceADXTableRestrictedViewPolicy() *schema.Resource {
@@ -116,17 +117,11 @@ func resourceADXTableRestrictedViewPolicyRead(ctx context.Context, d *schema.Res
 			return diag.Errorf("error parsing policy restricted_view for Table %q (Database %q): %+v", id.Name, id.DatabaseName, err)
 		}
 
-		if policy.Enabled == nil {
+		if policy.IsEnabled == nil {
 			return diag.Errorf("invalid object returned for policy restricted_view for table %q (Database %q): %s", id.Name, id.DatabaseName, resultSet[0])
 		}
 
-		// Convert the policy value to lowercase to ensure it matches "true" or "false"
-		enabled := strings.ToLower(policy.Enabled.Value)
-		if enabled != "true" && enabled != "false" {
-			enabled = "false" // Default to false if the value is unexpected
-		}
-
-		d.Set("enabled", enabled)
+		d.Set("enabled", policy.IsEnabled)
 		d.Set("table_name", id.Name)
 		d.Set("database_name", id.DatabaseName)
 	}

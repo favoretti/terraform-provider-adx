@@ -66,6 +66,7 @@ func Provider() *schema.Provider {
 
 			"adx_table":                            resourceADXTable(),
 			"adx_table_caching_policy":             resourceADXTableCachingPolicy(),
+			"adx_table_restriced_view_access_policy": resourceADXTableRestrictedViewPolicy(),
 			"adx_table_continuous_export":          resourceADXTableContinuousExport(),
 			"adx_table_ingestion_batching_policy":  resourceADXTableIngestionBatchingPolicy(),
 			"adx_table_ingestion_time_policy":      resourceADXTableIngestionTimePolicy(),
