@@ -51,7 +51,6 @@ func TestAccADXTableRestrictedViewPolicy_basic(t *testing.T) {
 	})
 }
 
-// Requires a follower database already configured with table `sample_shared_table`
 func TestAccADXTableRestrictedViewPolicy_follower(t *testing.T) {
 	var entity TableRestrictedViewPolicy
 	r := ADXTableRestrictedViewPolicyTestResource{}
