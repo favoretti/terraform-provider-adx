@@ -1,3 +1,7 @@
+## v0.0.35
+
+New resource: `adx_table_restricted_view_policy`
+
 ## v0.0.34
 
 * Fixed typo in ingstion_time_policy resource, preventing destroy from working (#69)
