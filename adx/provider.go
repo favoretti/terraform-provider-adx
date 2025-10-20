@@ -17,7 +17,9 @@ func Provider() *schema.Provider {
 				Type:             schema.TypeString,
 				Optional:         true,
 				DefaultFunc:      schema.MultiEnvDefaultFunc([]string{"ADX_CLIENT_ID"}, nil),
+				ConflictsWith:    []string{"use_default_credentials"},
 				ValidateDiagFunc: validate.StringIsNotEmpty,
+				Description:      "The client ID for the Service Principal used to connect to Azure Data Explorer. Required when not using default credentials.",
 			},
 
 			"client_secret": {
@@ -25,7 +27,26 @@ func Provider() *schema.Provider {
 				Optional:         true,
 				Sensitive:        true,
 				DefaultFunc:      schema.MultiEnvDefaultFunc([]string{"ADX_CLIENT_SECRET"}, nil),
+				ConflictsWith:    []string{"use_default_credentials"},
 				ValidateDiagFunc: validate.StringIsNotEmpty,
+				Description:      "The client secret for the Service Principal used to connect to Azure Data Explorer. Required when not using default credentials.",
+			},
+
+			"tenant_id": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				DefaultFunc:      schema.MultiEnvDefaultFunc([]string{"ADX_TENANT_ID"}, nil),
+				ConflictsWith:    []string{"use_default_credentials"},
+				ValidateDiagFunc: validate.StringIsNotEmpty,
+				Description:      "The tenant ID for the Service Principal used to connect to Azure Data Explorer. Required when not using default credentials.",
+			},
+
+			"use_default_credentials": {
+				Type:          schema.TypeBool,
+				Optional:      true,
+				Default:       false,
+				ConflictsWith: []string{"client_id", "client_secret", "tenant_id"},
+				Description:   "Use Azure Default Credentials for authentication. When enabled, the provider will use DefaultAzureCredential which supports Managed Identity, Azure CLI, and environment variables.",
 			},
 
 			"adx_endpoint": {
@@ -34,19 +55,14 @@ func Provider() *schema.Provider {
 				DefaultFunc:      schema.MultiEnvDefaultFunc([]string{"ADX_ENDPOINT"}, nil),
 				ForceNew:         true,
 				ValidateDiagFunc: validate.StringIsNotEmpty,
-			},
-
-			"tenant_id": {
-				Type:             schema.TypeString,
-				Optional:         true,
-				DefaultFunc:      schema.MultiEnvDefaultFunc([]string{"ADX_TENANT_ID"}, nil),
-				ValidateDiagFunc: validate.StringIsNotEmpty,
+				Description:      "The Azure Data Explorer cluster endpoint URI.",
 			},
 
 			"lazy_init": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "When enabled, the ADX client will be created lazily when first used.",
 			},
 		},
 
@@ -64,18 +80,18 @@ func Provider() *schema.Provider {
 			"adx_materialized_view_retention_policy":          resourceADXMaterializedViewRetentionPolicy(),
 			"adx_materialized_view_row_level_security_policy": resourceADXMaterializedViewRowLevelSecurityPolicy(),
 
-			"adx_table":       		                  	resourceADXTable(),
-			"adx_table_caching_policy":		          	resourceADXTableCachingPolicy(),
-			"adx_table_restricted_view_access_policy":	resourceADXTableRestrictedViewPolicy(),
-			"adx_table_continuous_export":          	resourceADXTableContinuousExport(),
-			"adx_table_ingestion_batching_policy":  	resourceADXTableIngestionBatchingPolicy(),
-			"adx_table_ingestion_time_policy":      	resourceADXTableIngestionTimePolicy(),
-			"adx_table_mapping":                    	resourceADXTableMapping(),
-			"adx_table_partitioning_policy":        	resourceADXTablePartitioningPolicy(),
-			"adx_table_retention_policy":           	resourceADXTableRetentionPolicy(),
-			"adx_table_row_level_security_policy":  	resourceADXTableRowLevelSecurityPolicy(),
-			"adx_table_streaming_ingestion_policy": 	resourceADXTableStreamingIngestionPolicy(),
-			"adx_table_update_policy":              	resourceADXTableUpdatePolicy(),
+			"adx_table":                               resourceADXTable(),
+			"adx_table_caching_policy":                resourceADXTableCachingPolicy(),
+			"adx_table_restricted_view_access_policy": resourceADXTableRestrictedViewPolicy(),
+			"adx_table_continuous_export":             resourceADXTableContinuousExport(),
+			"adx_table_ingestion_batching_policy":     resourceADXTableIngestionBatchingPolicy(),
+			"adx_table_ingestion_time_policy":         resourceADXTableIngestionTimePolicy(),
+			"adx_table_mapping":                       resourceADXTableMapping(),
+			"adx_table_partitioning_policy":           resourceADXTablePartitioningPolicy(),
+			"adx_table_retention_policy":              resourceADXTableRetentionPolicy(),
+			"adx_table_row_level_security_policy":     resourceADXTableRowLevelSecurityPolicy(),
+			"adx_table_streaming_ingestion_policy":    resourceADXTableStreamingIngestionPolicy(),
+			"adx_table_update_policy":                 resourceADXTableUpdatePolicy(),
 		},
 	}
 
@@ -87,11 +103,12 @@ func Provider() *schema.Provider {
 func providerConfigure(p *schema.Provider) schema.ConfigureContextFunc {
 	return func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 		config := &Config{
-			ClientID:     d.Get("client_id").(string),
-			ClientSecret: d.Get("client_secret").(string),
-			TenantID:     d.Get("tenant_id").(string),
-			Endpoint:     d.Get("adx_endpoint").(string),
-			LazyInit:     d.Get("lazy_init").(bool),
+			ClientID:              d.Get("client_id").(string),
+			ClientSecret:          d.Get("client_secret").(string),
+			TenantID:              d.Get("tenant_id").(string),
+			Endpoint:              d.Get("adx_endpoint").(string),
+			LazyInit:              d.Get("lazy_init").(bool),
+			UseDefaultCredentials: d.Get("use_default_credentials").(bool),
 		}
 
 		ua := p.UserAgent(TerraformProviderUserAgent, p.TerraformVersion)

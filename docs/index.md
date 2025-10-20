@@ -2,14 +2,40 @@
 
 Use this provider to manage Azure Data Explorer resources.
 
+# Azure Data Explorer Provider
+
+Use this provider to manage Azure Data Explorer resources.
+
+## Authentication
+
+The ADX provider supports two authentication methods:
+
+### Azure Default Credentials (Recommended)
+
+```hcl
+provider "adx" {
+  adx_endpoint             = "https://adxcluster123.eastus.kusto.windows.net"
+  use_default_credentials  = true
+}
+```
+
+### Service Principal Authentication
+
+```hcl
+provider "adx" {
+  adx_endpoint  = "https://adxcluster123.eastus.kusto.windows.net"
+  client_id     = "your-service-principal-client-id"
+  client_secret = "your-service-principal-client-secret"
+  tenant_id     = "your-azure-tenant-id"
+}
+```
+
 ## Example Usage
 
 ```hcl
 provider "adx" {
-  # adx_endpoint    = "..."
-  # client_id       = "..."
-  # client_secret   = "..."
-  # tenant_id       = "..."
+  adx_endpoint             = "https://adxcluster123.eastus.kusto.windows.net"
+  use_default_credentials  = true
 }
 
 resource "adx_table" "test" {
@@ -123,16 +149,43 @@ resource "adx_table_update_policy" "test_update" {
 
 * `adx_endpoint` - (String, Optional) ADX Endpoint URI, starting with `https://`. It can also be sourced from the `ADX_ENDPOINT` environment variable.
 
-* `client_id` - (String, Optional) The client ID. It can also be sourced from the `ADX_CLIENT_ID` environment variable.
+* `use_default_credentials` - (Boolean, Optional) Use Azure Default Credentials for authentication. When enabled, the provider will use DefaultAzureCredential which supports Managed Identity, Azure CLI, and environment variables. Conflicts with `client_id`, `client_secret`, and `tenant_id`. Default is false.
 
-* `client_secret` - (String, Optional) The client secret. It can also be sourced from the `ADX_CLIENT_SECRET` environment variable.
+* `client_id` - (String, Optional) The service principal client ID. Required when not using default credentials. It can also be sourced from the `ADX_CLIENT_ID` environment variable. Conflicts with `use_default_credentials`.
 
-* `tenant_id` - (String, Optional) The tenant ID. It can also be sourced from the `ADX_TENANT_ID` environment variable.
+* `client_secret` - (String, Optional) The service principal client secret. Required when not using default credentials. It can also be sourced from the `ADX_CLIENT_SECRET` environment variable. Conflicts with `use_default_credentials`.
 
-* `lazy_init` - (Boolean, Optional) Defer connection to ADX until the first resource is managed. Default is false
+* `tenant_id` - (String, Optional) The Azure tenant ID. Required when not using default credentials. It can also be sourced from the `ADX_TENANT_ID` environment variable. Conflicts with `use_default_credentials`.
 
-## Alternative authentication
-Above configuration parameters can also be overridden with following environment variables:
+* `lazy_init` - (Boolean, Optional) Defer connection to ADX until the first resource is managed. Default is false.
+
+## Authentication Methods
+
+### Azure Default Credentials (Recommended)
+
+Azure Default Credentials provide the most secure and flexible authentication method. It automatically detects and uses the most appropriate authentication method available in the current environment:
+
+1. **Environment Variables**: AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_CLIENT_SECRET
+2. **Workload Identity**: For applications running in Azure Kubernetes Service (AKS)
+3. **Managed Identity**: For applications running on Azure resources (VMs, App Service, Functions, etc.)
+4. **Azure CLI**: When authenticated via `az login`
+5. **Azure Developer CLI**: When authenticated via `azd auth login`
+6. **Azure PowerShell**: When authenticated via `Connect-AzAccount`
+
+### Service Principal Authentication
+
+Traditional authentication using a service principal with client credentials. Requires explicit configuration of client_id, client_secret, and tenant_id.
+
+## Environment Variables
+
+Configuration parameters can be overridden with the following environment variables:
+
+For Default Credentials:
+```
+ADX_ENDPOINT
+```
+
+For Service Principal authentication:
 ```
 ADX_ENDPOINT
 ADX_CLIENT_ID
@@ -140,14 +193,20 @@ ADX_CLIENT_SECRET
 ADX_TENANT_ID
 ```
 
-## Lazy provider initialization
+For Azure SDK authentication (when using Default Credentials):
+```
+AZURE_CLIENT_ID
+AZURE_TENANT_ID  
+AZURE_CLIENT_SECRET
+```
+
+## Lazy Provider Initialization
+
 ```hcl
 provider "adx" {
-  adx_endpoint  = "https://adxcluster123.eastus.kusto.windows.net"
-  client_id     = "clientId"
-  client_secret = "secret"
-  tenant_id     = "tenantId"
-  lazy_init     = true
+  adx_endpoint             = "https://adxcluster123.eastus.kusto.windows.net"
+  use_default_credentials  = true
+  lazy_init                = true
 }
 ```
 

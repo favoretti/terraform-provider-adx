@@ -9,11 +9,12 @@ import (
 )
 
 type Config struct {
-	ClientID     string
-	ClientSecret string
-	TenantID     string
-	Endpoint     string
-	LazyInit     bool
+	ClientID              string
+	ClientSecret          string
+	TenantID              string
+	Endpoint              string
+	LazyInit              bool
+	UseDefaultCredentials bool
 }
 
 type Meta struct {
@@ -49,9 +50,10 @@ func (c *Config) Client(userAgent string) (*Meta, diag.Diagnostics) {
 
 func providerConfigToClusterConfig(config *Config) *ClusterConfig {
 	return &ClusterConfig{
-		ClientID:     config.ClientID,
-		ClientSecret: config.ClientSecret,
-		TenantID:     config.TenantID,
-		URI:          config.Endpoint,
+		ClientID:              config.ClientID,
+		ClientSecret:          config.ClientSecret,
+		TenantID:              config.TenantID,
+		URI:                   config.Endpoint,
+		UseDefaultCredentials: config.UseDefaultCredentials,
 	}
 }

@@ -14,8 +14,6 @@ import (
 	"github.com/Azure/azure-kusto-go/kusto/data/value"
 	"github.com/Azure/azure-kusto-go/kusto/unsafe"
 
-	"github.com/Azure/go-autorest/autorest/azure/auth"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -136,23 +134,34 @@ func deleteADXEntity(ctx context.Context, d *schema.ResourceData, meta interface
 }
 
 func buildADXClient(clusterConfig *ClusterConfig) (*kusto.Client, error) {
-	if len(clusterConfig.ClientID) == 0 {
-		return nil, fmt.Errorf("client_id is required either in the resource or provider config")
-	}
-	if len(clusterConfig.ClientSecret) == 0 {
-		return nil, fmt.Errorf("client_secret is required either in the resource or provider config")
-	}
-	if len(clusterConfig.TenantID) == 0 {
-		return nil, fmt.Errorf("tenant_id is required either in the resource or provider config")
-	}
 	if len(clusterConfig.URI) == 0 {
 		return nil, fmt.Errorf("uri is required either in the resource or provider config")
 	}
 
-	auth := kusto.Authorization{Config: auth.NewClientCredentialsConfig(clusterConfig.ClientID, clusterConfig.ClientSecret, clusterConfig.TenantID)}
-	client, err := kusto.New(clusterConfig.URI, auth)
+	// Create the connection string builder
+	kcsb := kusto.NewConnectionStringBuilder(clusterConfig.URI)
+
+	if clusterConfig.UseDefaultCredentials {
+		// Use Azure Default Credentials
+		kcsb = kcsb.WithDefaultAzureCredential()
+	} else {
+		// Use traditional client credentials
+		if len(clusterConfig.ClientID) == 0 {
+			return nil, fmt.Errorf("client_id is required either in the resource or provider config when not using default credentials")
+		}
+		if len(clusterConfig.ClientSecret) == 0 {
+			return nil, fmt.Errorf("client_secret is required either in the resource or provider config when not using default credentials")
+		}
+		if len(clusterConfig.TenantID) == 0 {
+			return nil, fmt.Errorf("tenant_id is required either in the resource or provider config when not using default credentials")
+		}
+
+		kcsb = kcsb.WithAadAppKey(clusterConfig.ClientID, clusterConfig.ClientSecret, clusterConfig.TenantID)
+	}
+
+	client, err := kusto.New(kcsb)
 	if err != nil {
-		return nil, fmt.Errorf("error creating adx client from config: %+v", err)
+		return nil, fmt.Errorf("error creating adx client: %+v", err)
 	}
 	return client, nil
 }
