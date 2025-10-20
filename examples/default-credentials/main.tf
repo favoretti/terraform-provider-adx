@@ -37,25 +37,25 @@ resource "adx_table_mapping" "example_json" {
   database_name = var.database_name
   table_name    = adx_table.example.name
   kind          = "Json"
-  
+
   mapping {
     column   = "Name"
     path     = "$.name"
     datatype = "string"
   }
-  
+
   mapping {
     column   = "Age"
     path     = "$.age"
     datatype = "int"
   }
-  
+
   mapping {
     column   = "Email"
     path     = "$.email"
     datatype = "string"
   }
-  
+
   mapping {
     column   = "CreatedAt"
     path     = "$.created_at"

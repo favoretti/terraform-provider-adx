@@ -54,7 +54,7 @@ resource "adx_function" "example" {
   name          = "GetUserActions"
   database_name = var.database_name
   body          = "${adx_table.example.name} | where UserId == userId | order by Timestamp desc"
-  
+
   parameters {
     name = "userId"
     type = "string"
@@ -63,16 +63,16 @@ resource "adx_function" "example" {
 
 # Example table with cluster override (different authentication for specific resource)
 resource "adx_table" "override_example" {
-  name          = "OverrideTable" 
+  name          = "OverrideTable"
   database_name = var.database_name
   table_schema  = "Id:string,Value:int"
-  
+
   # Override cluster config for this specific resource
   cluster {
-    uri       = var.adx_endpoint
-    client_id = var.client_id
+    uri           = var.adx_endpoint
+    client_id     = var.client_id
     client_secret = var.client_secret
-    tenant_id = var.tenant_id
+    tenant_id     = var.tenant_id
   }
 }
 
