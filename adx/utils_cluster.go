@@ -9,10 +9,11 @@ import (
 )
 
 type ClusterConfig struct {
-	ClientID     string
-	ClientSecret string
-	TenantID     string
-	URI          string
+	ClientID              string
+	ClientSecret          string
+	TenantID              string
+	URI                   string
+	UseDefaultCredentials bool
 }
 
 func getClusterConfigInputSchema() *schema.Schema {
@@ -41,6 +42,11 @@ func getClusterConfigInputSchema() *schema.Schema {
 				},
 				"tenant_id": {
 					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+				},
+				"use_default_credentials": {
+					Type:     schema.TypeBool,
 					Optional: true,
 					Computed: true,
 				},
@@ -120,6 +126,10 @@ func applyClusterConfigDefaults(clusterConfig *ClusterConfig, defaultConfig *Clu
 		log.Printf("[DEBUG] Using default URI from provider for cluster config")
 		clusterConfig.URI = defaultConfig.URI
 	}
+	if !clusterConfig.UseDefaultCredentials {
+		log.Printf("[DEBUG] Using default UseDefaultCredentials from provider for cluster config")
+		clusterConfig.UseDefaultCredentials = defaultConfig.UseDefaultCredentials
+	}
 }
 
 func getAndExpandClusterConfigWithDefaults(ctx context.Context, d *schema.ResourceData, meta interface{}) *ClusterConfig {
@@ -146,10 +156,11 @@ func expandClusterConfig(input interface{}) *ClusterConfig {
 	clusterInputMap := input.(map[string]interface{})
 
 	return &ClusterConfig{
-		ClientID:     getAttributeOrDefault(clusterInputMap, "client_id", ""),
-		ClientSecret: getAttributeOrDefault(clusterInputMap, "client_secret", ""),
-		TenantID:     getAttributeOrDefault(clusterInputMap, "tenant_id", ""),
-		URI:          getAttributeOrDefault(clusterInputMap, "uri", ""),
+		ClientID:              getAttributeOrDefault(clusterInputMap, "client_id", ""),
+		ClientSecret:          getAttributeOrDefault(clusterInputMap, "client_secret", ""),
+		TenantID:              getAttributeOrDefault(clusterInputMap, "tenant_id", ""),
+		URI:                   getAttributeOrDefault(clusterInputMap, "uri", ""),
+		UseDefaultCredentials: getBoolAttributeOrDefault(clusterInputMap, "use_default_credentials", false),
 	}
 }
 
@@ -158,6 +169,13 @@ func getAttributeOrDefault(d map[string]interface{}, name string, defaultString 
 		return val.(string)
 	}
 	return defaultString
+}
+
+func getBoolAttributeOrDefault(d map[string]interface{}, name string, defaultBool bool) bool {
+	if val := d[name]; val != nil {
+		return val.(bool)
+	}
+	return defaultBool
 }
 
 func flattenAndSetClusterConfig(ctx context.Context, d *schema.ResourceData, clusterConfig *ClusterConfig) {
@@ -171,10 +189,11 @@ func flattenClusterConfig(clusterConfig *ClusterConfig) []map[string]interface{}
 	cluster[0]["client_secret"] = clusterConfig.ClientSecret
 	cluster[0]["tenant_id"] = clusterConfig.TenantID
 	cluster[0]["uri"] = clusterConfig.URI
+	cluster[0]["use_default_credentials"] = clusterConfig.UseDefaultCredentials
 	return cluster
 }
 
 func hashClusterConfig(clusterConfig *ClusterConfig) string {
-	hash := hashObjects([]interface{}{clusterConfig.ClientID, clusterConfig.ClientSecret, clusterConfig.TenantID, clusterConfig.URI})
+	hash := hashObjects([]interface{}{clusterConfig.ClientID, clusterConfig.ClientSecret, clusterConfig.TenantID, clusterConfig.URI, clusterConfig.UseDefaultCredentials})
 	return hex.EncodeToString(hash)
 }

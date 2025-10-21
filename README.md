@@ -15,14 +15,67 @@ terraform {
 }
 
 # Configure the Azure Data Explorer provider
+
+## Authentication Methods
+
+The ADX provider supports two authentication methods:
+
+### Method 1: Azure Default Credentials (Recommended)
+
+Use Azure Default Credentials for seamless authentication across different environments:
+
+```hcl
 provider "adx" {
-
-  # adx_endpoint    = "..."
-  # client_id       = "..."
-  # client_secret   = "..."
-  # tenant_id       = "..."
+  adx_endpoint               = "https://adxcluster123.eastus.kusto.windows.net"
+  use_default_credentials   = true
 }
+```
 
+When `use_default_credentials` is set to `true`, the provider uses DefaultAzureCredential which supports:
+- **Managed Identity** (when running on Azure resources like VMs, App Service, etc.)
+- **Azure CLI** (when authenticated via `az login`)
+- **Azure Developer CLI** (when authenticated via `azd auth login`) 
+- **Environment variables** (AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_CLIENT_SECRET)
+- **Azure PowerShell** (when authenticated via `Connect-AzAccount`)
+
+### Method 2: Service Principal (Client Credentials)
+
+Use explicit service principal credentials:
+
+```hcl
+provider "adx" {
+  adx_endpoint  = "https://adxcluster123.eastus.kusto.windows.net"
+  client_id     = "your-service-principal-client-id"
+  client_secret = "your-service-principal-client-secret"
+  tenant_id     = "your-azure-tenant-id"
+}
+```
+
+## Environment Variables
+
+Configuration parameters can be overridden with environment variables:
+
+```bash
+# For Default Credentials (recommended)
+export ADX_ENDPOINT="https://adxcluster123.eastus.kusto.windows.net"
+
+# For Service Principal authentication
+export ADX_ENDPOINT="https://adxcluster123.eastus.kusto.windows.net"
+export ADX_CLIENT_ID="your-service-principal-client-id"
+export ADX_CLIENT_SECRET="your-service-principal-client-secret"
+export ADX_TENANT_ID="your-azure-tenant-id"
+```
+
+## Examples
+
+See the [examples directory](./examples/) for complete working examples demonstrating different authentication methods:
+
+- **[Default Credentials](./examples/default-credentials/)** - Recommended approach using Azure Default Credentials
+- **[Service Principal](./examples/service-principal/)** - Traditional approach with explicit credentials
+
+## Resource Examples
+
+```hcl
 resource "adx_table" "test" {
   name          = "Test1"
   database_name = "test-db"
@@ -61,32 +114,40 @@ resource "adx_table_mapping" "test" {
     datatype = "string"
   }
 }
-
 ```
 
-## Alternative authentication
-Above configuration parameters can also be overriden with following environment variables:
-```
-ADX_ENDPOINT
-ADX_CLIENT_ID
-ADX_CLIENT_SECRET
-ADX_TENANT_ID
-```
+```hcl
+terraform {
+  required_providers {
+    adx = {
+      source = "favoretti/adx"
+    }
+  }
+}
+
+# Configure the Azure Data Explorer provider with Default Credentials
+provider "adx" {
+  adx_endpoint             = "https://adxcluster123.eastus.kusto.windows.net"
+  use_default_credentials  = true
+}
 
 ## Lazy provider initialization
+
+```
+
+## Lazy Provider Initialization
+
 ```hcl
 provider "adx" {
-  adx_endpoint  = "https://adxcluster123.eastus.kusto.windows.net"
-  client_id     = "clientId"
-  client_secret = "secret"
-  tenant_id     = "tenantId"
-  lazy_init     = true
+  adx_endpoint             = "https://adxcluster123.eastus.kusto.windows.net"
+  use_default_credentials  = true
+  lazy_init                = true
 }
 ```
 
 If `lazy_init` is set to true, no connection will be attempted to the ADX cluster until the first resource state load.
 
-## Cluster config per resource
+## Cluster Configuration Per Resource
 
 Resources allow overriding any of the cluster attributes specified in the provider config.
 
@@ -101,6 +162,7 @@ resource "adx_table" "test" {
   table_schema  = "f1:string,f2:string,f4:string,f3:int"
   cluster {
     uri = "https://adxcluster456.eastus.kusto.windows.net"
+    use_default_credentials = true
   }
 }
 ```

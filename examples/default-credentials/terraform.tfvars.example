@@ -1,0 +1,3 @@
+# Example: Default Credentials
+adx_endpoint = "https://mycluster.eastus.kusto.windows.net"
+database_name = "TestDatabase"

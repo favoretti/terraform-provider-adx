@@ -183,7 +183,7 @@ func resourceADXTableCreate(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf("error creating adx client connection: %+v", err)
 	}
 
-	_, err = client.Mgmt(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(createStatement), kusto.AllowWrite())
+	_, err = client.Mgmt(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(createStatement))
 	if err != nil {
 		return diag.Errorf("error creating Table %q (Database %q): %+v", tableName, databaseName, err)
 	}
@@ -221,7 +221,7 @@ func resourceADXTableUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf("error creating adx client connection: %+v", err)
 	}
 
-	_, err = client.Mgmt(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(createStatement), kusto.AllowWrite())
+	_, err = client.Mgmt(ctx, databaseName, kusto.NewStmt("", kStmtOpts).UnsafeAdd(createStatement))
 	if err != nil {
 		return diag.Errorf("error updating Table %q (Database %q): %+v", tableName, databaseName, err)
 	}
