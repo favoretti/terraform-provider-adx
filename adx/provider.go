@@ -74,6 +74,7 @@ func Provider() *schema.Provider {
 			"adx_table_partitioning_policy":        	resourceADXTablePartitioningPolicy(),
 			"adx_table_retention_policy":           	resourceADXTableRetentionPolicy(),
 			"adx_table_row_level_security_policy":  	resourceADXTableRowLevelSecurityPolicy(),
+			"adx_table_security_role":              	resourceADXTableSecurityRole(),
 			"adx_table_streaming_ingestion_policy": 	resourceADXTableStreamingIngestionPolicy(),
 			"adx_table_update_policy":              	resourceADXTableUpdatePolicy(),
 		},
