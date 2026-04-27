@@ -248,6 +248,11 @@ func isColumnExists(ctx context.Context, meta interface{}, clusterConfig *Cluste
 	return hasStatementResults(ctx, meta, clusterConfig, databaseName, showStatement, "checking if column exists")
 }
 
+func isDatabaseExists(ctx context.Context, meta interface{}, clusterConfig *ClusterConfig, databaseName string) (bool, error) {
+	showStatement := fmt.Sprintf(".show database %s", escapeEntityNameIfRequired(databaseName))
+	return hasStatementResults(ctx, meta, clusterConfig, databaseName, showStatement, "checking if database exists")
+}
+
 func isEntityExists(ctx context.Context, meta interface{}, clusterConfig *ClusterConfig, databaseName, entityType string, entityName string) (bool, error) {
 	if entityType == "table" {
 		return isTableExists(ctx, meta, clusterConfig, databaseName, entityName)
@@ -257,6 +262,8 @@ func isEntityExists(ctx context.Context, meta interface{}, clusterConfig *Cluste
 		return isFunctionExists(ctx, meta, clusterConfig, databaseName, entityName)
 	} else if entityType == "column" {
 		return isColumnExists(ctx, meta, clusterConfig, databaseName, entityName)
+	} else if entityType == "database" {
+		return isDatabaseExists(ctx, meta, clusterConfig, databaseName)
 	}
 	return false, fmt.Errorf("checking for existance of entity type (%s) is not yet supported", entityType)
 }

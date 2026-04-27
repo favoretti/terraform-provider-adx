@@ -64,6 +64,8 @@ func Provider() *schema.Provider {
 			"adx_materialized_view_retention_policy":          resourceADXMaterializedViewRetentionPolicy(),
 			"adx_materialized_view_row_level_security_policy": resourceADXMaterializedViewRowLevelSecurityPolicy(),
 
+			"adx_merge_policy":                             resourceADXMergePolicy(),
+
 			"adx_table":       		                  	resourceADXTable(),
 			"adx_table_caching_policy":		          	resourceADXTableCachingPolicy(),
 			"adx_table_restricted_view_access_policy":	resourceADXTableRestrictedViewPolicy(),

@@ -25,3 +25,6 @@ modules-dev/
 # never upload the build to git
 terraform-provider-adx
 tf.zip
+
+# environment variables
+.env
