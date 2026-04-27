@@ -14,7 +14,7 @@ func TestAccADXTableRestrictedViewPolicy_basic(t *testing.T) {
 	r := ADXTableRestrictedViewPolicyTestResource{}
 	rtcBuilder := BuildResourceTestContext[TableRestrictedViewPolicy]()
 	rtc, _ := rtcBuilder.Test(t).Type("adx_table_RestrictedView_policy").
-		DatabaseName("test-db").
+		DatabaseName(testAccDatabaseName()).
 		EntityType("RestrictedView").
 		ReadStatementFunc(GetAccTestPolicyReadStatementFunc()).Build()
 
@@ -56,7 +56,7 @@ func TestAccADXTableRestrictedViewPolicy_follower(t *testing.T) {
 	r := ADXTableRestrictedViewPolicyTestResource{}
 	rtcBuilder := BuildResourceTestContext[TableRestrictedViewPolicy]()
 	rtc, _ := rtcBuilder.Test(t).Type("adx_table_RestrictedView_policy").
-		DatabaseName("shareable-db").
+		DatabaseName(testAccShareableDatabaseName()).
 		EntityType("RestrictedView").
 		EntityName("sample_shared_table").
 		ReadStatementFunc(GetAccTestPolicyReadStatementFunc()).Build()

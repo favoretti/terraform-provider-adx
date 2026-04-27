@@ -15,7 +15,7 @@ func TestAccADXMaterializedViewCachingPolicy_basic(t *testing.T) {
 	r := ADXMaterializedViewCachingPolicyTestResource{}
 	rtcBuilder := BuildResourceTestContext[MaterializedViewCachingPolicy]()
 	rtc, _ := rtcBuilder.Test(t).Type("adx_materialized_view_caching_policy").
-		DatabaseName("test-db").
+		DatabaseName(testAccDatabaseName()).
 		EntityType("caching").
 		ReadStatementFunc(GetAccTestPolicyReadStatementFunc()).Build()
 
@@ -58,7 +58,7 @@ func TestAccADXMaterializedViewCachingPolicy_follower(t *testing.T) {
 	r := ADXMaterializedViewCachingPolicyTestResource{}
 	rtcBuilder := BuildResourceTestContext[MaterializedViewCachingPolicy]()
 	rtc, _ := rtcBuilder.Test(t).Type("adx_materialized_view_caching_policy").
-		DatabaseName("shareable-db").
+		DatabaseName(testAccShareableDatabaseName()).
 		EntityType("caching").
 		EntityName("sample_shared_mv").
 		ReadStatementFunc(GetAccTestPolicyReadStatementFunc()).Build()

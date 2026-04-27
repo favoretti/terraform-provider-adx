@@ -14,7 +14,7 @@ func TestAccADXTableCachingPolicy_basic(t *testing.T) {
 	r := ADXTableCachingPolicyTestResource{}
 	rtcBuilder := BuildResourceTestContext[TableCachingPolicy]()
 	rtc, _ := rtcBuilder.Test(t).Type("adx_table_caching_policy").
-		DatabaseName("test-db").
+		DatabaseName(testAccDatabaseName()).
 		EntityType("caching").
 		ReadStatementFunc(GetAccTestPolicyReadStatementFunc()).Build()
 
@@ -57,7 +57,7 @@ func TestAccADXTableCachingPolicy_follower(t *testing.T) {
 	r := ADXTableCachingPolicyTestResource{}
 	rtcBuilder := BuildResourceTestContext[TableCachingPolicy]()
 	rtc, _ := rtcBuilder.Test(t).Type("adx_table_caching_policy").
-		DatabaseName("shareable-db").
+		DatabaseName(testAccShareableDatabaseName()).
 		EntityType("caching").
 		EntityName("sample_shared_table").
 		ReadStatementFunc(GetAccTestPolicyReadStatementFunc()).Build()

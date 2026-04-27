@@ -14,7 +14,7 @@ func TestAccADXMergePolicy_table(t *testing.T) {
 	r := ADXMergePolicyTestResource{}
 	rtcBuilder := BuildResourceTestContext[TablePolicy]()
 	rtc, _ := rtcBuilder.Test(t).Type("adx_merge_policy").
-		DatabaseName("test-db").
+		DatabaseName(testAccDatabaseName()).
 		EntityType("merge").
 		ReadStatementFunc(GetAccTestPolicyReadStatementFunc()).Build()
 

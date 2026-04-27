@@ -15,7 +15,7 @@ func TestAccADXTable_basic(t *testing.T) {
 	r := ADXTableTestResource{}
 	rtcBuilder := BuildResourceTestContext[TableSchema]()
 	rtc, _ := rtcBuilder.Test(t).Type("adx_table").
-		DatabaseName("test-db").
+		DatabaseName(testAccDatabaseName()).
 		EntityType("table").
 		ReadStatementFunc(func(id string) (string, error) {
 			funcId, err := parseADXTableID(id)
@@ -60,7 +60,7 @@ func TestAccADXTable_basic_inline(t *testing.T) {
 	r := ADXTableTestResource{}
 	rtcBuilder := BuildResourceTestContext[TableSchema]()
 	rtc, _ := rtcBuilder.Test(t).Type("adx_table").
-		DatabaseName("test-db").
+		DatabaseName(testAccDatabaseName()).
 		EntityType("table").
 		ReadStatementFunc(func(id string) (string, error) {
 			funcId, err := parseADXTableID(id)

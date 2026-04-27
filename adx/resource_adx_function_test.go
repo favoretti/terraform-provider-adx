@@ -14,7 +14,7 @@ func TestAccADXFunction_basic(t *testing.T) {
 	r := ADXFunctionTestResource{}
 	rtcBuilder := BuildResourceTestContext[ADXFunction]()
 	rtc, _ := rtcBuilder.Test(t).Type("adx_function").
-		DatabaseName("test-db").
+		DatabaseName(testAccDatabaseName()).
 		EntityType("function").
 		ReadStatementFunc(func(id string) (string, error) {
 			funcId, err := parseADXFunctionID(id)
