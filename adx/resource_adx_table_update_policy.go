@@ -119,6 +119,11 @@ func resourceADXTableUpdatePolicyRead(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("error parsing policy update for Table %q (Database %q): %+v", id.Name, id.DatabaseName, err)
 	}
 
+	if len(policy) == 0 {
+		d.SetId("")
+		return diags
+	}
+
 	d.Set("table_name", id.Name)
 	d.Set("database_name", id.DatabaseName)
 	d.Set("enabled", policy[0].IsEnabled)
