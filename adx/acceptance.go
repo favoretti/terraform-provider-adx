@@ -240,6 +240,20 @@ func testAccPreCheck(t *testing.T) {
 	}
 }
 
+func testAccDatabaseName() string {
+	if v := os.Getenv("ADX_TEST_DATABASE"); v != "" {
+		return v
+	}
+	return "test-db"
+}
+
+func testAccShareableDatabaseName() string {
+	if v := os.Getenv("ADX_TEST_SHAREABLE_DATABASE"); v != "" {
+		return v
+	}
+	return "shareable-db"
+}
+
 func GetAccTestPolicyReadStatementFunc() func(string) (string, error) {
 	return func(id string) (string, error) {
 		policyId, err := parseADXPolicyID(id)

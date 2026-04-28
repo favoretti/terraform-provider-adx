@@ -14,7 +14,7 @@ func TestAccADXColumnEncodingPolicy_basic(t *testing.T) {
 	r := ADXColumnEncodingPolicyTestResource{}
 	rtcBuilder := BuildResourceTestContext[ColumnEncodingPolicy]()
 	rtc, _ := rtcBuilder.Test(t).Type("adx_column_encoding_policy").
-		DatabaseName("test-db").
+		DatabaseName(testAccDatabaseName()).
 		EntityType("encoding").
 		ReadStatementFunc(GetAccTestPolicyReadStatementFunc()).Build()
 

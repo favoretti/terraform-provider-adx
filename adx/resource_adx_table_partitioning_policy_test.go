@@ -14,7 +14,7 @@ func TestAccADXTablePartitioningPolicy_basic(t *testing.T) {
 	r := ADXTablePartitioningPolicyTestResource{}
 	rtcBuilder := BuildResourceTestContext[TablePartitioningPolicy]()
 	rtc, _ := rtcBuilder.Test(t).Type("adx_table_partitioning_policy").
-		DatabaseName("test-db").
+		DatabaseName(testAccDatabaseName()).
 		EntityType("partitioning").
 		ReadStatementFunc(GetAccTestPolicyReadStatementFunc()).Build()
 

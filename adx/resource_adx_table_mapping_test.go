@@ -15,7 +15,7 @@ func TestAccTableMapping_basicJson(t *testing.T) {
 	r := ADXTableMappingTestResource{}
 	rtcBuilder := BuildResourceTestContext[TableMapping]()
 	rtc, _ := rtcBuilder.Test(t).Type("adx_table_mapping").
-		DatabaseName("test-db").
+		DatabaseName(testAccDatabaseName()).
 		EntityType("tablemapping").
 		ReadStatementFunc(func(id string) (string, error) {
 			mappingId, err := parseADXTableMappingID(id)
@@ -57,7 +57,7 @@ func TestAccTableMapping_basicCsv(t *testing.T) {
 	r := ADXTableMappingTestResource{}
 	rtcBuilder := BuildResourceTestContext[TableMapping]()
 	rtc, _ := rtcBuilder.Test(t).Type("adx_table_mapping").
-		DatabaseName("test-db").
+		DatabaseName(testAccDatabaseName()).
 		EntityType("tablemapping").
 		ReadStatementFunc(func(id string) (string, error) {
 			mappingId, err := parseADXTableMappingID(id)

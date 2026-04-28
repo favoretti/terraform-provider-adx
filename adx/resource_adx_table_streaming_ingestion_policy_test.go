@@ -14,7 +14,7 @@ func TestAccADXTableStreamingIngestionPolicy_basic(t *testing.T) {
 	r := ADXTableStreamingIngestionPolicyTestResource{}
 	rtcBuilder := BuildResourceTestContext[TableStreamingIngestionPolicy]()
 	rtc, _ := rtcBuilder.Test(t).Type("adx_table_streaming_ingestion_policy").
-		DatabaseName("test-db").
+		DatabaseName(testAccDatabaseName()).
 		EntityType("streamingingestion").
 		ReadStatementFunc(GetAccTestPolicyReadStatementFunc()).Build()
 

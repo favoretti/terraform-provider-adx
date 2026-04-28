@@ -15,7 +15,7 @@ func TestAccMaterializedView(t *testing.T) {
 	r := ADXMaterializedViewTestResource{}
 	rtcBuilder := BuildResourceTestContext[ADXMaterializedView]()
 	rtc, _ := rtcBuilder.Test(t).Type("adx_materialized_view").
-		DatabaseName("test-db").
+		DatabaseName(testAccDatabaseName()).
 		EntityType("materializedview").
 		ReadStatementFunc(func(id string) (string, error) {
 			viewId, err := parseADXMaterializedViewID(id)
@@ -68,7 +68,7 @@ func TestAccMaterializedView_RLSSourceTable(t *testing.T) {
 	r := ADXMaterializedViewTestResource{}
 	rtcBuilder := BuildResourceTestContext[ADXMaterializedView]()
 	rtc, _ := rtcBuilder.Test(t).Type("adx_materialized_view").
-		DatabaseName("test-db").
+		DatabaseName(testAccDatabaseName()).
 		EntityType("materializedview").
 		ReadStatementFunc(func(id string) (string, error) {
 			viewId, err := parseADXMaterializedViewID(id)
@@ -123,7 +123,7 @@ func TestAccMaterializedView_BackfillAsync(t *testing.T) {
 	r := ADXMaterializedViewTestResource{}
 	rtcBuilder := BuildResourceTestContext[ADXMaterializedView]()
 	rtc, _ := rtcBuilder.Test(t).Type("adx_materialized_view").
-		DatabaseName("test-db").
+		DatabaseName(testAccDatabaseName()).
 		EntityType("materializedview").
 		ReadStatementFunc(func(id string) (string, error) {
 			viewId, err := parseADXMaterializedViewID(id)
