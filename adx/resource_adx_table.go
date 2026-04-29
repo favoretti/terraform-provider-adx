@@ -306,7 +306,11 @@ func resourceADXTableRead(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 
 	d.Set("name", schemas[0].TableName)
-	d.Set("database_name", schemas[0].DatabaseName)
+	resolvedDBName, err := resolveDatabaseName(ctx, meta, clusterConfig, id.DatabaseName, schemas[0].DatabaseName)
+	if err != nil {
+		return diag.Errorf("error resolving database name for Table %q: %+v", id.Name, err)
+	}
+	d.Set("database_name", resolvedDBName)
 	d.Set("table_schema", schemas[0].Schema)
 	d.Set("column", flattenTableColumn(schemas[0].Schema))
 	d.Set("docstring", schemas[0].DocString)
