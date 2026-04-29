@@ -202,7 +202,11 @@ func resourceADXTableMappingRead(ctx context.Context, d *schema.ResourceData, me
 
 	d.Set("name", schemas[0].Name)
 	d.Set("table_name", schemas[0].Table)
-	d.Set("database_name", schemas[0].Database)
+	resolvedDBName, err := resolveDatabaseName(ctx, meta, clusterConfig, id.DatabaseName, schemas[0].Database)
+	if err != nil {
+		return diag.Errorf("error resolving database name for Table Mapping %q: %+v", id.MappingName, err)
+	}
+	d.Set("database_name", resolvedDBName)
 	d.Set("kind", strings.ToLower(schemas[0].Kind))
 	d.Set("mapping", flattenTableMapping(schemas[0].Mapping))
 	d.Set("last_updated_on", schemas[0].LastUpdatedOn.String())

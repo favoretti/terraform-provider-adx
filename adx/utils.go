@@ -339,3 +339,35 @@ func unescapeEntityName(name string) string {
 	}
 	return name
 }
+
+var uuidPattern = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
+
+func isUUID(s string) bool {
+	return uuidPattern.MatchString(s)
+}
+
+type DatabaseIdentity struct {
+	DatabaseName string
+	PrettyName   string
+}
+
+// resolveDatabaseName resolves the database name from an API response.
+// Fabric KQL databases return a UUID as DatabaseName in responses like
+// .show table cslschema. In that case, we query .show database to get
+// the PrettyName which contains the actual database name.
+func resolveDatabaseName(ctx context.Context, meta interface{}, clusterConfig *ClusterConfig, queryDatabaseName string, apiDatabaseName string) (string, error) {
+	if !isUUID(apiDatabaseName) {
+		return apiDatabaseName, nil
+	}
+
+	dbInfo, err := queryADXMgmtAndParse[DatabaseIdentity](ctx, meta, clusterConfig, queryDatabaseName, ".show database")
+	if err != nil {
+		return apiDatabaseName, fmt.Errorf("error resolving database name: %+v", err)
+	}
+
+	if len(dbInfo) > 0 && dbInfo[0].PrettyName != "" {
+		return dbInfo[0].PrettyName, nil
+	}
+
+	return apiDatabaseName, nil
+}
