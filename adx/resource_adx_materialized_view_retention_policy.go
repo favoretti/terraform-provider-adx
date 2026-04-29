@@ -47,8 +47,8 @@ func resourceADXMaterializedViewRetentionPolicy() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ValidateDiagFunc: validate.StringMatch(
-					regexp.MustCompile("[0-9]{1,3}[dhms]"),
-					"soft delete timespan must be in the format of <amount><unit> such as 1m for (one minute) or 30d (thirty days)",
+					regexp.MustCompile(`^([1-9]\d{0,4}|[1-2]\d{5}|3[0-4]\d{4}|35\d{4}|36[0-3]\d{3}|364[0-5]\d{2}|3646[0-2]\d|36463[0-5])[dhms]$`),
+					"soft delete timespan must be in the format of <amount><unit> such as 1m for (one minute) or 30d (thirty days), maximum is 364635d (999 years)",
 				),
 			},
 
