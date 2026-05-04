@@ -104,3 +104,46 @@ resource "adx_table" "test" {
   }
 }
 ```
+
+## Running Local Tests
+
+The tests are acceptance tests and require a live Azure Data Explorer cluster.
+
+### Required environment variables
+
+```sh
+export ADX_ENDPOINT="https://<your-cluster>.<region>.kusto.windows.net"
+export ADX_CLIENT_ID="<service-principal-client-id>"
+export ADX_CLIENT_SECRET="<service-principal-client-secret>"
+export ADX_TENANT_ID="<tenant-id>"
+```
+
+### Optional environment variables
+
+```sh
+# Defaults to "test-db" if not set
+export ADX_TEST_DATABASE="test-db"
+
+# Defaults to "shareable-db" if not set
+export ADX_TEST_SHAREABLE_DATABASE="shareable-db"
+```
+
+Make sure the databases exist in the cluster and the service principal has admin permissions on them.
+
+### Run all acceptance tests
+
+```sh
+TF_ACC=1 go test ./adx/... -v -timeout 120m
+```
+
+### Run a specific test
+
+```sh
+TF_ACC=1 go test ./adx/... -v -run TestAccADXTable_basic -timeout 30m
+```
+
+### Run unit tests only (no cluster required)
+
+```sh
+go test ./adx/... -v -run TestProvider
+```

@@ -1,3 +1,21 @@
+## v0.0.39
+
+* Fix: resolve database name for Fabric KQL databases (#79)
+
+## v0.0.38
+
+* Fix: guard against empty update-policy slice in `adx_table_update_policy` Read to prevent index panic (#78)
+* Feat: make test database names configurable via `ADX_TEST_DATABASE` and `ADX_TEST_SHAREABLE_DATABASE` environment variables (#77)
+
+## v0.0.37
+
+* New resource: `adx_merge_policy` (#76)
+
+## v0.0.36
+
+* New resource: `adx_table_security_role` (#75)
+* Fix: allow soft delete period value up to 36500 days in retention policy (#73)
+
 ## v0.0.35
 
 New resource: `adx_table_restricted_view_policy`
