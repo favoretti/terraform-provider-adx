@@ -53,6 +53,8 @@ func Provider() *schema.Provider {
 		DataSourcesMap: map[string]*schema.Resource{},
 
 		ResourcesMap: map[string]*schema.Resource{
+			"adx_cluster_request_classification_policy": resourceADXClusterRequestClassificationPolicy(),
+
 			"adx_column_encoding_policy": resourceADXColumnEncodingPolicy(),
 
 			"adx_external_table": resourceADXExternalTable(),
@@ -79,6 +81,8 @@ func Provider() *schema.Provider {
 			"adx_table_security_role":              	resourceADXTableSecurityRole(),
 			"adx_table_streaming_ingestion_policy": 	resourceADXTableStreamingIngestionPolicy(),
 			"adx_table_update_policy":              	resourceADXTableUpdatePolicy(),
+
+			"adx_workload_group": resourceADXWorkloadGroup(),
 		},
 	}
 
