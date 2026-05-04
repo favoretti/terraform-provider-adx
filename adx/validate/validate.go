@@ -1,6 +1,7 @@
 package validate
 
 import (
+	"encoding/json"
 	"regexp"
 
 	"github.com/hashicorp/go-cty/cty"
@@ -97,6 +98,20 @@ func StringIsSystemOrUUID(i interface{}, k cty.Path) diag.Diagnostics {
 
 	if _, err := uuid.ParseUUID(v); err != nil {
 		return diag.Errorf("expected the value \"system\" or a valid UUID, got: %v", v)
+	}
+
+	return nil
+}
+
+func StringIsJSON(i interface{}, k cty.Path) diag.Diagnostics {
+	v, ok := i.(string)
+	if !ok {
+		return diag.Errorf("expected type of %q to be string", k)
+	}
+
+	var js interface{}
+	if err := json.Unmarshal([]byte(v), &js); err != nil {
+		return diag.Errorf("expected %q to be valid JSON: %s", k, err)
 	}
 
 	return nil
