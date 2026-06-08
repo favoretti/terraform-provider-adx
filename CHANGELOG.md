@@ -1,3 +1,8 @@
+## v0.0.40
+
+* New resource: `adx_workload_group` (#82)
+* New resource: `adx_cluster_request_classification_policy` (#82)
+
 ## v0.0.39
 
 * Fix: resolve database name for Fabric KQL databases (#79)
