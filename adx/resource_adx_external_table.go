@@ -2,7 +2,10 @@ package adx
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -72,19 +75,22 @@ func resourceADXExternalTable() *schema.Resource {
 			},
 
 			"partitions": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "jsonencode([])",
+				Type:             schema.TypeString,
+				Optional:         true,
+				Default:          "jsonencode([])",
+				DiffSuppressFunc: suppressExternalTablePartitionsDiff,
 			},
 
 			"path_format": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: suppressExternalTablePathFormatDiff,
 			},
 
 			"folder": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: suppressExternalTableFolderDiff,
 			},
 
 			"doc_string": {
@@ -244,11 +250,16 @@ func resourceADXExternalTableRead(ctx context.Context, d *schema.ResourceData, m
 
 		d.Set("name", id.Name)
 		d.Set("database_name", id.DatabaseName)
-		d.Set("storage_connection_string", resultSet[0].ConnectionStrings)
+
+		// ADX never returns the connection string verbatim (secret is redacted), so keep
+		// the configured value and only read it when state is empty (e.g. on import).
+		if v, ok := d.GetOk("storage_connection_string"); !ok || v.(string) == "" {
+			d.Set("storage_connection_string", resultSet[0].ConnectionStrings)
+		}
+
 		d.Set("partitions", resultSet[0].Partitions)
 		d.Set("path_format", resultSet[0].PathFormat)
 		d.Set("folder", resultSet[0].Folder)
-		d.Set("properties", resultSet[0].Properties)
 
 	}
 
@@ -268,4 +279,173 @@ func resourceADXExternalTableDelete(ctx context.Context, d *schema.ResourceData,
 
 func parseADXExternalTableID(input string) (*adxResourceId, error) {
 	return parseADXResourceID(input, 4, 0, 1, 2, 3)
+}
+
+// ADX returns folder, path_format and partitions in a canonicalized form that differs
+// from the KQL config syntax. These DiffSuppressFuncs compare them semantically.
+
+// folder: config is quoted, ADX returns it unquoted.
+func suppressExternalTableFolderDiff(k, old, new string, d *schema.ResourceData) bool {
+	return normalizeExternalTableFolder(old) == normalizeExternalTableFolder(new)
+}
+
+func normalizeExternalTableFolder(s string) string {
+	return strings.Trim(strings.TrimSpace(s), "'\"")
+}
+
+// path_format: datetime_pattern('yyyy/MM/dd', Day) vs datetime_pattern("yyyy/MM/dd",Day).
+func suppressExternalTablePathFormatDiff(k, old, new string, d *schema.ResourceData) bool {
+	return normalizeExternalTablePathFormat(old) == normalizeExternalTablePathFormat(new)
+}
+
+func normalizeExternalTablePathFormat(s string) string {
+	s = strings.ReplaceAll(s, "\"", "'")
+	s = strings.ReplaceAll(s, " ", "")
+	return strings.TrimSpace(s)
+}
+
+// partitions: KQL clause (config) vs JSON array (ADX).
+func suppressExternalTablePartitionsDiff(k, old, new string, d *schema.ResourceData) bool {
+	oldCanon, oldOk := canonicalizeExternalTablePartitions(old)
+	newCanon, newOk := canonicalizeExternalTablePartitions(new)
+
+	// Fall back to literal comparison if either side is unparseable.
+	if !oldOk || !newOk {
+		return old == new
+	}
+	return oldCanon == newCanon
+}
+
+type externalTablePartition struct {
+	Name     string
+	Column   string
+	Function string
+	Mod      string
+	Ordinal  int
+}
+
+// canonicalizeExternalTablePartitions reduces a KQL or JSON partition definition to a
+// comparable signature. The bool reports whether parsing succeeded.
+func canonicalizeExternalTablePartitions(s string) (string, bool) {
+	s = strings.TrimSpace(s)
+	if s == "" || s == "[]" || s == "jsonencode([])" {
+		return "", true
+	}
+
+	var parts []externalTablePartition
+	var ok bool
+	if strings.HasPrefix(s, "[") {
+		parts, ok = parseExternalTablePartitionsJSON(s)
+	} else {
+		parts, ok = parseExternalTablePartitionsKQL(s)
+	}
+	if !ok {
+		return "", false
+	}
+
+	var b strings.Builder
+	for _, p := range parts {
+		b.WriteString(strings.ToLower(p.Name))
+		b.WriteByte('=')
+		b.WriteString(strings.ToLower(p.Function))
+		b.WriteByte('(')
+		b.WriteString(strings.ToLower(p.Column))
+		if p.Mod != "" {
+			b.WriteByte(',')
+			b.WriteString(p.Mod)
+		}
+		b.WriteString(");")
+	}
+	return b.String(), true
+}
+
+func parseExternalTablePartitionsJSON(s string) ([]externalTablePartition, bool) {
+	var raw []struct {
+		Name       string      `json:"Name"`
+		ColumnName string      `json:"ColumnName"`
+		Function   string      `json:"Function"`
+		Mod        json.Number `json:"Mod"`
+		Ordinal    int         `json:"Ordinal"`
+	}
+	if err := json.Unmarshal([]byte(s), &raw); err != nil {
+		return nil, false
+	}
+
+	sort.SliceStable(raw, func(i, j int) bool { return raw[i].Ordinal < raw[j].Ordinal })
+
+	parts := make([]externalTablePartition, 0, len(raw))
+	for _, r := range raw {
+		parts = append(parts, externalTablePartition{
+			Name:     r.Name,
+			Column:   r.ColumnName,
+			Function: r.Function,
+			Mod:      strings.TrimSpace(r.Mod.String()),
+			Ordinal:  r.Ordinal,
+		})
+	}
+	return parts, true
+}
+
+var (
+	kqlPartitionRe = regexp.MustCompile(`^([^\s:]+)\s*:\s*\w+\s*(?:=\s*(.+))?$`)
+	kqlFunctionRe  = regexp.MustCompile(`^(\w+)\s*\((.+)\)$`)
+)
+
+func parseExternalTablePartitionsKQL(s string) ([]externalTablePartition, bool) {
+	elements := splitTopLevel(s, ',')
+	parts := make([]externalTablePartition, 0, len(elements))
+	for _, el := range elements {
+		el = strings.TrimSpace(el)
+		if el == "" {
+			continue
+		}
+
+		m := kqlPartitionRe.FindStringSubmatch(el)
+		if m == nil {
+			return nil, false
+		}
+
+		p := externalTablePartition{Name: strings.TrimSpace(m[1])}
+		expr := strings.TrimSpace(m[2])
+		if expr != "" {
+			if fm := kqlFunctionRe.FindStringSubmatch(expr); fm != nil {
+				p.Function = strings.TrimSpace(fm[1])
+				args := splitTopLevel(fm[2], ',')
+				if len(args) > 0 {
+					p.Column = strings.TrimSpace(args[0])
+				}
+				if len(args) > 1 {
+					p.Mod = strings.TrimSpace(args[1])
+				}
+			} else {
+				p.Column = expr
+			}
+		}
+		parts = append(parts, p)
+	}
+	return parts, true
+}
+
+// splitTopLevel splits s on sep, ignoring separators nested inside parentheses.
+func splitTopLevel(s string, sep byte) []string {
+	var res []string
+	depth := 0
+	start := 0
+	for i := 0; i < len(s); i++ {
+		switch s[i] {
+		case '(':
+			depth++
+		case ')':
+			if depth > 0 {
+				depth--
+			}
+		case sep:
+			if depth == 0 {
+				res = append(res, s[start:i])
+				start = i + 1
+			}
+		}
+	}
+	res = append(res, s[start:])
+	return res
 }

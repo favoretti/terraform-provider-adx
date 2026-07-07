@@ -1,3 +1,7 @@
+## v0.0.41
+
+* Fix: eliminate permanent in-place diff on `adx_external_table` for `folder`, `partitions`, `path_format` and `storage_connection_string`. ADX returns these values in a canonicalized form (unquoted folder, JSON partitions, double-quoted/whitespace-stripped path format, redacted connection string) that differed from the KQL config syntax. Added `DiffSuppressFunc`s that compare the values semantically, and stopped overwriting the sensitive connection string on read.
+
 ## v0.0.40
 
 * New resource: `adx_workload_group` (#82)
