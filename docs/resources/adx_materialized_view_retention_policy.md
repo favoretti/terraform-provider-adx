@@ -41,8 +41,8 @@ resource "adx_materialized_view_retention_policy" "test" {
 
 - **view_name** (String, Required) Name of the materialized view containing the policy to modify
 - **database_name** (String, Required) Database name that the target materialized view is in
-- **soft_delete_period** (String, Required) Time span for which it's guaranteed that the data is kept available to query. The period is measured starting from the time the data was ingested (see note in ADX docs about this being imprecise)
-- **recoverability** (Boolean, Required) Data recoverability (true/false) after the data was soft-deleted
+- **soft_delete_period** (String, Required) Time span for which it's guaranteed that the data is kept available to query, in the format `<amount><unit>` where unit is one of `d`, `h`, `m`, `s` (for example `500m` or `30d`), up to a maximum of `364635d` (999 years). The period is measured starting from the time the data was ingested (see note in ADX docs about this being imprecise). `0s` is accepted by the provider and means no data is kept at all
+- **recoverability** (Boolean, Required) Data recoverability (true/false) after the data was soft-deleted. Must be `false` when `soft_delete_period` is `0s`, since ADX does not commit the ingested data in that case
 - **cluster** (Optional) `cluster` Configuration block (defined below) for the target cluster (overrides any config specified in the provider)
 
 `cluster` Configuration block for connection details about the target ADX cluster
