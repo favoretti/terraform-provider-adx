@@ -1,3 +1,8 @@
+## v0.0.42
+
+* Fix: allow `soft_delete_period = "0s"` on `adx_table_retention_policy` and `adx_materialized_view_retention_policy`. The validation regex rejected a leading zero, but ADX explicitly supports a soft-delete period of 0 in table-level retention policies — the common staging table pattern where a transactional update policy moves the data to a target table and nothing is committed to the source table.
+* Feat: `adx_table_retention_policy` and `adx_materialized_view_retention_policy` now fail at plan time when `soft_delete_period` is 0 and `recoverability` is `true`, which ADX does not allow.
+
 ## v0.0.41
 
 * Fix: eliminate permanent in-place diff on `adx_external_table` for `folder`, `partitions`, `path_format` and `storage_connection_string`. ADX returns these values in a canonicalized form (unquoted folder, JSON partitions, double-quoted/whitespace-stripped path format, redacted connection string) that differed from the KQL config syntax. Added `DiffSuppressFunc`s that compare the values semantically, and stopped overwriting the sensitive connection string on read.
