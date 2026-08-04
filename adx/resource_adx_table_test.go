@@ -5,8 +5,28 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/stretchr/testify/assert"
 )
+
+// checkTableSchemaMatches compares table_schema after unescaping both sides (e.g.
+// "['version']" vs "version"). Whether ADX's `.show table ... cslschema` escapes a given
+// column name is a property of the Kusto engine version running on the cluster, not of
+// this provider, so asserting on the raw escaped/unescaped form directly is brittle
+// across clusters -- this mirrors the table_schema DiffSuppressFunc's own comparison.
+func checkTableSchemaMatches(tfName, expectedUnescaped string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[tfName]
+		if !ok {
+			return fmt.Errorf("not found: %s", tfName)
+		}
+		got := unescapeTableSchema(rs.Primary.Attributes["table_schema"])
+		if got != expectedUnescaped {
+			return fmt.Errorf("table_schema (unescaped) = %q, want %q (raw state value: %q)", got, expectedUnescaped, rs.Primary.Attributes["table_schema"])
+		}
+		return nil
+	}
+}
 
 type ADXTableTestResource struct{}
 
@@ -81,7 +101,7 @@ func TestAccADXTable_basic_inline(t *testing.T) {
 					rtc.GetTestCheckEntityExists(&entity),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "name", rtc.EntityName),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
-					resource.TestCheckResourceAttr(rtc.GetTFName(), "table_schema", "f1:string,['version']:string,f4:string"),
+					checkTableSchemaMatches(rtc.GetTFName(), "f1:string,version:string,f4:string"),
 				),
 			},
 			{
@@ -90,7 +110,7 @@ func TestAccADXTable_basic_inline(t *testing.T) {
 					rtc.GetTestCheckEntityExists(&entity),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "name", rtc.EntityName),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
-					resource.TestCheckResourceAttr(rtc.GetTFName(), "table_schema", "f1:string,['version']:string,f4:string,f3:int"),
+					checkTableSchemaMatches(rtc.GetTFName(), "f1:string,version:string,f4:string,f3:int"),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "docstring", "This is table"),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "folder", "iamafolder"),
 				),

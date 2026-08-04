@@ -35,7 +35,6 @@ resource "adx_table_restricted_view_access_policy" "test" {
 - **table_name** (String, Required) Name of the table containing the policy to modify
 - **database_name** (String, Required) Database name that the target table is in
 - **enabled** (boolean or String, Required) Enables or disables policy
-- **follower_database** (Bool, Optional) True if the target table is from an attached/follower database
 - **cluster** (Optional) `cluster` Configuration block (defined below) for the target cluster (overrides any config specified in the provider)
 
 `cluster` Configuration block for connection details about the target ADX cluster 

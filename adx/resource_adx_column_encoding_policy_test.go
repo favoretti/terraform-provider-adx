@@ -32,7 +32,12 @@ func TestAccADXColumnEncodingPolicy_basic(t *testing.T) {
 				),
 			},
 			{
-				Config: r.basic(rtc, "00:05:00", "200"),
+				// Re-apply the same values: this step's Check asserts the same
+				// entity_identifier/encoding_policy_type as step 1, so Config must match
+				// (previously passed mismatched values copy-pasted from a different
+				// test, which this step's own checks would have failed once step 1's
+				// missing depends_on stopped masking it).
+				Config: r.basic(rtc, fmt.Sprintf("%s.f1", rtc.EntityName), "BigObject"),
 				Check: resource.ComposeTestCheckFunc(
 					rtc.GetTestCheckEntityExists(&entity),
 					resource.TestCheckResourceAttr(rtc.GetTFName(), "database_name", rtc.DatabaseName),
@@ -57,6 +62,8 @@ func (this ADXColumnEncodingPolicyTestResource) basic(rtc *ResourceTestContext[C
 		database_name         	= "%s"
 		entity_identifier 		= "%s"
 		encoding_policy_type   	= "%s"
+
+		depends_on = [adx_table.test]
 	}
 	`, this.template(rtc), rtc.Type, rtc.Label, rtc.DatabaseName, entityIdentifier, encodingPolicyType)
 }
