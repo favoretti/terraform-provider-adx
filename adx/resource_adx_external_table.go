@@ -156,20 +156,43 @@ func resourceADXExternalTableCreateUpdate(ctx context.Context, d *schema.Resourc
 	clusterConfig := getAndExpandClusterConfigWithDefaults(ctx, d, meta)
 	name := d.Get("name").(string)
 	databaseName := d.Get("database_name").(string)
+
+	createStatement := buildExternalTableCreateStatement(d)
+
+	_, err := queryADXMgmt(ctx, meta, clusterConfig, databaseName, createStatement)
+	if err != nil {
+		return diag.Errorf("error creating external table %s (Database %q): %+v", name, databaseName, err)
+	}
+
+	client, err := getADXClient(meta, clusterConfig)
+	if err != nil {
+		return diag.Errorf("error creating adx client connection: %+v", err)
+	}
+	d.SetId(buildADXResourceId(client.Endpoint(), databaseName, "externaltable", name))
+
+	return resourceADXExternalTableRead(ctx, d, meta)
+}
+
+// buildExternalTableCreateStatement assembles the .create-or-alter KQL statement sent to
+// ADX for both create and update. partitions, path_format and folder are read via
+// configuredExternalTableString rather than d.Get so the statement always reflects the
+// KQL the user configured, not a stale ADX-canonicalized value suppressed onto state.
+func buildExternalTableCreateStatement(d *schema.ResourceData) string {
+	name := d.Get("name").(string)
 	dataFormat := d.Get("data_format").(string)
 	storageConnectionString := d.Get("storage_connection_string").(string)
-	schema := d.Get("schema").(string)
-	partitions := d.Get("partitions").(string)
-	pathFormat := d.Get("path_format").(string)
+	tableSchema := d.Get("schema").(string)
+	partitions := configuredExternalTableString(d, "partitions")
+	pathFormat := configuredExternalTableString(d, "path_format")
 	kind := d.Get("kind").(string)
 
 	var withParams []string
 
-	if folder, ok := d.GetOk("folder"); ok {
-		withParams = append(withParams, fmt.Sprintf("folder=%s", folder.(string)))
+	if folder := configuredExternalTableString(d, "folder"); folder != "" {
+		withParams = append(withParams, fmt.Sprintf("folder=%s", folder))
 	}
 	if docString, ok := d.GetOk("doc_string"); ok {
-		withParams = append(withParams, fmt.Sprintf("docString=%s", docString.(string)))
+		withParams = append(withParams, fmt.Sprintf("docString='%s'", docString.(string)))
 	}
 	if compressed, ok := d.GetOk("compressed"); ok {
 		withParams = append(withParams, fmt.Sprintf("compressed=%t", compressed.(bool)))
@@ -204,29 +227,14 @@ func resourceADXExternalTableCreateUpdate(ctx context.Context, d *schema.Resourc
 		withClause = fmt.Sprintf("with(%s)", strings.Join(withParams, ", "))
 	}
 
-	createStatement := ""
 	if len(partitions) > 0 && len(pathFormat) > 0 {
-		createStatement = fmt.Sprintf(".create-or-alter external table %s (%s) kind = %s partition by (%s) pathformat = (%s) dataformat = %s ('%s') %s", name, schema, kind, partitions, pathFormat, dataFormat, storageConnectionString, withClause)
+		return fmt.Sprintf(".create-or-alter external table %s (%s) kind = %s partition by (%s) pathformat = (%s) dataformat = %s ('%s') %s", name, tableSchema, kind, partitions, pathFormat, dataFormat, storageConnectionString, withClause)
 	} else if len(partitions) > 0 && len(pathFormat) == 0 {
-		createStatement = fmt.Sprintf(".create-or-alter external table %s (%s) kind = %s partition by (%s) dataformat = %s ('%s') %s", name, schema, kind, partitions, dataFormat, storageConnectionString, withClause)
+		return fmt.Sprintf(".create-or-alter external table %s (%s) kind = %s partition by (%s) dataformat = %s ('%s') %s", name, tableSchema, kind, partitions, dataFormat, storageConnectionString, withClause)
 	} else if len(partitions) == 0 && len(pathFormat) > 0 {
-		createStatement = fmt.Sprintf(".create-or-alter external table %s (%s) kind = %s pathformat = (%s) dataformat = %s ('%s') %s", name, schema, kind, pathFormat, dataFormat, storageConnectionString, withClause)
-	} else {
-		createStatement = fmt.Sprintf(".create-or-alter external table %s (%s) kind = %s dataformat = %s ('%s') %s", name, schema, kind, dataFormat, storageConnectionString, withClause)
+		return fmt.Sprintf(".create-or-alter external table %s (%s) kind = %s pathformat = (%s) dataformat = %s ('%s') %s", name, tableSchema, kind, pathFormat, dataFormat, storageConnectionString, withClause)
 	}
-
-	_, err := queryADXMgmt(ctx, meta, clusterConfig, databaseName, createStatement)
-	if err != nil {
-		return diag.Errorf("error creating external table %s (Database %q): %+v", name, databaseName, err)
-	}
-
-	client, err := getADXClient(meta, clusterConfig)
-	if err != nil {
-		return diag.Errorf("error creating adx client connection: %+v", err)
-	}
-	d.SetId(buildADXResourceId(client.Endpoint(), databaseName, "externaltable", name))
-
-	return resourceADXExternalTableRead(ctx, d, meta)
+	return fmt.Sprintf(".create-or-alter external table %s (%s) kind = %s dataformat = %s ('%s') %s", name, tableSchema, kind, dataFormat, storageConnectionString, withClause)
 }
 
 func resourceADXExternalTableRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -279,6 +287,24 @@ func resourceADXExternalTableDelete(ctx context.Context, d *schema.ResourceData,
 
 func parseADXExternalTableID(input string) (*adxResourceId, error) {
 	return parseADXResourceID(input, 4, 0, 1, 2, 3)
+}
+
+// configuredExternalTableString returns the value the user actually wrote for key in
+// their current configuration, bypassing d.Get. Once state holds ADX's canonicalized
+// form (e.g. JSON partitions) and a DiffSuppressFunc below considers it equivalent to
+// the KQL config, the SDK drops that attribute from the diff entirely, so d.Get would
+// return the stale canonicalized state value instead of the KQL to send to ADX. Falls
+// back to d.Get when the key is absent from config (e.g. relying on its schema default).
+func configuredExternalTableString(d *schema.ResourceData, key string) string {
+	raw := d.GetRawConfig()
+	if raw.IsNull() {
+		return d.Get(key).(string)
+	}
+	v := raw.GetAttr(key)
+	if v.IsNull() || !v.IsKnown() {
+		return d.Get(key).(string)
+	}
+	return v.AsString()
 }
 
 // ADX returns folder, path_format and partitions in a canonicalized form that differs

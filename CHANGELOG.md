@@ -1,3 +1,10 @@
+## Unreleased
+
+* Fix: `adx_external_table` updates failing since v0.0.41 whenever `partitions`, `path_format`, or `folder` were set. The `DiffSuppressFunc`s added in v0.0.41 to eliminate the permanent diff also cause the SDK to drop those attributes from the diff entirely once state holds ADX's canonicalized form (e.g. JSON partitions) that's equivalent to the KQL config. `d.Get` then returned that stale, canonicalized state value during apply instead of the configured KQL, producing an invalid `.create-or-alter` statement. The resource now reads these three fields from the raw configuration (`d.GetRawConfig()`) instead, so the KQL the user wrote is always what's sent to ADX.
+* Fix: `adx_table_restricted_view_access_policy` panicked on every Create/Update/Read (`enabled: '' expected type 'string', got unconvertible type 'bool'`) — `Read` set the string-typed `enabled` attribute from a `*bool`.
+* Breaking: removed the `follower_database` option from `adx_table_restricted_view_access_policy`. It never worked: ADX only supports overriding caching policy and authorized principals on a follower database, there is no `.alter follower database ... policy restricted_view_access` command, and setting it produced a KQL syntax error.
+* Fix: `adx_external_table`'s `doc_string` was inserted into the `with(...)` clause unquoted, so any value containing a space (the entire point of a free-text documentation string) produced invalid KQL and failed. Now quoted, matching how `adx_table`'s `docstring` is already handled.
+
 ## v0.0.42
 
 * Fix: allow `soft_delete_period = "0s"` on `adx_table_retention_policy` and `adx_materialized_view_retention_policy`. The validation regex rejected a leading zero, but ADX explicitly supports a soft-delete period of 0 in table-level retention policies — the common staging table pattern where a transactional update policy moves the data to a target table and nothing is committed to the source table.

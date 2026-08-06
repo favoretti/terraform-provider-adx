@@ -126,6 +126,13 @@ export ADX_TEST_DATABASE="test-db"
 
 # Defaults to "shareable-db" if not set
 export ADX_TEST_SHAREABLE_DATABASE="shareable-db"
+
+# Storage connection string used by adx_external_table acceptance tests.
+# Required for TestAccADXExternalTable_basic; that test is skipped (not failed)
+# if unset. ADX resolves the storage hostname via DNS when creating an
+# external table even without validate_not_empty set, so no placeholder works
+# here -- this must point at a real, resolvable storage account/container.
+export ADX_TEST_STORAGE_CONNECTION_STRING="https://<account>.blob.core.windows.net/<container>;<SAS token or account key>"
 ```
 
 Make sure the databases exist in the cluster and the service principal has admin permissions on them.
